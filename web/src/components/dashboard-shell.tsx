@@ -8,6 +8,7 @@ import {
   UserCircle,
   LogOut,
   ChevronRight,
+  Shield,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -27,7 +28,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   admin: [
     { href: "/dashboard/admin", label: "Overview", Icon: LayoutDashboard },
     { href: "/dashboard/admin/players", label: "Players", Icon: Users },
-    { href: "/dashboard/admin/teams", label: "Teams", Icon: Users },
+    { href: "/dashboard/admin/teams", label: "Teams", Icon: Shield },
   ],
   coach: [
     { href: "/dashboard/coach", label: "Overview", Icon: LayoutDashboard },
