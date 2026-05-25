@@ -1,10 +1,37 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // This app lives in a subdirectory alongside the Expo app; pin the
-  // workspace root so Turbopack doesn't pick up the repo-root lockfile.
   turbopack: {
     root: __dirname,
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      {
+        // Service worker must never be cached
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
+        // Icons can be cached long-term
+        source: "/icons/(.*)",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+    ];
   },
 };
 
