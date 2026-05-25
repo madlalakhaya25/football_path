@@ -68,7 +68,7 @@ export default function LinkChildScreen() {
 
   return (
     <Screen>
-      <TouchableOpacity className="mt-2 mb-8" onPress={() => router.back()}>
+      <TouchableOpacity className="mb-8" onPress={() => router.back()}>
         <Text className="text-ink-secondary text-body">← Back</Text>
       </TouchableOpacity>
 
@@ -85,7 +85,7 @@ export default function LinkChildScreen() {
             label="Player code"
             placeholder="e.g. a3f9c2b1e0"
             value={value}
-            onChangeText={(t) => onChange(t.toLowerCase().trim())}
+            onChangeText={(t) => onChange(t.toLowerCase())}
             error={errors.share_token?.message}
             autoCapitalize="none"
             autoCorrect={false}

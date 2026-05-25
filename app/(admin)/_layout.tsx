@@ -48,7 +48,6 @@ export default function AdminLayout() {
       <Tabs.Screen name="teams/[id]" options={{ href: null }} />
       <Tabs.Screen name="players/new" options={{ href: null }} />
       <Tabs.Screen name="players/[id]" options={{ href: null }} />
-      <Tabs.Screen name="coaches" options={{ href: null }} />
     </Tabs>
   );
 }

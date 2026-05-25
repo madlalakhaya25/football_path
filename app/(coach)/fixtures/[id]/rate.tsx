@@ -1,27 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
+import { StarPicker } from '@/components/ui/StarPicker';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { showAlert } from '@/lib/alert';
 import { useFixture } from '@/hooks/useFixtures';
 import { useQueryClient } from '@tanstack/react-query';
-
-function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return (
-    <View className="flex-row gap-1">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <TouchableOpacity key={n} onPress={() => onChange(n)} hitSlop={8}>
-          <Text className={`text-xl ${n <= value ? 'text-amber' : 'text-ink-tertiary'}`}>★</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
 
 interface RatingState { rating: number; note: string; }
 
@@ -102,6 +91,7 @@ export default function RatePlayersScreen() {
               <Text className="text-ink-primary font-bold text-body ml-3">{a.players?.full_name}</Text>
             </View>
             <StarPicker
+              size="sm"
               value={ratings[a.player_id]?.rating ?? 3}
               onChange={(v) =>
                 setRatings((prev) => ({ ...prev, [a.player_id]: { ...prev[a.player_id], rating: v } }))

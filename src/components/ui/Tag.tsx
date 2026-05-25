@@ -9,10 +9,10 @@ interface TagProps {
 }
 
 const styles: Record<TagVariant, { container: string; text: string }> = {
-  green: { container: 'bg-green-primary/10 border border-green-primary/30', text: 'text-green-primary' },
-  amber: { container: 'bg-amber-primary/10 border border-amber-primary/30', text: 'text-amber-primary' },
-  neutral: { container: 'bg-pitch-card border border-pitch-border', text: 'text-text-secondary' },
-  red: { container: 'bg-red-500/10 border border-red-500/30', text: 'text-red-400' },
+  green:   { container: 'bg-green-bg border border-green-border',   text: 'text-green' },
+  amber:   { container: 'bg-amber-bg border border-amber-border',   text: 'text-amber' },
+  neutral: { container: 'bg-surface-1 border border-border',        text: 'text-ink-secondary' },
+  red:     { container: 'bg-red-bg border border-red-border',       text: 'text-red' },
 };
 
 export function Tag({ label, variant = 'neutral' }: TagProps) {

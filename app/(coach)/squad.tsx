@@ -85,7 +85,7 @@ export default function SquadScreen() {
   if (!teamLoading && !team) {
     return (
       <Screen>
-        <View className="mt-8 mb-6">
+        <View className="mt-4 mb-6">
           <Text className="text-ink-primary text-hero font-black mb-1">Create Your Team</Text>
           <Text className="text-ink-secondary text-body">Set up your squad to get started.</Text>
         </View>
@@ -147,7 +147,7 @@ export default function SquadScreen() {
         keyExtractor={(item: any) => item.player_id}
         contentContainerClassName="px-4 pb-8"
         showsVerticalScrollIndicator={false}
-        onRefresh={refetch}
+        onRefresh={() => { refetch(); }}
         refreshing={isLoading}
         renderItem={({ item }) => (
           <PlayerCard

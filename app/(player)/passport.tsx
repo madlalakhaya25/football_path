@@ -4,23 +4,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
+import { StarRow } from '@/components/ui/StarRow';
 import { useAuthStore } from '@/store/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import * as Clipboard from 'expo-clipboard';
 
-function StarRow({ rating }: { rating: number }) {
-  return (
-    <View className="flex-row">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Text key={n} className={`text-sm ${n <= rating ? 'text-amber' : 'text-ink-tertiary'}`}>★</Text>
-      ))}
-    </View>
-  );
-}
-
 export default function PlayerPassportScreen() {
   const profile = useAuthStore((s) => s.profile);
+  const clear = useAuthStore((s) => s.clear);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    clear();
+  };
 
   const { data: player, isLoading } = useQuery({
     queryKey: ['my-passport', profile?.userId],
@@ -97,9 +94,14 @@ export default function PlayerPassportScreen() {
     <SafeAreaView className="flex-1 bg-pitch" edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="px-4 pt-6 pb-2">
-          <Text className="text-ink-tertiary text-caption uppercase tracking-wide">Football Passport</Text>
-          <Text className="text-green text-caption font-semibold mt-0.5">{academyName}</Text>
+        <View className="px-4 pt-6 pb-2 flex-row items-center justify-between">
+          <View>
+            <Text className="text-ink-tertiary text-caption uppercase tracking-wide">Football Passport</Text>
+            {academyName && <Text className="text-green text-caption font-semibold mt-0.5">{academyName}</Text>}
+          </View>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text className="text-ink-tertiary text-caption">Logout</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Hero card */}

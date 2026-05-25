@@ -1,0 +1,170 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, ClipboardList, Star } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { CancelFixtureButton } from "./cancel-fixture-button";
+
+const STATUS_VARIANT = {
+  upcoming: "neutral",
+  completed: "success",
+  cancelled: "danger",
+  postponed: "warning",
+} as const;
+
+export default async function FixtureDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const { data: fixture } = await supabase
+    .from("fixtures")
+    .select(`
+      id, opponent, venue, fixture_date, is_home, status, notes,
+      match_results ( team_score, opponent_score, match_notes ),
+      match_appearances (
+        played,
+        players ( id, full_name, position, photo_url )
+      ),
+      player_ratings (
+        rating, note,
+        players ( id, full_name )
+      )
+    `)
+    .eq("id", id)
+    .single();
+
+  if (!fixture) notFound();
+
+  type Appearance = { played: boolean; players: { id: string; full_name: string; position: string | null; photo_url: string | null } | { id: string; full_name: string; position: string | null; photo_url: string | null }[] | null };
+  type PRating = { rating: number; note: string | null; players: { id: string; full_name: string } | { id: string; full_name: string }[] | null };
+
+  const result = Array.isArray(fixture.match_results) ? fixture.match_results[0] : fixture.match_results;
+  const appearances: Appearance[] = fixture.match_appearances ?? [];
+  const ratings: PRating[] = fixture.player_ratings ?? [];
+  const date = new Date(fixture.fixture_date);
+
+  const ratingsMap = new Map(ratings.map((r) => {
+    const p = Array.isArray(r.players) ? r.players[0] : r.players;
+    return [p?.id, r.rating];
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/dashboard/coach/fixtures">
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Fixtures
+          </Link>
+        </Button>
+      </div>
+
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {fixture.is_home ? "vs" : "@"} {fixture.opponent}
+          </h1>
+          <p className="text-muted-foreground">
+            {date.toLocaleDateString("en-ZA", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            {fixture.venue && ` · ${fixture.venue}`}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant={STATUS_VARIANT[fixture.status as keyof typeof STATUS_VARIANT] ?? "neutral"} className="capitalize">
+            {fixture.status}
+          </Badge>
+          {fixture.status === "upcoming" && (
+            <>
+              <Button asChild size="sm">
+                <Link href={`/dashboard/coach/fixtures/${id}/log`}>
+                  <ClipboardList className="size-4" aria-hidden="true" />
+                  Log result
+                </Link>
+              </Button>
+              <CancelFixtureButton fixtureId={id} />
+            </>
+          )}
+        </div>
+      </div>
+
+      {fixture.notes && (
+        <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          {fixture.notes}
+        </p>
+      )}
+
+      {/* Result */}
+      {result && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Result</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center gap-6">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  {fixture.is_home ? "Us" : fixture.opponent}
+                </p>
+                <p className="text-5xl font-black tabular-nums">{fixture.is_home ? result.team_score : result.opponent_score}</p>
+              </div>
+              <span className="text-2xl text-muted-foreground font-light">—</span>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                  {fixture.is_home ? fixture.opponent : "Us"}
+                </p>
+                <p className="text-5xl font-black tabular-nums">{fixture.is_home ? result.opponent_score : result.team_score}</p>
+              </div>
+            </div>
+            {result.match_notes && (
+              <p className="mt-4 text-center text-sm text-muted-foreground">{result.match_notes}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Appearances + Ratings */}
+      {appearances.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">Squad appearances</h2>
+          <div className="divide-y divide-border rounded-xl border border-border">
+            {appearances.map((a, i) => {
+              const player = Array.isArray(a.players) ? a.players[0] : a.players;
+              if (!player) return null;
+              const rating = ratingsMap.get(player.id);
+              const initials = player.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
+              return (
+                <div key={i} className="flex items-center gap-3 px-4 py-3">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/15 text-xs font-bold text-primary">
+                    {initials}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{player.full_name}</p>
+                  </div>
+                  {rating && (
+                    <div className="flex shrink-0 gap-0.5">
+                      {[1,2,3,4,5].map((n) => (
+                        <Star key={n} className={`size-3.5 ${n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`} aria-hidden="true" />
+                      ))}
+                    </div>
+                  )}
+                  <Badge variant={a.played ? "success" : "neutral"} className="shrink-0">
+                    {a.played ? "Played" : "Absent"}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

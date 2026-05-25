@@ -45,7 +45,7 @@ export default function NewFixtureScreen() {
   return (
     <Screen scroll>
       {/* Header */}
-      <View className="flex-row items-center mt-2 mb-6">
+      <View className="flex-row items-center mb-6">
         <TouchableOpacity onPress={() => router.back()} className="mr-4">
           <Text className="text-ink-secondary text-body">← Back</Text>
         </TouchableOpacity>
@@ -72,11 +72,13 @@ export default function NewFixtureScreen() {
         render={({ field: { onChange, value } }) => (
           <Input
             label="Date & Time"
-            placeholder="YYYY-MM-DDTHH:MM (e.g. 2026-06-01T10:00)"
+            placeholder="2026-06-01T10:00"
             value={value}
             onChangeText={onChange}
             error={errors.fixture_date?.message}
-            hint="Format: 2026-06-01T10:00"
+            hint="Format: YYYY-MM-DDTHH:MM  e.g. 2026-06-01T10:00"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
         )}
       />

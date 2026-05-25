@@ -18,10 +18,9 @@ function StatCard({ value, label }: { value: string | number; label: string }) {
   );
 }
 
-function FixtureRow({ fixture }: { fixture: any }) {
+function FixtureRow({ fixture, teamName }: { fixture: any; teamName: string }) {
   const router = useRouter();
   const result = fixture.match_results?.[0];
-  const isUpcoming = fixture.status === 'upcoming';
   const isHome = fixture.is_home;
 
   return (
@@ -44,7 +43,7 @@ function FixtureRow({ fixture }: { fixture: any }) {
       </View>
       <View className="flex-row items-center justify-between">
         <Text className="text-ink-primary font-bold text-heading flex-1">
-          {isHome ? 'GrowFit' : fixture.opponent}
+          {isHome ? teamName : fixture.opponent}
         </Text>
         {result ? (
           <Text className="text-green font-black text-title mx-4">
@@ -56,7 +55,7 @@ function FixtureRow({ fixture }: { fixture: any }) {
           <Text className="text-ink-tertiary text-body mx-4">vs</Text>
         )}
         <Text className="text-ink-primary font-bold text-heading flex-1 text-right">
-          {isHome ? fixture.opponent : 'GrowFit'}
+          {isHome ? fixture.opponent : teamName}
         </Text>
       </View>
     </TouchableOpacity>
@@ -138,7 +137,7 @@ export default function CoachDashboard() {
                 <Text className="text-green text-caption font-semibold">See all</Text>
               </TouchableOpacity>
             </View>
-            {upcoming.slice(0, 2).map((f: any) => <FixtureRow key={f.id} fixture={f} />)}
+            {upcoming.slice(0, 2).map((f: any) => <FixtureRow key={f.id} fixture={f} teamName={team?.name ?? 'Home'} />)}
           </View>
         )}
 
@@ -146,7 +145,7 @@ export default function CoachDashboard() {
         {recent.length > 0 && (
           <View className="px-4 mb-6">
             <Text className="text-ink-primary text-heading font-bold mb-3">Recent Results</Text>
-            {recent.map((f: any) => <FixtureRow key={f.id} fixture={f} />)}
+            {recent.map((f: any) => <FixtureRow key={f.id} fixture={f} teamName={team?.name ?? 'Home'} />)}
           </View>
         )}
 

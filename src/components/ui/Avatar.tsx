@@ -41,7 +41,7 @@ export function Avatar({ uri, name, size = 'md' }: AvatarProps) {
 
   return (
     <View className={`${container} rounded-full bg-green-dark items-center justify-center`}>
-      <Text className={`${text} text-pitch font-bold`}>{initials(name)}</Text>
+      <Text className={`${text} text-white font-bold`}>{initials(name)}</Text>
     </View>
   );
 }

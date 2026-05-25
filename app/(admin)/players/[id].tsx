@@ -4,20 +4,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
+import { StarRow } from '@/components/ui/StarRow';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import * as Clipboard from 'expo-clipboard';
 import { showAlert } from '@/lib/alert';
-
-function StarRow({ rating }: { rating: number }) {
-  return (
-    <View className="flex-row">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Text key={n} className={`text-sm ${n <= rating ? 'text-amber' : 'text-ink-tertiary'}`}>★</Text>
-      ))}
-    </View>
-  );
-}
 
 export default function AdminPlayerDetailScreen() {
   const router = useRouter();

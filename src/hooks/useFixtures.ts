@@ -89,17 +89,3 @@ export function useLogMatch() {
   });
 }
 
-export function useFixtureRatings(fixtureId: string | undefined) {
-  return useQuery({
-    queryKey: ['ratings', fixtureId],
-    enabled: !!fixtureId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('player_ratings')
-        .select('*, players(id, full_name, photo_url)')
-        .eq('fixture_id', fixtureId!);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}

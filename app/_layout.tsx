@@ -1,5 +1,6 @@
 import '../global.css';
 import React, { useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -17,18 +18,17 @@ const queryClient = new QueryClient({
 function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
-  const { session, profile, setSession, setProfile, setLoading } = useAuthStore();
+  const { session, profile, isLoading, setSession, setProfile, setLoading } = useAuthStore();
 
   useEffect(() => {
-    // Listen for Supabase auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      setSession(newSession);
 
-      if (session?.user) {
+      if (newSession?.user) {
         const { data } = await supabase
           .from('profiles')
           .select('id, role, academy_id, full_name')
-          .eq('id', session.user.id)
+          .eq('id', newSession.user.id)
           .single();
 
         if (data) {
@@ -38,6 +38,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
             academyId: data.academy_id,
             fullName: data.full_name,
           } as AuthSession);
+        } else {
+          setProfile(null);
         }
       } else {
         setProfile(null);
@@ -49,12 +51,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (isLoading) return;
+
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (session && profile && inAuthGroup) {
-      // New user — no academy yet, send to role selection
       if (!profile.academyId) {
         router.replace('/(auth)/role');
         return;
@@ -66,7 +69,15 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         case 'parent': router.replace('/(parent)/home'); break;
       }
     }
-  }, [session, profile, segments]);
+  }, [session, profile, segments, isLoading]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0D0D0D', alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#00FF7F" />
+      </View>
+    );
+  }
 
   return <>{children}</>;
 }

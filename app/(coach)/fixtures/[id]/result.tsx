@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
+import { StarPicker } from '@/components/ui/StarPicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFixture, useLogMatch } from '@/hooks/useFixtures';
 import { useMyTeam, useSquad } from '@/hooks/useTeam';
@@ -18,18 +19,6 @@ interface PlayerRatingState {
   note: string;
 }
 
-function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return (
-    <View className="flex-row gap-1">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <TouchableOpacity key={n} onPress={() => onChange(n)} hitSlop={8}>
-          <Text className={`text-2xl ${n <= value ? 'text-amber' : 'text-ink-tertiary'}`}>★</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-}
-
 export default function LogResultScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,20 +30,12 @@ export default function LogResultScreen() {
   const [teamScore, setTeamScore] = useState('0');
   const [opponentScore, setOpponentScore] = useState('0');
   const [matchNotes, setMatchNotes] = useState('');
-  const [players, setPlayers] = useState<PlayerRatingState[]>(() =>
-    (squad ?? []).map((m: any) => ({
-      player_id: m.player_id,
-      full_name: m.players?.full_name ?? '',
-      photo_url: m.players?.photo_url ?? null,
-      played: true,
-      rating: 3,
-      note: '',
-    }))
-  );
+  const [players, setPlayers] = useState<PlayerRatingState[]>([]);
+  const initialized = useRef(false);
 
-  // Populate players from squad once squad loads
-  React.useEffect(() => {
-    if (squad && players.length === 0) {
+  useEffect(() => {
+    if (squad && !initialized.current) {
+      initialized.current = true;
       setPlayers(
         squad.map((m: any) => ({
           player_id: m.player_id,
@@ -125,7 +106,7 @@ export default function LogResultScreen() {
             <View className="flex-row items-center justify-between">
               <View className="items-center flex-1">
                 <Text className={`font-bold text-body mb-2 ${isHome ? 'text-green' : 'text-ink-primary'}`}>
-                  {isHome ? 'GrowFit' : fixture?.opponent}
+                  {isHome ? team?.name ?? 'Home' : fixture?.opponent}
                 </Text>
                 <Input
                   value={teamScore}
@@ -138,7 +119,7 @@ export default function LogResultScreen() {
               <Text className="text-ink-tertiary text-title font-black mx-4">–</Text>
               <View className="items-center flex-1">
                 <Text className={`font-bold text-body mb-2 ${!isHome ? 'text-green' : 'text-ink-primary'}`}>
-                  {isHome ? fixture?.opponent : 'GrowFit'}
+                  {isHome ? fixture?.opponent : team?.name ?? 'Home'}
                 </Text>
                 <Input
                   value={opponentScore}
@@ -167,6 +148,14 @@ export default function LogResultScreen() {
           <Text className="text-ink-secondary text-caption mb-4">
             Toggle off players who didn't play. Star ratings are saved to their passports.
           </Text>
+
+          {players.length === 0 && (
+            <View className="items-center py-8 bg-surface-1 border border-border rounded-card mb-4">
+              <Text className="text-ink-tertiary text-body text-center">
+                Loading squad...
+              </Text>
+            </View>
+          )}
 
           {players.map((player) => (
             <View

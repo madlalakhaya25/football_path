@@ -1,36 +1,50 @@
 import React from 'react';
-import { View, Text, ImageBackground } from 'react-native';
+import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
+
+const FEATURES = [
+  { emoji: '🪪', text: 'Digital player passports' },
+  { emoji: '⭐', text: 'Coach ratings after every match' },
+  { emoji: '👨‍👦', text: 'Parents follow progress live' },
+];
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
     <SafeAreaView className="flex-1 bg-pitch">
-      <View className="flex-1 px-6 justify-between py-12">
-        {/* Logo / Brand */}
-        <View className="items-center mt-8">
-          <View className="w-20 h-20 rounded-2xl bg-green items-center justify-center mb-4">
+      <View className="flex-1 px-6 justify-between py-10">
+        {/* Logo + Academy */}
+        <View className="items-center mt-6">
+          <View className="w-20 h-20 rounded-2xl bg-green items-center justify-center mb-5 shadow-green-glow">
             <Text className="text-pitch text-4xl font-black">FP</Text>
           </View>
           <Text className="text-white text-3xl font-black tracking-tight">FootballPath</Text>
-          <Text className="text-ink-secondary text-base mt-2 text-center">
-            GrowFit Football Academy
-          </Text>
+          <Text className="text-ink-secondary text-sm mt-1">GrowFit Football Academy</Text>
         </View>
 
-        {/* Tagline */}
+        {/* Hero tagline */}
         <View className="items-center">
-          <Text className="text-white text-2xl font-bold text-center leading-8">
+          <Text className="text-white text-2xl font-bold text-center leading-9">
             Every player deserves{'\n'}
             <Text className="text-green">to be seen.</Text>
           </Text>
           <Text className="text-ink-secondary text-base text-center mt-4 leading-6">
             Digital passports. Real progress.{'\n'}
-            Coaches, players, and parents connected.
+            Coaches, players, and parents — connected.
           </Text>
+
+          {/* Feature bullets */}
+          <View className="mt-8 gap-3 w-full">
+            {FEATURES.map((f) => (
+              <View key={f.emoji} className="flex-row items-center bg-surface-1 border border-border rounded-card px-4 py-3">
+                <Text className="text-xl mr-3">{f.emoji}</Text>
+                <Text className="text-ink-primary text-sm font-medium">{f.text}</Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* CTA */}
@@ -39,7 +53,7 @@ export default function WelcomeScreen() {
             label="Get Started"
             onPress={() => router.push('/(auth)/login')}
           />
-          <Text className="text-ink-tertiary text-xs text-center">
+          <Text className="text-ink-tertiary text-xs text-center leading-4">
             By continuing you agree to our Terms of Use
           </Text>
         </View>

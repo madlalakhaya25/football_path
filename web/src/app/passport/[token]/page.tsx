@@ -1,0 +1,192 @@
+import { notFound } from "next/navigation";
+import { Star } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RatingRing } from "@/components/ui/rating-ring";
+import { StatBar } from "@/components/ui/stat-bar";
+import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { POSITIONS, FEET } from "@/lib/types";
+
+export const revalidate = 60;
+
+interface PassportData {
+  id: string;
+  full_name: string;
+  position: string | null;
+  secondary_pos: string | null;
+  preferred_foot: string | null;
+  date_of_birth: string | null;
+  photo_url: string | null;
+  share_token: string;
+  academy_name: string | null;
+  ratings: { rating: number; note: string | null; fixture_date: string | null; opponent: string | null }[];
+}
+
+export default async function PublicPassportPage({
+  params,
+}: {
+  params: Promise<{ token: string }>;
+}) {
+  const { token } = await params;
+  const supabase = await createClient();
+
+  const { data } = await supabase.rpc("get_public_passport", {
+    p_share_token: token.toLowerCase(),
+  });
+
+  if (!data) notFound();
+
+  // RPC returns JSON — cast it
+  const passport = data as PassportData;
+
+  const ratings = passport.ratings ?? [];
+  const ratingValues = ratings.map((r) => r.rating);
+  const avg = ratingValues.length
+    ? Math.round((ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length) * 20)
+    : 0;
+  const ratingAvgStars = ratingValues.length
+    ? ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length
+    : 0;
+
+  const posLabel = POSITIONS.find((p) => p.value === passport.position)?.label ?? "—";
+  const secPosLabel = POSITIONS.find((p) => p.value === passport.secondary_pos)?.label;
+  const footLabel = FEET.find((f) => f.value === passport.preferred_foot)?.label;
+  const age = passport.date_of_birth
+    ? Math.floor((Date.now() - new Date(passport.date_of_birth).getTime()) / 31_557_600_000)
+    : null;
+  const initials = passport.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
+
+  // Simulated attribute bars from avg rating (no granular attrs stored yet)
+  const ATTRS = [
+    { label: "Overall", value: avg },
+    { label: "Appearances", value: Math.min(100, ratings.length * 5) },
+  ];
+
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-4xl items-center justify-between px-4 sm:px-6">
+          <Logo />
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <main className="flex-1 px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Passport card */}
+            <Card className="overflow-hidden lg:col-span-1">
+              <div className="h-1.5 bg-brand" />
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  {passport.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={passport.photo_url}
+                      alt={passport.full_name}
+                      className="size-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="grid size-20 place-items-center rounded-full bg-brand/20 text-xl font-bold text-primary">
+                      {initials}
+                    </span>
+                  )}
+                  <RatingRing value={avg} size={88} />
+                </div>
+                <CardTitle className="mt-3 text-xl">{passport.full_name}</CardTitle>
+                <CardDescription>
+                  {posLabel}
+                  {passport.academy_name && ` · ${passport.academy_name}`}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="brand">{posLabel}</Badge>
+                  {secPosLabel && <Badge variant="neutral">{secPosLabel}</Badge>}
+                  {age && <Badge variant="neutral">Age {age}</Badge>}
+                  {footLabel && <Badge variant="neutral">{footLabel} foot</Badge>}
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  {ATTRS.map((a) => (
+                    <StatBar key={a.label} label={a.label} value={a.value} />
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 text-sm border-t border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Ratings</p>
+                    <p className="font-bold text-lg tabular-nums">{ratings.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Avg rating</p>
+                    <div className="flex gap-0.5 mt-1">
+                      {[1,2,3,4,5].map((n) => (
+                        <Star
+                          key={n}
+                          className={`size-4 ${n <= Math.round(ratingAvgStars) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+                          aria-hidden="true"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Rating history */}
+            <div className="space-y-4 lg:col-span-2">
+              <h2 className="text-xl font-bold">Match ratings</h2>
+
+              {ratings.length === 0 ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">No ratings yet</CardTitle>
+                    <CardDescription>Ratings will appear after matches are logged by a coach.</CardDescription>
+                  </CardHeader>
+                </Card>
+              ) : (
+                <div className="divide-y divide-border rounded-xl border border-border">
+                  {[...ratings]
+                    .sort((a, b) =>
+                      (b.fixture_date ?? "").localeCompare(a.fixture_date ?? "")
+                    )
+                    .map((r, i) => (
+                      <div key={i} className="flex items-start gap-4 px-4 py-3">
+                        <div className="flex shrink-0 gap-0.5 pt-0.5">
+                          {[1,2,3,4,5].map((n) => (
+                            <Star
+                              key={n}
+                              className={`size-4 ${n <= r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
+                              aria-hidden="true"
+                            />
+                          ))}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          {r.opponent && <p className="font-medium text-sm">vs {r.opponent}</p>}
+                          {r.note && <p className="text-sm text-muted-foreground mt-0.5">&ldquo;{r.note}&rdquo;</p>}
+                          {r.fixture_date && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(r.fixture_date).toLocaleDateString("en-ZA", {
+                                day: "numeric", month: "short", year: "numeric",
+                              })}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
+        Powered by <span className="font-semibold text-foreground">GrowFit Path</span>
+      </footer>
+    </div>
+  );
+}

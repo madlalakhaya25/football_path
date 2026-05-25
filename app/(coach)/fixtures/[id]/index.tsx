@@ -5,23 +5,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
+import { StarRow } from '@/components/ui/StarRow';
 import { useFixture } from '@/hooks/useFixtures';
+import { useMyTeam } from '@/hooks/useTeam';
 import * as Clipboard from 'expo-clipboard';
-
-function StarRow({ rating }: { rating: number }) {
-  return (
-    <View className="flex-row">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Text key={n} className={`text-base ${n <= rating ? 'text-amber' : 'text-ink-tertiary'}`}>★</Text>
-      ))}
-    </View>
-  );
-}
 
 export default function FixtureDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: fixture, isLoading } = useFixture(id);
+  const { data: team } = useMyTeam();
+  const teamName = team?.name ?? 'Home';
 
   if (isLoading || !fixture) {
     return (
@@ -75,7 +69,7 @@ export default function FixtureDetailScreen() {
             <View className="flex-1 items-center">
               <Text className="text-ink-tertiary text-caption mb-1">{isHome ? 'Home' : 'Away'}</Text>
               <Text className={`font-black text-heading ${isHome ? 'text-green' : 'text-ink-primary'}`}>
-                {isHome ? 'GrowFit' : fixture.opponent}
+                {isHome ? teamName : fixture.opponent}
               </Text>
             </View>
             <View className="items-center px-4">
@@ -96,7 +90,7 @@ export default function FixtureDetailScreen() {
             <View className="flex-1 items-center">
               <Text className="text-ink-tertiary text-caption mb-1">{isHome ? 'Away' : 'Home'}</Text>
               <Text className={`font-black text-heading ${!isHome ? 'text-green' : 'text-ink-primary'}`}>
-                {isHome ? fixture.opponent : 'GrowFit'}
+                {isHome ? fixture.opponent : teamName}
               </Text>
             </View>
           </View>

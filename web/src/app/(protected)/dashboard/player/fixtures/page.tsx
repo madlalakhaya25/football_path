@@ -1,0 +1,138 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+
+const STATUS_VARIANT = {
+  upcoming: "neutral",
+  completed: "success",
+  cancelled: "danger",
+  postponed: "warning",
+} as const;
+
+export default async function PlayerFixturesPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const { data: player } = await supabase
+    .from("players")
+    .select("id")
+    .eq("profile_id", user.id)
+    .single();
+
+  if (!player) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Fixtures</h1>
+        <p className="text-muted-foreground">No player profile found. Ask your coach to add you to the squad.</p>
+      </div>
+    );
+  }
+
+  const { data: memberRows } = await supabase
+    .from("team_members")
+    .select("team_id")
+    .eq("player_id", player.id)
+    .eq("active", true)
+    .limit(1);
+
+  const teamId = memberRows?.[0]?.team_id;
+
+  if (!teamId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-bold">Fixtures</h1>
+        <p className="text-muted-foreground">You&apos;re not in a team yet. Ask your coach for the team invite code.</p>
+      </div>
+    );
+  }
+
+  const { data: fixtures } = await supabase
+    .from("fixtures")
+    .select(`
+      id, opponent, venue, fixture_date, is_home, status,
+      match_results ( team_score, opponent_score ),
+      match_appearances!inner ( played )
+    `)
+    .eq("team_id", teamId)
+    .eq("match_appearances.player_id", player.id)
+    .order("fixture_date", { ascending: false });
+
+  const upcoming = (fixtures ?? []).filter((f: { status: string }) => f.status === "upcoming");
+  const past = (fixtures ?? []).filter((f: { status: string }) => f.status !== "upcoming");
+
+  function FixtureRow({ f }: {
+    f: {
+      id: string; opponent: string; venue: string | null; fixture_date: string;
+      is_home: boolean; status: string;
+      match_results: { team_score: number; opponent_score: number } | { team_score: number; opponent_score: number }[] | null;
+      match_appearances: { played: boolean }[];
+    }
+  }) {
+    const date = new Date(f.fixture_date);
+    const result = Array.isArray(f.match_results) ? f.match_results[0] : f.match_results;
+    const appearance = f.match_appearances?.[0];
+
+    return (
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="min-w-0">
+          <p className="font-medium">{f.is_home ? "vs" : "@"} {f.opponent}</p>
+          <p className="text-xs text-muted-foreground">
+            {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" })}
+            {f.venue && ` · ${f.venue}`}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {result && (
+            <span className="font-bold tabular-nums text-sm">
+              {f.is_home ? result.team_score : result.opponent_score} – {f.is_home ? result.opponent_score : result.team_score}
+            </span>
+          )}
+          {appearance && (
+            <Badge variant={appearance.played ? "success" : "neutral"}>
+              {appearance.played ? "Played" : "Absent"}
+            </Badge>
+          )}
+          <Badge variant={STATUS_VARIANT[f.status as keyof typeof STATUS_VARIANT] ?? "neutral"} className="capitalize">
+            {f.status}
+          </Badge>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">My Fixtures</h1>
+
+      {(fixtures ?? []).length === 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>No fixtures yet</CardTitle>
+            <CardDescription>Your upcoming matches will appear here once scheduled.</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {upcoming.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Upcoming</h2>
+              <div className="divide-y divide-border rounded-xl border border-border">
+                {upcoming.map((f: Parameters<typeof FixtureRow>[0]["f"]) => <FixtureRow key={f.id} f={f} />)}
+              </div>
+            </section>
+          )}
+          {past.length > 0 && (
+            <section>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Past</h2>
+              <div className="divide-y divide-border rounded-xl border border-border">
+                {past.map((f: Parameters<typeof FixtureRow>[0]["f"]) => <FixtureRow key={f.id} f={f} />)}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -18,8 +18,9 @@ export function Input({ label, error, hint, rightElement, style, ...props }: Inp
           {label}
         </Text>
       )}
-      <View className={`flex-row items-center bg-surface-3 rounded-card border
-        ${error   ? 'border-red' : focused ? 'border-green' : 'border-border'}`}>
+      <View className={`flex-row bg-surface-3 rounded-card border
+        ${props.multiline ? 'items-start' : 'items-center'}
+        ${error ? 'border-red' : focused ? 'border-green' : 'border-border'}`}>
         <TextInput
           {...props}
           onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
@@ -27,8 +28,9 @@ export function Input({ label, error, hint, rightElement, style, ...props }: Inp
           className="flex-1 px-4 py-3.5 text-ink-primary text-body"
           placeholderTextColor="#5A5A5A"
           selectionColor="#00FF7F"
+          style={style}
         />
-        {rightElement && <View className="pr-3">{rightElement}</View>}
+        {rightElement && <View className="pr-3 py-3">{rightElement}</View>}
       </View>
       {error && <Text className="text-red text-caption mt-1.5">{error}</Text>}
       {hint && !error && <Text className="text-ink-tertiary text-caption mt-1.5">{hint}</Text>}

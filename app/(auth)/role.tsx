@@ -60,12 +60,17 @@ export default function RoleScreen() {
       return;
     }
 
-    setProfile(data as any);
+    setProfile({
+      userId: data.id,
+      role: data.role,
+      academyId: data.academy_id,
+      fullName: data.full_name,
+    });
   };
 
   return (
     <Screen>
-      <View className="mt-8 mb-10">
+      <View className="mt-4 mb-10">
         <Text className="text-white text-3xl font-black mb-1">Who are you?</Text>
         <Text className="text-ink-secondary text-base">
           Select your role to get the right view.
