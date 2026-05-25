@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,6 +7,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/alert';
 import { otpSchema, type OtpInput } from '@/lib/validation';
 
 export default function VerifyScreen() {
@@ -34,7 +35,7 @@ export default function VerifyScreen() {
     setLoading(false);
 
     if (error) {
-      Alert.alert('Invalid code', 'Please check the code and try again.');
+      showAlert('Invalid code', 'Please check the code and try again.');
       return;
     }
     // AuthGate in _layout.tsx handles redirect after session is set
@@ -44,7 +45,7 @@ export default function VerifyScreen() {
     setResending(true);
     await supabase.auth.signInWithOtp({ phone });
     setResending(false);
-    Alert.alert('Code resent', `A new code has been sent to ${phone}`);
+    showAlert('Code resent', `A new code has been sent to ${phone}`);
   };
 
   return (

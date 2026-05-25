@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { createPlayerSchema, type CreatePlayerInput } from '@/lib/validation';
 import { POSITIONS } from '@/types/app';
+import { showAlert } from '@/lib/alert';
 
 export default function NewPlayerScreen() {
   const router = useRouter();
@@ -62,13 +63,13 @@ export default function NewPlayerScreen() {
     onSuccess: (player: any) => {
       queryClient.invalidateQueries({ queryKey: ['admin-players'] });
       queryClient.invalidateQueries({ queryKey: ['squad'] });
-      Alert.alert(
+      showAlert(
         'Player added!',
         `${player.full_name}'s passport code is: ${player.share_token}`,
-        [{ text: 'Done', onPress: () => router.back() }]
+        () => router.back()
       );
     },
-    onError: (e: any) => Alert.alert('Error', e.message),
+    onError: (e: any) => showAlert('Error', e.message),
   });
 
   return (

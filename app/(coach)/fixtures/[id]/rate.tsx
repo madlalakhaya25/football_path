@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input } from '@/components/ui/Input';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { showAlert } from '@/lib/alert';
 import { useFixture } from '@/hooks/useFixtures';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -67,14 +68,12 @@ export default function RatePlayersScreen() {
     setSaving(false);
 
     if (error) {
-      Alert.alert('Error', error.message);
+      showAlert('Error', error.message);
       return;
     }
 
     queryClient.invalidateQueries({ queryKey: ['fixture', id] });
-    Alert.alert('Ratings saved!', '', [
-      { text: 'Done', onPress: () => router.back() },
-    ]);
+    showAlert('Ratings saved!', undefined, () => router.back());
   };
 
   return (

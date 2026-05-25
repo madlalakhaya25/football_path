@@ -7,6 +7,7 @@ import { useMyTeam, useSquad } from '@/hooks/useTeam';
 import { useFixtures } from '@/hooks/useFixtures';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
+import { supabase } from '@/lib/supabase';
 
 function StatCard({ value, label }: { value: string | number; label: string }) {
   return (
@@ -65,6 +66,12 @@ function FixtureRow({ fixture }: { fixture: any }) {
 export default function CoachDashboard() {
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
+  const clear = useAuthStore((s) => s.clear);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    clear();
+  };
   const { data: team } = useMyTeam();
   const { data: squad } = useSquad(team?.id);
   const { data: fixtures } = useFixtures(team?.id);
@@ -83,7 +90,12 @@ export default function CoachDashboard() {
               {profile?.fullName?.split(' ')[0]}
             </Text>
           </View>
-          <Avatar name={profile?.fullName} size="md" />
+          <View className="flex-row items-center gap-3">
+            <Avatar name={profile?.fullName} size="md" />
+            <TouchableOpacity onPress={handleLogout}>
+              <Text className="text-ink-tertiary text-caption">Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Team card */}
@@ -110,7 +122,7 @@ export default function CoachDashboard() {
         ) : (
           <TouchableOpacity
             className="mx-4 mb-6 bg-green-bg border border-green-border rounded-card p-5 items-center"
-            onPress={() => router.push('/(admin)/teams/new' as any)}
+            onPress={() => router.push('/(coach)/squad')}
           >
             <Text className="text-green text-title font-bold">+ Create your team</Text>
             <Text className="text-ink-secondary text-body mt-1">Set up your squad to get started</Text>

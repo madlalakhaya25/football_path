@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { linkChildSchema, type LinkChildInput } from '@/lib/validation';
 import { useQueryClient } from '@tanstack/react-query';
+import { showAlert } from '@/lib/alert';
 
 export default function LinkChildScreen() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function LinkChildScreen() {
 
     if (lookupError || !player) {
       setLoading(false);
-      Alert.alert('Not found', 'We couldn\'t find a player with that code. Check with your coach.');
+      showAlert('Not found', "We couldn't find a player with that code. Check with your coach.");
       return;
     }
 
@@ -50,18 +51,18 @@ export default function LinkChildScreen() {
 
     if (linkError) {
       if (linkError.code === '23505') {
-        Alert.alert('Already linked', `You're already following ${player.full_name}.`);
+        showAlert('Already linked', `You're already following ${player.full_name}.`);
       } else {
-        Alert.alert('Error', linkError.message);
+        showAlert('Error', linkError.message);
       }
       return;
     }
 
     queryClient.invalidateQueries({ queryKey: ['my-children'] });
-    Alert.alert(
+    showAlert(
       'Linked!',
       `You're now following ${player.full_name}. You'll see their fixtures and ratings.`,
-      [{ text: 'Great!', onPress: () => router.replace('/(parent)/home') }]
+      () => router.replace('/(parent)/home' as any)
     );
   };
 

@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
-import { useMyTeam, useSquad } from '@/hooks/useTeam';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useMyTeam, useSquad, useCreateTeam } from '@/hooks/useTeam';
+import { showAlert } from '@/lib/alert';
 
 function StarRating({ avg }: { avg: number | null }) {
   if (!avg) return <Text className="text-ink-tertiary text-caption">No ratings yet</Text>;
@@ -55,12 +58,55 @@ function PlayerCard({ member, onPress }: { member: any; onPress: () => void }) {
 export default function SquadScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const { data: team } = useMyTeam();
+  const [teamName, setTeamName] = useState('');
+  const [ageGroup, setAgeGroup] = useState('');
+  const { data: team, isLoading: teamLoading } = useMyTeam();
   const { data: squad, isLoading, refetch } = useSquad(team?.id);
+  const createTeam = useCreateTeam();
 
   const filtered = (squad ?? []).filter((m: any) =>
     m.players?.full_name?.toLowerCase().includes(search.toLowerCase())
   );
+
+  const onCreateTeam = async () => {
+    if (!teamName.trim()) {
+      showAlert('Required', 'Please enter a team name.');
+      return;
+    }
+    try {
+      await createTeam.mutateAsync({ name: teamName.trim(), age_group: ageGroup.trim() || undefined });
+      setTeamName('');
+      setAgeGroup('');
+    } catch (e: any) {
+      showAlert('Error', e.message ?? 'Could not create team');
+    }
+  };
+
+  if (!teamLoading && !team) {
+    return (
+      <Screen>
+        <View className="mt-8 mb-6">
+          <Text className="text-ink-primary text-hero font-black mb-1">Create Your Team</Text>
+          <Text className="text-ink-secondary text-body">Set up your squad to get started.</Text>
+        </View>
+        <Input
+          label="Team Name *"
+          placeholder="e.g. GrowFit U15 A"
+          value={teamName}
+          onChangeText={setTeamName}
+        />
+        <Input
+          label="Age Group (optional)"
+          placeholder="e.g. U15"
+          value={ageGroup}
+          onChangeText={setAgeGroup}
+        />
+        <View className="mt-4">
+          <Button label="Create Team" loading={createTeam.isPending} onPress={onCreateTeam} />
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen padded={false}>

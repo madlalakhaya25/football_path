@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -7,6 +7,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFixture, useLogMatch } from '@/hooks/useFixtures';
 import { useMyTeam, useSquad } from '@/hooks/useTeam';
+import { showAlert } from '@/lib/alert';
 
 interface PlayerRatingState {
   player_id: string;
@@ -77,7 +78,7 @@ export default function LogResultScreen() {
     const ts = parseInt(teamScore, 10);
     const os = parseInt(opponentScore, 10);
     if (isNaN(ts) || isNaN(os)) {
-      Alert.alert('Invalid score', 'Please enter valid scores.');
+      showAlert('Invalid score', 'Please enter valid scores.');
       return;
     }
 
@@ -92,11 +93,11 @@ export default function LogResultScreen() {
           .filter((p) => p.played)
           .map((p) => ({ player_id: p.player_id, rating: p.rating, note: p.note || undefined })),
       });
-      Alert.alert('Result logged!', 'Great game. Parents can see the result now.', [
-        { text: 'Done', onPress: () => router.replace(`/(coach)/fixtures/${id}`) },
-      ]);
+      showAlert('Result logged!', 'Great game. Parents can see the result now.', () =>
+        router.replace(`/(coach)/fixtures/${id}` as any)
+      );
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Failed to log result');
+      showAlert('Error', e.message ?? 'Failed to log result');
     }
   };
 

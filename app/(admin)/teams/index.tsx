@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Button } from '@/components/ui/Button';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { useAuthStore } from '@/store/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { showAlert } from '@/lib/alert';
 import { AGE_GROUPS } from '@/types/app';
 
 export default function TeamsScreen() {
@@ -48,7 +49,7 @@ export default function TeamsScreen() {
       setTeamName('');
       setAgeGroup('');
     },
-    onError: (e: any) => Alert.alert('Error', e.message),
+    onError: (e: any) => showAlert('Error', e.message),
   });
 
   return (

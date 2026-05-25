@@ -54,7 +54,11 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (session && profile && inAuthGroup) {
-      // Route to role-specific home
+      // New user — no academy yet, send to role selection
+      if (!profile.academyId) {
+        router.replace('/(auth)/role');
+        return;
+      }
       switch (profile.role) {
         case 'admin':  router.replace('/(admin)/dashboard'); break;
         case 'coach':  router.replace('/(coach)/dashboard'); break;

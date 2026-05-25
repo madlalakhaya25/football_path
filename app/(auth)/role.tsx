@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/ui/Screen';
 import { Button } from '@/components/ui/Button';
@@ -40,6 +40,7 @@ export default function RoleScreen() {
   const { session, setProfile } = useAuthStore();
   const [selected, setSelected] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const onConfirm = async () => {
     if (!selected || !session) return;
@@ -47,7 +48,7 @@ export default function RoleScreen() {
 
     const { data, error } = await supabase
       .from('profiles')
-      .update({ role: selected })
+      .update({ role: selected, academy_id: '00000000-0000-0000-0000-000000000001' })
       .eq('id', session.user.id)
       .select('id, role, academy_id, full_name')
       .single();
@@ -55,12 +56,11 @@ export default function RoleScreen() {
     setLoading(false);
 
     if (error || !data) {
-      Alert.alert('Error', 'Could not save your role. Please try again.');
+      setErrorMsg('Could not save your role. Please try again.');
       return;
     }
 
     setProfile(data as any);
-    // AuthGate will handle redirect
   };
 
   return (
@@ -100,6 +100,10 @@ export default function RoleScreen() {
           </TouchableOpacity>
         ))}
       </View>
+
+      {errorMsg && (
+        <Text className="text-red text-body mb-3">{errorMsg}</Text>
+      )}
 
       <Button
         label="Continue"

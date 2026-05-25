@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Switch, Alert, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useMyTeam } from '@/hooks/useTeam';
 import { useCreateFixture } from '@/hooks/useFixtures';
+import { showAlert } from '@/lib/alert';
 import { createFixtureSchema, type CreateFixtureInput } from '@/lib/validation';
 
 export default function NewFixtureScreen() {
@@ -30,16 +31,14 @@ export default function NewFixtureScreen() {
 
   const onSubmit = async (data: CreateFixtureInput) => {
     if (!team) {
-      Alert.alert('Error', 'No team found. Create a team first.');
+      showAlert('Error', 'No team found. Create a team first.');
       return;
     }
     try {
       await createFixture.mutateAsync(data);
-      Alert.alert('Fixture added!', 'Share the details with your squad.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      showAlert('Fixture added!', 'Share the details with your squad.', () => router.back());
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'Failed to create fixture');
+      showAlert('Error', e.message ?? 'Failed to create fixture');
     }
   };
 
