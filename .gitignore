@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+jspm_packages/
 
 # Expo
 .expo/
@@ -26,13 +27,53 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+lib-cov
+
+# Build output
+build/Release
+.next
+out
+.nuxt
+.output
+.vuepress/dist
+.temp
+.svelte-kit/
+**/.vitepress/dist
+**/.vitepress/cache
+.docusaurus
+.fusebox/
+.serverless/
+.dynamodb/
+
 # macOS
 .DS_Store
 *.pem
 
 # local env files
 .env
-.env*.local
+.env.*
+!.env.example
 
 # typescript
 *.tsbuildinfo
@@ -40,3 +81,40 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Cache
+.cache
+.parcel-cache
+.npm
+.eslintcache
+.stylelintcache
+.node_repl_history
+.firebase/
+.tern-port
+.vscode-test
+.pnpm-store
+.grunt
+bower_components
+.lock-wscript
+web_modules/
+.yarn-integrity
+
+# yarn v3
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# pnpm
+.pnpm-store
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.vite/
+
+# Misc
+*.tgz
