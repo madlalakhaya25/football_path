@@ -91,15 +91,24 @@ self.addEventListener("fetch", (event) => {
 // ─── Push notifications ───────────────────────────────────────────────────────
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  const data = event.data.json();
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: "GrowFit Path", body: event.data.text() };
+  }
   event.waitUntil(
-    self.registration.showNotification(data.title ?? "GrowFit Path", {
-      body: data.body,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      vibrate: [100, 50, 100],
-      data: { url: data.url ?? "/" },
-    })
+    self.registration
+      .showNotification(data.title ?? "GrowFit Path", {
+        body: data.body,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        vibrate: [100, 50, 100],
+        data: { url: data.url ?? "/" },
+      })
+      .catch(() => {
+        // Notification display may fail if permission is revoked after subscription
+      })
   );
 });
 

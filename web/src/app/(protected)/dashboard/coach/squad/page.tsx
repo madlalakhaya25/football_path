@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Plus, UserX } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -123,10 +124,11 @@ export default async function SquadPage() {
                         {/* Avatar */}
                         <Link href={`/dashboard/coach/squad/${player.id}`} className="flex-shrink-0">
                           {player.photo_url ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <Image
                               src={player.photo_url}
                               alt={player.full_name}
+                              width={48}
+                              height={48}
                               className="size-12 rounded-full object-cover"
                             />
                           ) : (

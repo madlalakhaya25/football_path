@@ -74,7 +74,7 @@ const logMatchSchema = z.object({
 });
 
 export async function logMatch(payload: unknown) {
-  const { supabase, team } = await getCoach();
+  const { supabase, user, team } = await getCoach();
   if (!team) return { error: "No team found." };
 
   const parsed = logMatchSchema.safeParse(payload);
@@ -90,7 +90,7 @@ export async function logMatch(payload: unknown) {
     // Fallback: write directly if edge function unavailable
     const [r1, r2, r3, r4] = await Promise.all([
       supabase.from("match_results").upsert(
-        { fixture_id, team_score, opponent_score, match_notes, logged_by: (await supabase.auth.getUser()).data.user?.id },
+        { fixture_id, team_score, opponent_score, match_notes, logged_by: user.id },
         { onConflict: "fixture_id" }
       ),
       supabase.from("fixtures").update({ status: "completed" }).eq("id", fixture_id),
@@ -102,7 +102,7 @@ export async function logMatch(payload: unknown) {
         : Promise.resolve({ error: null }),
       ratings.length
         ? supabase.from("player_ratings").upsert(
-            ratings.map((r) => ({ fixture_id, ...r, coach_id: (supabase as unknown as { _auth?: { userId?: string } })._auth?.userId })),
+            ratings.map((r) => ({ fixture_id, ...r, coach_id: user.id })),
             { onConflict: "fixture_id,player_id,coach_id" }
           )
         : Promise.resolve({ error: null }),
