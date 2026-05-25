@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Calendar, Trophy } from "lucide-react";
+import { CreateTeamForm } from "@/components/create-team-form";
 
 export default async function CoachDashboardPage() {
   const supabase = await createClient();
@@ -43,9 +44,12 @@ export default async function CoachDashboardPage() {
       {!team ? (
         <Card>
           <CardHeader>
-            <CardTitle>No team yet</CardTitle>
-            <CardDescription>Create a team to start managing your squad.</CardDescription>
+            <CardTitle>Create your team</CardTitle>
+            <CardDescription>Set up your team to start managing your squad and fixtures.</CardDescription>
           </CardHeader>
+          <CardContent>
+            <CreateTeamForm />
+          </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-3">
