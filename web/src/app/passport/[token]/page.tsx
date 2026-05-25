@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -82,10 +83,11 @@ export default async function PublicPassportPage({
               <CardHeader>
                 <div className="flex items-center justify-between">
                   {passport.photo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={passport.photo_url}
                       alt={passport.full_name}
+                      width={80}
+                      height={80}
                       className="size-20 rounded-full object-cover"
                     />
                   ) : (

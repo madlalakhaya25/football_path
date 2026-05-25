@@ -3,6 +3,24 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/auth/login", "/auth/verify", "/auth/role", "/", "/passport"];
 
+// Simple in-memory rate limiter (per process instance)
+// For multi-instance deployments, replace with a shared store like Upstash Redis
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const AUTH_RATE_LIMIT = { windowMs: 60_000, max: 10 };
+const AUTH_PATHS = ["/auth/login", "/auth/verify"];
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || entry.resetAt <= now) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + AUTH_RATE_LIMIT.windowMs });
+    return false;
+  }
+  if (entry.count >= AUTH_RATE_LIMIT.max) return true;
+  entry.count++;
+  return false;
+}
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -32,6 +50,19 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  if (AUTH_PATHS.some((p) => pathname.startsWith(p))) {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+      request.headers.get("x-real-ip") ??
+      "unknown";
+    if (isRateLimited(ip)) {
+      return new NextResponse("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": "60" },
+      });
+    }
+  }
   const isPublic =
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
     pathname.startsWith("/_next") ||
