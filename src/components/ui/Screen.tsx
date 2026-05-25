@@ -22,7 +22,7 @@ export function Screen({
   const content = scroll ? (
     <ScrollView
       className="flex-1"
-      contentContainerClassName={`${padded ? 'px-4 pb-10' : ''} ${className ?? ''}`}
+      contentContainerClassName={`${padded ? 'px-4 pt-4 pb-10' : ''} ${className ?? ''}`}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       refreshControl={
@@ -38,7 +38,7 @@ export function Screen({
       {children}
     </ScrollView>
   ) : (
-    <View className={`flex-1 ${padded ? 'px-4' : ''} ${className ?? ''}`}>
+    <View className={`flex-1 ${padded ? 'px-4 pt-4' : ''} ${className ?? ''}`}>
       {children}
     </View>
   );

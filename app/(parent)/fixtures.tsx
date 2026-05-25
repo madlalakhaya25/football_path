@@ -47,7 +47,7 @@ export default function ParentFixturesScreen() {
         keyExtractor={(item: any) => item.id}
         contentContainerClassName="px-4 pb-8"
         showsVerticalScrollIndicator={false}
-        onRefresh={refetch}
+        onRefresh={() => { refetch(); }}
         refreshing={isLoading}
         renderItem={({ item: f }: { item: any }) => {
           const result = f.match_results?.[0];

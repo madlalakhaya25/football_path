@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { supabase } from '@/lib/supabase';
 import { loginSchema, type LoginInput } from '@/lib/validation';
 
-// react-hook-form needs @hookform/resolvers
 export default function LoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -43,7 +42,7 @@ export default function LoginScreen() {
 
   return (
     <Screen>
-      <TouchableOpacity className="mt-2 mb-8" onPress={() => router.back()}>
+      <TouchableOpacity className="mb-8" onPress={() => router.back()}>
         <Text className="text-ink-secondary text-sm">← Back</Text>
       </TouchableOpacity>
 

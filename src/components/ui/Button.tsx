@@ -52,7 +52,10 @@ export function Button({
         ${isDisabled ? 'opacity-40' : ''}`}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'primary' ? '#0D0D0D' : '#00FF7F'} />
+        <ActivityIndicator
+          size="small"
+          color={variant === 'primary' ? '#0D0D0D' : variant === 'danger' ? '#FF4444' : '#00FF7F'}
+        />
       ) : (
         <>
           {leftIcon && <View className="mr-2">{leftIcon}</View>}

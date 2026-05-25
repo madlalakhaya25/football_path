@@ -50,7 +50,7 @@ export default function VerifyScreen() {
 
   return (
     <Screen>
-      <TouchableOpacity className="mt-2 mb-8" onPress={() => router.back()}>
+      <TouchableOpacity className="mb-8" onPress={() => router.back()}>
         <Text className="text-ink-secondary text-sm">← Back</Text>
       </TouchableOpacity>
 

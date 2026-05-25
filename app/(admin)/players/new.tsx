@@ -74,7 +74,7 @@ export default function NewPlayerScreen() {
 
   return (
     <Screen scroll>
-      <View className="flex-row items-center mt-2 mb-6">
+      <View className="flex-row items-center mb-6">
         <TouchableOpacity onPress={() => router.back()} className="mr-4">
           <Text className="text-ink-secondary">← Back</Text>
         </TouchableOpacity>

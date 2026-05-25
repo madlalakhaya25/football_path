@@ -23,16 +23,26 @@ export default function AdminDashboard() {
     queryKey: ['admin-stats', profile?.academyId],
     enabled: !!profile?.academyId,
     queryFn: async () => {
+      const academyId = profile!.academyId!;
       const [teams, players, fixtures, ratings] = await Promise.all([
-        supabase.from('teams').select('id', { count: 'exact' }).eq('academy_id', profile!.academyId!).eq('active', true),
-        supabase.from('players').select('id', { count: 'exact' }).eq('academy_id', profile!.academyId!).eq('active', true),
-        supabase.from('fixtures').select('id, status', { count: 'exact' }),
-        supabase.from('player_ratings').select('id', { count: 'exact' }),
+        supabase.from('teams').select('id', { count: 'exact' }).eq('academy_id', academyId).eq('active', true),
+        supabase.from('players').select('id', { count: 'exact' }).eq('academy_id', academyId).eq('active', true),
+        supabase.from('fixtures')
+          .select('id', { count: 'exact' })
+          .eq('status', 'upcoming')
+          .in('team_id', (
+            await supabase.from('teams').select('id').eq('academy_id', academyId).eq('active', true)
+          ).data?.map((t: any) => t.id) ?? []),
+        supabase.from('player_ratings')
+          .select('id', { count: 'exact' })
+          .in('player_id', (
+            await supabase.from('players').select('id').eq('academy_id', academyId)
+          ).data?.map((p: any) => p.id) ?? []),
       ]);
       return {
         teams: teams.count ?? 0,
         players: players.count ?? 0,
-        upcomingFixtures: fixtures.data?.filter((f: any) => f.status === 'upcoming').length ?? 0,
+        upcomingFixtures: fixtures.count ?? 0,
         ratingsLogged: ratings.count ?? 0,
       };
     },

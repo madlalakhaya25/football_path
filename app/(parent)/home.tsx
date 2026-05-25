@@ -5,23 +5,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
 import { Button } from '@/components/ui/Button';
+import { StarRow } from '@/components/ui/StarRow';
 import { useAuthStore } from '@/store/authStore';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
-
-function StarRow({ rating }: { rating: number }) {
-  return (
-    <View className="flex-row">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <Text key={n} className={`text-base ${n <= rating ? 'text-amber' : 'text-ink-tertiary'}`}>★</Text>
-      ))}
-    </View>
-  );
-}
+import { useQuery } from '@tanstack/react-query';
 
 export default function ParentHomeScreen() {
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
+  const clear = useAuthStore((s) => s.clear);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    clear();
+  };
 
   // Get linked children
   const { data: children, isLoading } = useQuery({
@@ -58,6 +55,11 @@ export default function ParentHomeScreen() {
   if (!hasChildren) {
     return (
       <SafeAreaView className="flex-1 bg-pitch" edges={['top']}>
+        <View className="px-4 pt-6 pb-2 flex-row justify-end">
+          <TouchableOpacity onPress={handleLogout}>
+            <Text className="text-ink-tertiary text-caption">Logout</Text>
+          </TouchableOpacity>
+        </View>
         <View className="flex-1 px-6 items-center justify-center">
           <Text className="text-4xl mb-4">👨‍👦</Text>
           <Text className="text-ink-primary text-title font-bold text-center mb-2">
@@ -80,9 +82,14 @@ export default function ParentHomeScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="px-4 pt-6 pb-4 flex-row items-center justify-between">
           <Text className="text-ink-primary text-hero font-black">My Child</Text>
-          <TouchableOpacity onPress={() => router.push('/(parent)/link-child')}>
-            <Text className="text-green text-caption font-semibold">+ Add child</Text>
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-4">
+            <TouchableOpacity onPress={() => router.push('/(parent)/link-child')}>
+              <Text className="text-green text-caption font-semibold">+ Add</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout}>
+              <Text className="text-ink-tertiary text-caption">Logout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {children!.map((player: any) => {

@@ -57,7 +57,7 @@ export default function PlayersScreen() {
         data={filtered}
         keyExtractor={(p: any) => p.id}
         contentContainerClassName="px-4 pb-8"
-        onRefresh={refetch}
+        onRefresh={() => { refetch(); }}
         refreshing={isLoading}
         renderItem={({ item: player }: { item: any }) => {
           const team = player.team_members?.[0]?.teams;

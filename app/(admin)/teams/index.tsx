@@ -86,7 +86,7 @@ export default function TeamsScreen() {
         data={teams ?? []}
         keyExtractor={(t: any) => t.id}
         contentContainerClassName="px-4 pb-8"
-        onRefresh={refetch}
+        onRefresh={() => { refetch(); }}
         refreshing={isLoading}
         renderItem={({ item: team }: { item: any }) => (
           <TouchableOpacity

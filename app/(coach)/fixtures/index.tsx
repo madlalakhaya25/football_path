@@ -9,7 +9,7 @@ import { useFixtures } from '@/hooks/useFixtures';
 
 type FilterTab = 'all' | 'upcoming' | 'completed';
 
-function FixtureCard({ fixture, onPress }: { fixture: any; onPress: () => void }) {
+function FixtureCard({ fixture, teamName, onPress }: { fixture: any; teamName: string; onPress: () => void }) {
   const result = fixture.match_results?.[0];
   const statusVariant =
     fixture.status === 'upcoming' ? 'amber' :
@@ -39,7 +39,7 @@ function FixtureCard({ fixture, onPress }: { fixture: any; onPress: () => void }
         {/* Home team */}
         <View className="flex-1">
           <Text className={`font-bold text-heading ${fixture.is_home ? 'text-green' : 'text-ink-primary'}`}>
-            {fixture.is_home ? 'GrowFit' : fixture.opponent}
+            {fixture.is_home ? teamName : fixture.opponent}
           </Text>
           <Text className="text-ink-tertiary text-caption mt-0.5">
             {fixture.is_home ? 'Home' : 'Away'}
@@ -66,7 +66,7 @@ function FixtureCard({ fixture, onPress }: { fixture: any; onPress: () => void }
         {/* Away team */}
         <View className="flex-1 items-end">
           <Text className={`font-bold text-heading ${!fixture.is_home ? 'text-green' : 'text-ink-primary'}`}>
-            {fixture.is_home ? fixture.opponent : 'GrowFit'}
+            {fixture.is_home ? fixture.opponent : teamName}
           </Text>
           <Text className="text-ink-tertiary text-caption mt-0.5">
             {fixture.is_home ? 'Away' : 'Home'}
@@ -93,6 +93,7 @@ export default function FixturesScreen() {
   const [filter, setFilter] = useState<FilterTab>('all');
   const { data: team } = useMyTeam();
   const { data: fixtures, isLoading, refetch } = useFixtures(team?.id);
+  const teamName = team?.name ?? 'Home';
 
   const filtered = (fixtures ?? []).filter((f: any) => {
     if (filter === 'all') return true;
@@ -139,11 +140,12 @@ export default function FixturesScreen() {
         keyExtractor={(item: any) => item.id}
         contentContainerClassName="px-4 pb-8"
         showsVerticalScrollIndicator={false}
-        onRefresh={refetch}
+        onRefresh={() => { refetch(); }}
         refreshing={isLoading}
         renderItem={({ item }) => (
           <FixtureCard
             fixture={item}
+            teamName={teamName}
             onPress={() => router.push(`/(coach)/fixtures/${item.id}`)}
           />
         )}

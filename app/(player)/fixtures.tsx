@@ -91,7 +91,7 @@ export default function PlayerFixturesScreen() {
         keyExtractor={(item: any) => item.id}
         contentContainerClassName="px-4 pb-8"
         showsVerticalScrollIndicator={false}
-        onRefresh={refetch}
+        onRefresh={() => { refetch(); }}
         refreshing={isLoading}
         renderItem={({ item }) => <FixtureCard fixture={item} />}
         ListEmptyComponent={
