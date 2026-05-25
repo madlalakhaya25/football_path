@@ -19,36 +19,40 @@ export function Screen({
   onRefresh,
   refreshing = false,
 }: ScreenProps) {
+  const content = scroll ? (
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName={`${padded ? 'px-4 pb-10' : ''} ${className ?? ''}`}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      refreshControl={
+        onRefresh ? (
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#00FF7F"
+          />
+        ) : undefined
+      }
+    >
+      {children}
+    </ScrollView>
+  ) : (
+    <View className={`flex-1 ${padded ? 'px-4' : ''} ${className ?? ''}`}>
+      {children}
+    </View>
+  );
+
   return (
     <SafeAreaView className="flex-1 bg-pitch" edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        {scroll ? (
-          <ScrollView
-            className="flex-1"
-            contentContainerClassName={`${padded ? 'px-4 pb-10' : ''} ${className ?? ''}`}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            refreshControl={
-              onRefresh ? (
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor="#00FF7F"
-                />
-              ) : undefined
-            }
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View className={`flex-1 ${padded ? 'px-4' : ''} ${className ?? ''}`}>
-            {children}
-          </View>
-        )}
-      </KeyboardAvoidingView>
+      {Platform.OS === 'web' ? content : (
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          {content}
+        </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 }

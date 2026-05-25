@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Tag } from '@/components/ui/Tag';
@@ -39,8 +39,13 @@ export default function FixtureDetailScreen() {
 
   const shareFixture = async () => {
     const url = `https://footballpath.app/fixture/${fixture.id}`;
-    await Clipboard.setStringAsync(url);
-    Alert.alert('Copied!', 'Fixture link copied — paste into WhatsApp.');
+    if (Platform.OS === 'web') {
+      await navigator.clipboard.writeText(url);
+      window.alert('Fixture link copied — paste into WhatsApp.');
+    } else {
+      await Clipboard.setStringAsync(url);
+      Alert.alert('Copied!', 'Fixture link copied — paste into WhatsApp.');
+    }
   };
 
   return (

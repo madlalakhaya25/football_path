@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
@@ -84,8 +84,13 @@ export default function PlayerPassportScreen() {
 
   const sharePassport = async () => {
     const url = `https://footballpath.app/p/${player.share_token}`;
-    await Clipboard.setStringAsync(url);
-    Alert.alert('Link copied!', 'Paste your passport link into WhatsApp to share it.');
+    if (Platform.OS === 'web') {
+      await navigator.clipboard.writeText(url);
+      window.alert('Passport link copied — paste into WhatsApp to share it.');
+    } else {
+      await Clipboard.setStringAsync(url);
+      Alert.alert('Link copied!', 'Paste your passport link into WhatsApp to share it.');
+    }
   };
 
   return (

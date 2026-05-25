@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { WebContainer } from '@/components/ui/WebContainer';
 import type { AuthSession } from '@/types/app';
 
 const queryClient = new QueryClient({
@@ -68,19 +69,21 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <AuthGate>
-          <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(admin)" />
-            <Stack.Screen name="(coach)" />
-            <Stack.Screen name="(player)" />
-            <Stack.Screen name="(parent)" />
-            <Stack.Screen name="passport/[token]" />
-          </Stack>
-        </AuthGate>
-      </QueryClientProvider>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0D0D0D' }}>
+      <WebContainer>
+        <QueryClientProvider client={queryClient}>
+          <AuthGate>
+            <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(admin)" />
+              <Stack.Screen name="(coach)" />
+              <Stack.Screen name="(player)" />
+              <Stack.Screen name="(parent)" />
+              <Stack.Screen name="passport/[token]" />
+            </Stack>
+          </AuthGate>
+        </QueryClientProvider>
+      </WebContainer>
     </GestureHandlerRootView>
   );
 }
