@@ -67,7 +67,7 @@ export default function RoleScreen() {
     <Screen>
       <View className="mt-8 mb-10">
         <Text className="text-white text-3xl font-black mb-1">Who are you?</Text>
-        <Text className="text-text-secondary text-base">
+        <Text className="text-ink-secondary text-base">
           Select your role to get the right view.
         </Text>
       </View>
@@ -80,21 +80,21 @@ export default function RoleScreen() {
             activeOpacity={0.8}
             className={`flex-row items-center p-4 rounded-xl border
               ${selected === option.role
-                ? 'border-green-primary bg-green-primary/10'
-                : 'border-pitch-border bg-pitch-card'
+                ? 'border-green bg-green/10'
+                : 'border-border bg-surface-1'
               }`}
           >
             <Text className="text-3xl mr-4">{option.emoji}</Text>
             <View className="flex-1">
-              <Text className={`font-bold text-base ${selected === option.role ? 'text-green-primary' : 'text-white'}`}>
+              <Text className={`font-bold text-base ${selected === option.role ? 'text-green' : 'text-white'}`}>
                 {option.title}
               </Text>
-              <Text className="text-text-secondary text-sm mt-0.5">{option.description}</Text>
+              <Text className="text-ink-secondary text-sm mt-0.5">{option.description}</Text>
             </View>
             <View className={`w-5 h-5 rounded-full border-2 items-center justify-center
-              ${selected === option.role ? 'border-green-primary' : 'border-text-muted'}`}>
+              ${selected === option.role ? 'border-green' : 'border-ink-tertiary'}`}>
               {selected === option.role && (
-                <View className="w-2.5 h-2.5 rounded-full bg-green-primary" />
+                <View className="w-2.5 h-2.5 rounded-full bg-green" />
               )}
             </View>
           </TouchableOpacity>

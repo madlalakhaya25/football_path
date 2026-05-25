@@ -12,11 +12,11 @@ export default function WelcomeScreen() {
       <View className="flex-1 px-6 justify-between py-12">
         {/* Logo / Brand */}
         <View className="items-center mt-8">
-          <View className="w-20 h-20 rounded-2xl bg-green-primary items-center justify-center mb-4">
+          <View className="w-20 h-20 rounded-2xl bg-green items-center justify-center mb-4">
             <Text className="text-pitch text-4xl font-black">FP</Text>
           </View>
           <Text className="text-white text-3xl font-black tracking-tight">FootballPath</Text>
-          <Text className="text-text-secondary text-base mt-2 text-center">
+          <Text className="text-ink-secondary text-base mt-2 text-center">
             GrowFit Football Academy
           </Text>
         </View>
@@ -25,9 +25,9 @@ export default function WelcomeScreen() {
         <View className="items-center">
           <Text className="text-white text-2xl font-bold text-center leading-8">
             Every player deserves{'\n'}
-            <Text className="text-green-primary">to be seen.</Text>
+            <Text className="text-green">to be seen.</Text>
           </Text>
-          <Text className="text-text-secondary text-base text-center mt-4 leading-6">
+          <Text className="text-ink-secondary text-base text-center mt-4 leading-6">
             Digital passports. Real progress.{'\n'}
             Coaches, players, and parents connected.
           </Text>
@@ -39,7 +39,7 @@ export default function WelcomeScreen() {
             label="Get Started"
             onPress={() => router.push('/(auth)/login')}
           />
-          <Text className="text-text-muted text-xs text-center">
+          <Text className="text-ink-tertiary text-xs text-center">
             By continuing you agree to our Terms of Use
           </Text>
         </View>

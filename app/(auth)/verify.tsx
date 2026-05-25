@@ -50,11 +50,11 @@ export default function VerifyScreen() {
   return (
     <Screen>
       <TouchableOpacity className="mt-2 mb-8" onPress={() => router.back()}>
-        <Text className="text-text-secondary text-sm">← Back</Text>
+        <Text className="text-ink-secondary text-sm">← Back</Text>
       </TouchableOpacity>
 
       <Text className="text-white text-3xl font-black mb-1">Enter code</Text>
-      <Text className="text-text-secondary text-base mb-8">
+      <Text className="text-ink-secondary text-base mb-8">
         We sent a 6-digit code to{'\n'}
         <Text className="text-white font-semibold">{phone}</Text>
       </Text>

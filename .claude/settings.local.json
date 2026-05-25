@@ -8,7 +8,9 @@
       "Bash(node -e \"try { const pkg=require\\('./node_modules/expo-image/package.json'\\); const webField = pkg['react-native'] || pkg['browser'] || 'not found'; console.log\\('web/browser field:', JSON.stringify\\(webField\\).slice\\(0,200\\)\\) } catch\\(e\\) { console.log\\('err:', e.message\\) }\")",
       "Bash(node -e \"const pkg=require\\('./node_modules/expo-image/package.json'\\); console.log\\('main:', pkg.main, 'exports keys:', Object.keys\\(pkg.exports||{}\\).slice\\(0,10\\)\\)\")",
       "Bash(node -e \"const pkg=require\\('./node_modules/expo-clipboard/package.json'\\); console.log\\('main:', pkg.main, 'has web?', !!pkg.browser\\)\")",
-      "Bash(node -e \"const pkg=require\\('./node_modules/react-native-reanimated/package.json'\\); console.log\\('reanimated:', pkg.version, 'has web:', !!pkg.browser || !!pkg['react-native']\\)\")"
+      "Bash(node -e \"const pkg=require\\('./node_modules/react-native-reanimated/package.json'\\); console.log\\('reanimated:', pkg.version, 'has web:', !!pkg.browser || !!pkg['react-native']\\)\")",
+      "Bash(npm install *)",
+      "Bash(npx expo *)"
     ]
   }
 }

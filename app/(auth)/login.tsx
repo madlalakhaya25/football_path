@@ -13,6 +13,7 @@ import { loginSchema, type LoginInput } from '@/lib/validation';
 export default function LoginScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const {
     control,
@@ -25,19 +26,15 @@ export default function LoginScreen() {
 
   const onSubmit = async ({ phone }: LoginInput) => {
     setLoading(true);
-    // Normalise: ensure +27 prefix
-    const normalised = phone.startsWith('0')
-      ? '+27' + phone.slice(1)
-      : phone;
+    setErrorMsg(null);
+    const normalised = phone.startsWith('0') ? '+27' + phone.slice(1) : phone;
 
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: normalised,
-    });
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalised });
 
     setLoading(false);
 
     if (error) {
-      Alert.alert('Error', error.message);
+      setErrorMsg(error.message);
       return;
     }
 
@@ -47,11 +44,11 @@ export default function LoginScreen() {
   return (
     <Screen>
       <TouchableOpacity className="mt-2 mb-8" onPress={() => router.back()}>
-        <Text className="text-text-secondary text-sm">← Back</Text>
+        <Text className="text-ink-secondary text-sm">← Back</Text>
       </TouchableOpacity>
 
       <Text className="text-white text-3xl font-black mb-1">Sign in</Text>
-      <Text className="text-text-secondary text-base mb-8">
+      <Text className="text-ink-secondary text-base mb-8">
         We'll send a one-time code to your phone.
       </Text>
 
@@ -70,6 +67,10 @@ export default function LoginScreen() {
           />
         )}
       />
+
+      {errorMsg && (
+        <Text className="text-red text-body mt-3">{errorMsg}</Text>
+      )}
 
       <View className="mt-4">
         <Button label="Send Code" loading={loading} onPress={handleSubmit(onSubmit)} />
