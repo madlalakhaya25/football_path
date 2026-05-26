@@ -51,11 +51,21 @@ export async function createPlayer(formData: FormData) {
   const { supabase, team } = await getCoachTeam();
   if (!team) return { error: "No team found." };
 
+  const num = (key: string) => {
+    const v = formData.get(key);
+    return v !== null && v !== "" ? Number(v) : undefined;
+  };
   const raw = {
     full_name: formData.get("full_name") as string,
     date_of_birth: (formData.get("date_of_birth") as string) || undefined,
     position: (formData.get("position") as string) || undefined,
     preferred_foot: (formData.get("preferred_foot") as string) || undefined,
+    pace:      num("pace"),
+    shooting:  num("shooting"),
+    passing:   num("passing"),
+    dribbling: num("dribbling"),
+    defending: num("defending"),
+    physical:  num("physical"),
   };
 
   const parsed = createPlayerSchema.safeParse(raw);
@@ -80,6 +90,50 @@ export async function createPlayer(formData: FormData) {
 
   revalidatePath("/dashboard/coach/squad");
   redirect("/dashboard/coach/squad");
+}
+
+export async function updateTeam(teamId: string, formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const raw = {
+    name: formData.get("name") as string,
+    age_group: (formData.get("age_group") as string) || undefined,
+  };
+  const parsed = createTeamSchema.safeParse(raw);
+  if (!parsed.success) {
+    const msgs = parsed.error.flatten().fieldErrors;
+    return { error: Object.values(msgs).flat()[0] ?? "Invalid input." };
+  }
+
+  const { error } = await supabase
+    .from("teams")
+    .update(parsed.data)
+    .eq("id", teamId)
+    .eq("coach_id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/admin/teams");
+  revalidatePath("/dashboard/coach");
+  return { success: true };
+}
+
+export async function deleteTeam(teamId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const { error } = await supabase
+    .from("teams")
+    .update({ active: false })
+    .eq("id", teamId)
+    .eq("coach_id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/admin/teams");
+  revalidatePath("/dashboard/coach");
+  redirect("/dashboard/admin/teams");
 }
 
 export async function createTeam(formData: FormData) {

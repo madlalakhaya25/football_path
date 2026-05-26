@@ -3,7 +3,7 @@
  * These mirror the Supabase schema and are shared across screens.
  */
 
-export type UserRole = "admin" | "coach" | "player" | "parent" | "scout";
+export type UserRole = "admin" | "coach" | "player" | "parent";
 
 export type FixtureStatus = "upcoming" | "completed" | "cancelled" | "postponed";
 

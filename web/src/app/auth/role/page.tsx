@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, Shield, Target, Users } from "lucide-react";
+import { Shield, Target, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,6 @@ const ROLES: { value: UserRole; label: string; description: string; Icon: React.
   { value: "player", label: "Player", description: "Track your stats and build your passport.", Icon: Target },
   { value: "coach", label: "Coach", description: "Manage your squad and log match results.", Icon: Users },
   { value: "parent", label: "Parent", description: "Follow your child's progress.", Icon: Shield },
-  { value: "scout", label: "Scout", description: "Discover and evaluate talent.", Icon: Eye },
 ];
 
 const ROLE_ROUTES: Record<UserRole, string> = {
@@ -24,7 +23,6 @@ const ROLE_ROUTES: Record<UserRole, string> = {
   coach: "/dashboard/coach",
   player: "/dashboard/player",
   parent: "/dashboard/parent",
-  scout: "/dashboard/player",
 };
 
 export default function RolePage() {

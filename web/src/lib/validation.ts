@@ -25,6 +25,8 @@ export const otpSchema = z.object({
   token: z.string().length(6, "OTP must be 6 digits"),
 });
 
+const attrField = z.coerce.number().int().min(0).max(100).optional();
+
 export const createPlayerSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters"),
   date_of_birth: z.string().optional(),
@@ -33,6 +35,12 @@ export const createPlayerSchema = z.object({
     .optional(),
   preferred_foot: z.enum(["left", "right", "both"]).optional().nullable(),
   photo_url: z.string().url().optional().nullable(),
+  pace:      attrField,
+  shooting:  attrField,
+  passing:   attrField,
+  dribbling: attrField,
+  defending: attrField,
+  physical:  attrField,
 });
 
 export const createTeamSchema = z.object({

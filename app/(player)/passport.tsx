@@ -10,6 +10,28 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import * as Clipboard from 'expo-clipboard';
 
+const ATTRS = [
+  { key: 'pace',      label: 'Pace' },
+  { key: 'shooting',  label: 'Shooting' },
+  { key: 'passing',   label: 'Passing' },
+  { key: 'dribbling', label: 'Dribbling' },
+  { key: 'defending', label: 'Defending' },
+  { key: 'physical',  label: 'Physical' },
+] as const;
+
+function AttrBar({ label, value }: { label: string; value: number }) {
+  const color = value >= 80 ? '#4ade80' : value >= 65 ? '#fbbf24' : '#f87171';
+  return (
+    <View className="flex-row items-center gap-3 mb-2">
+      <Text className="text-ink-secondary text-caption w-20">{label}</Text>
+      <View className="flex-1 h-2 bg-surface-3 rounded-full overflow-hidden">
+        <View style={{ width: `${value}%`, backgroundColor: color }} className="h-full rounded-full" />
+      </View>
+      <Text className="text-ink-primary font-bold text-caption w-7 text-right">{value}</Text>
+    </View>
+  );
+}
+
 export default function PlayerPassportScreen() {
   const profile = useAuthStore((s) => s.profile);
   const clear = useAuthStore((s) => s.clear);
@@ -154,6 +176,18 @@ export default function PlayerPassportScreen() {
             </View>
           </View>
         </View>
+
+        {/* Attributes */}
+        {ATTRS.some(({ key }) => (player as any)[key] != null) && (
+          <View className="mx-4 mb-4 bg-surface-2 rounded-card p-5 border border-border">
+            <Text className="text-ink-primary font-bold text-heading mb-3">Attributes</Text>
+            {ATTRS.map(({ key, label }) => {
+              const val = (player as any)[key];
+              if (val == null) return null;
+              return <AttrBar key={key} label={label} value={val} />;
+            })}
+          </View>
+        )}
 
         {/* Share button */}
         <View className="px-4 mb-6">

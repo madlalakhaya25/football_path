@@ -1,18 +1,42 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform, Image } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
 import { StarRow } from '@/components/ui/StarRow';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
 import { showAlert } from '@/lib/alert';
+
+const ATTRS = [
+  { key: 'pace',      label: 'Pace' },
+  { key: 'shooting',  label: 'Shooting' },
+  { key: 'passing',   label: 'Passing' },
+  { key: 'dribbling', label: 'Dribbling' },
+  { key: 'defending', label: 'Defending' },
+  { key: 'physical',  label: 'Physical' },
+] as const;
+
+function AttrBar({ label, value }: { label: string; value: number }) {
+  const color = value >= 80 ? '#4ade80' : value >= 65 ? '#fbbf24' : '#f87171';
+  return (
+    <View className="flex-row items-center gap-3 mb-2">
+      <Text className="text-ink-secondary text-caption w-20">{label}</Text>
+      <View className="flex-1 h-2 bg-surface-3 rounded-full overflow-hidden">
+        <View style={{ width: `${value}%`, backgroundColor: color }} className="h-full rounded-full" />
+      </View>
+      <Text className="text-ink-primary font-bold text-caption w-7 text-right">{value}</Text>
+    </View>
+  );
+}
 
 export default function AdminPlayerDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
   const { data: player, isLoading } = useQuery({
     queryKey: ['admin-player-detail', id],
@@ -34,6 +58,35 @@ export default function AdminPlayerDetailScreen() {
       return data;
     },
   });
+
+  const uploadPhoto = async () => {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { showAlert('Permission needed', 'Allow photo library access to upload a photo.'); return; }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (result.canceled) return;
+
+    const uri = result.assets[0].uri;
+    const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const path = `${id}.${ext}`;
+
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const { error: uploadErr } = await supabase.storage
+      .from('player-photos')
+      .upload(path, blob, { upsert: true, contentType: `image/${ext}` });
+    if (uploadErr) { showAlert('Upload failed', uploadErr.message); return; }
+
+    const { data: { publicUrl } } = supabase.storage.from('player-photos').getPublicUrl(path);
+    await supabase.from('players').update({ photo_url: publicUrl }).eq('id', id!);
+    queryClient.invalidateQueries({ queryKey: ['admin-player-detail', id] });
+  };
 
   if (isLoading || !player) {
     return (
@@ -73,7 +126,12 @@ export default function AdminPlayerDetailScreen() {
 
         <View className="mx-4 mb-4 bg-surface-2 rounded-card p-5 border border-border">
           <View className="flex-row items-center mb-4">
-            <Avatar uri={player.photo_url} name={player.full_name} size="xl" />
+            <TouchableOpacity onPress={uploadPhoto} activeOpacity={0.8}>
+              <Avatar uri={player.photo_url} name={player.full_name} size="xl" />
+              <View className="absolute bottom-0 right-0 bg-green rounded-full w-5 h-5 items-center justify-center">
+                <Text className="text-white text-xs font-bold">+</Text>
+              </View>
+            </TouchableOpacity>
             <View className="ml-4 flex-1">
               <Text className="text-ink-primary font-black text-title">{player.full_name}</Text>
               <View className="flex-row flex-wrap gap-2 mt-2">
@@ -103,6 +161,18 @@ export default function AdminPlayerDetailScreen() {
             </View>
           </View>
         </View>
+
+        {/* Attributes */}
+        {ATTRS.some(({ key }) => player[key] != null) && (
+          <View className="mx-4 mb-4 bg-surface-2 rounded-card p-5 border border-border">
+            <Text className="text-ink-primary font-bold text-heading mb-3">Attributes</Text>
+            {ATTRS.map(({ key, label }) => {
+              const val = player[key];
+              if (val == null) return null;
+              return <AttrBar key={key} label={label} value={val} />;
+            })}
+          </View>
+        )}
 
         <TouchableOpacity
           onPress={sharePassport}

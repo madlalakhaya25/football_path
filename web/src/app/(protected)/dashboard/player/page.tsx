@@ -6,6 +6,15 @@ import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS } from "@/lib/types";
 
+const ATTRS = [
+  { key: "pace",      label: "Pace" },
+  { key: "shooting",  label: "Shooting" },
+  { key: "passing",   label: "Passing" },
+  { key: "dribbling", label: "Dribbling" },
+  { key: "defending", label: "Defending" },
+  { key: "physical",  label: "Physical" },
+] as const;
+
 export default async function PlayerDashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -15,6 +24,7 @@ export default async function PlayerDashboardPage() {
     .from("players")
     .select(`
       id, full_name, position, preferred_foot, date_of_birth, photo_url, share_token,
+      pace, shooting, passing, dribbling, defending, physical,
       player_ratings ( rating, created_at )
     `)
     .eq("profile_id", user.id)
@@ -90,7 +100,7 @@ export default async function PlayerDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Share Passport</CardTitle>
-            <CardDescription>Give scouts your unique code.</CardDescription>
+            <CardDescription>Give coaches and scouts your unique code.</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="rounded-md bg-muted px-4 py-3 text-center font-mono text-lg font-bold tracking-widest">
@@ -99,6 +109,22 @@ export default async function PlayerDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Attributes */}
+      {ATTRS.some(({ key }) => player[key] != null) && (
+        <Card className="max-w-sm">
+          <CardHeader>
+            <CardTitle>Attributes</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {ATTRS.map(({ key, label }) => {
+              const val = player[key as keyof typeof player] as number | null;
+              if (val == null) return null;
+              return <StatBar key={key} label={label} value={val} />;
+            })}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

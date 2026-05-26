@@ -1,15 +1,20 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/ui/Avatar';
 import { Tag } from '@/components/ui/Tag';
-import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/Button';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminTeamDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const queryClient = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editAgeGroup, setEditAgeGroup] = useState('');
 
   const { data: team, isLoading } = useQuery({
     queryKey: ['admin-team-detail', id],
@@ -32,6 +37,38 @@ export default function AdminTeamDetailScreen() {
     },
   });
 
+  const updateTeam = useMutation({
+    mutationFn: async ({ name, age_group }: { name: string; age_group: string }) => {
+      const { error } = await supabase.from('teams').update({ name, age_group: age_group || null }).eq('id', id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-team-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-teams'] });
+      setEditing(false);
+    },
+    onError: (e: any) => Alert.alert('Error', e.message),
+  });
+
+  const deleteTeam = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from('teams').update({ active: false }).eq('id', id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-teams'] });
+      router.back();
+    },
+    onError: (e: any) => Alert.alert('Error', e.message),
+  });
+
+  const confirmDelete = () => {
+    Alert.alert('Delete team', `Delete "${team?.name}"? This cannot be undone.`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteTeam.mutate() },
+    ]);
+  };
+
   if (isLoading || !team) {
     return (
       <SafeAreaView className="flex-1 bg-pitch items-center justify-center">
@@ -51,24 +88,68 @@ export default function AdminTeamDetailScreen() {
 
         {/* Team header */}
         <View className="mx-4 mb-4 bg-surface-2 rounded-card p-5 border border-border">
-          <View className="flex-row items-center justify-between mb-4">
-            <View>
-              <Text className="text-ink-tertiary text-caption uppercase tracking-wide">Team</Text>
-              <Text className="text-ink-primary text-hero font-black mt-1">{team.name}</Text>
-              {team.age_group && (
-                <Text className="text-green text-caption font-semibold mt-0.5">{team.age_group}</Text>
-              )}
-              {team.profiles?.full_name && (
-                <Text className="text-ink-secondary text-caption mt-1">
-                  Coach: {team.profiles.full_name}
-                </Text>
-              )}
+          {editing ? (
+            <View className="mb-4 gap-3">
+              <TextInput
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Team name"
+                placeholderTextColor="#666"
+                className="bg-surface-1 border border-border rounded-card px-4 py-3 text-ink-primary text-body"
+              />
+              <TextInput
+                value={editAgeGroup}
+                onChangeText={setEditAgeGroup}
+                placeholder="Age group (e.g. U17)"
+                placeholderTextColor="#666"
+                className="bg-surface-1 border border-border rounded-card px-4 py-3 text-ink-primary text-body"
+              />
+              <View className="flex-row gap-2">
+                <Button
+                  label="Save"
+                  loading={updateTeam.isPending}
+                  onPress={() => updateTeam.mutate({ name: editName, age_group: editAgeGroup })}
+                />
+                <Button label="Cancel" variant="ghost" onPress={() => setEditing(false)} />
+              </View>
             </View>
-            <View className="bg-green-bg border border-green-border rounded-card px-3 py-2 items-center">
-              <Text className="text-ink-tertiary text-caption">Invite code</Text>
-              <Text className="text-green font-black text-title tracking-widest">{team.invite_code}</Text>
+          ) : (
+            <View className="flex-row items-center justify-between mb-4">
+              <View>
+                <Text className="text-ink-tertiary text-caption uppercase tracking-wide">Team</Text>
+                <Text className="text-ink-primary text-hero font-black mt-1">{team.name}</Text>
+                {team.age_group && (
+                  <Text className="text-green text-caption font-semibold mt-0.5">{team.age_group}</Text>
+                )}
+                {team.profiles?.full_name && (
+                  <Text className="text-ink-secondary text-caption mt-1">
+                    Coach: {team.profiles.full_name}
+                  </Text>
+                )}
+              </View>
+              <View className="bg-green-bg border border-green-border rounded-card px-3 py-2 items-center">
+                <Text className="text-ink-tertiary text-caption">Invite code</Text>
+                <Text className="text-green font-black text-title tracking-widest">{team.invite_code}</Text>
+              </View>
             </View>
-          </View>
+          )}
+
+          {!editing && (
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity
+                onPress={() => { setEditName(team.name); setEditAgeGroup(team.age_group ?? ''); setEditing(true); }}
+                className="flex-1 bg-surface-1 border border-border rounded-card py-2 items-center"
+              >
+                <Text className="text-ink-primary text-caption font-semibold">Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={confirmDelete}
+                className="flex-1 bg-red-bg border border-red-border rounded-card py-2 items-center"
+              >
+                <Text className="text-red text-caption font-semibold">Delete Team</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View className="flex-row border-t border-border pt-4 gap-4">
             <View className="flex-1 items-center">

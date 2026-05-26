@@ -13,6 +13,15 @@ import { createPlayerSchema, type CreatePlayerInput } from '@/lib/validation';
 import { POSITIONS } from '@/types/app';
 import { showAlert } from '@/lib/alert';
 
+const ATTRS = [
+  { key: 'pace'      as const, label: 'Pace' },
+  { key: 'shooting'  as const, label: 'Shooting' },
+  { key: 'passing'   as const, label: 'Passing' },
+  { key: 'dribbling' as const, label: 'Dribbling' },
+  { key: 'defending' as const, label: 'Defending' },
+  { key: 'physical'  as const, label: 'Physical' },
+];
+
 export default function NewPlayerScreen() {
   const router = useRouter();
   const profile = useAuthStore((s) => s.profile);
@@ -194,6 +203,38 @@ export default function NewPlayerScreen() {
           </View>
         </>
       )}
+
+      {/* Attributes */}
+      <Text className="text-ink-secondary text-caption font-medium mb-2 mt-2 uppercase tracking-wide">
+        Attributes (optional)
+      </Text>
+      {ATTRS.map(({ key, label }) => (
+        <Controller
+          key={key}
+          control={control}
+          name={key}
+          render={({ field: { onChange, value } }) => (
+            <View className="flex-row items-center mb-3">
+              <Text className="text-ink-secondary text-body w-24">{label}</Text>
+              <TouchableOpacity
+                onPress={() => onChange(Math.max(0, (value ?? 50) - 5))}
+                className="w-8 h-8 bg-surface-2 border border-border rounded-full items-center justify-center"
+              >
+                <Text className="text-ink-primary font-bold text-sm">−</Text>
+              </TouchableOpacity>
+              <Text className="text-green font-bold text-body w-12 text-center">
+                {value != null ? value : '—'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => onChange(Math.min(100, (value ?? 50) + 5))}
+                className="w-8 h-8 bg-surface-2 border border-border rounded-full items-center justify-center"
+              >
+                <Text className="text-ink-primary font-bold text-sm">+</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+      ))}
 
       <View className="mt-4">
         <Button

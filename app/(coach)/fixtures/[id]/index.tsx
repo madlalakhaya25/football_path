@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +8,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import { StarRow } from '@/components/ui/StarRow';
 import { useFixture } from '@/hooks/useFixtures';
 import { useMyTeam } from '@/hooks/useTeam';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 import * as Clipboard from 'expo-clipboard';
 
 export default function FixtureDetailScreen() {
@@ -16,6 +18,28 @@ export default function FixtureDetailScreen() {
   const { data: fixture, isLoading } = useFixture(id);
   const { data: team } = useMyTeam();
   const teamName = team?.name ?? 'Home';
+  const queryClient = useQueryClient();
+  const [cancelling, setCancelling] = useState(false);
+
+  const cancelFixture = () => {
+    Alert.alert('Cancel fixture', 'Mark this fixture as cancelled?', [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Cancel fixture', style: 'destructive',
+        onPress: async () => {
+          setCancelling(true);
+          const { error } = await supabase
+            .from('fixtures')
+            .update({ status: 'cancelled' })
+            .eq('id', id!);
+          setCancelling(false);
+          if (error) { Alert.alert('Error', error.message); return; }
+          queryClient.invalidateQueries({ queryKey: ['fixture', id] });
+          queryClient.invalidateQueries({ queryKey: ['fixtures'] });
+        },
+      },
+    ]);
+  };
 
   if (isLoading || !fixture) {
     return (
@@ -118,6 +142,12 @@ export default function FixtureDetailScreen() {
                 label="Share Fixture"
                 variant="secondary"
                 onPress={shareFixture}
+              />
+              <Button
+                label={cancelling ? 'Cancelling…' : 'Cancel Fixture'}
+                variant="ghost"
+                loading={cancelling}
+                onPress={cancelFixture}
               />
             </>
           )}

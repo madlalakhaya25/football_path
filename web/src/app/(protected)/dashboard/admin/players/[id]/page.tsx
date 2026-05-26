@@ -6,7 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RatingRing } from "@/components/ui/rating-ring";
+import { StatBar } from "@/components/ui/stat-bar";
+import { PlayerPhotoUpload } from "@/components/player-photo-upload";
 import { POSITIONS, FEET } from "@/lib/types";
+
+const ATTRS = [
+  { key: "pace",      label: "Pace" },
+  { key: "shooting",  label: "Shooting" },
+  { key: "passing",   label: "Passing" },
+  { key: "dribbling", label: "Dribbling" },
+  { key: "defending", label: "Defending" },
+  { key: "physical",  label: "Physical" },
+] as const;
 
 export default async function AdminPlayerDetailPage({
   params,
@@ -29,6 +40,7 @@ export default async function AdminPlayerDetailPage({
     .from("players")
     .select(`
       id, full_name, position, secondary_pos, preferred_foot, date_of_birth, photo_url, share_token, academy_id,
+      pace, shooting, passing, dribbling, defending, physical,
       player_ratings (
         id, rating, note, created_at,
         fixtures ( opponent, fixture_date )
@@ -67,9 +79,13 @@ export default async function AdminPlayerDetailPage({
           <div className="h-1 bg-brand" />
           <CardHeader>
             <div className="flex items-center justify-between">
-              <span className="grid size-16 place-items-center rounded-full bg-brand/20 text-lg font-bold text-primary">
-                {initials}
-              </span>
+              {player.photo_url ? (
+                <img src={player.photo_url} alt={player.full_name} className="size-16 rounded-full object-cover" />
+              ) : (
+                <span className="grid size-16 place-items-center rounded-full bg-brand/20 text-lg font-bold text-primary">
+                  {initials}
+                </span>
+              )}
               <RatingRing value={avg} size={72} />
             </div>
             <CardTitle className="mt-3">{player.full_name}</CardTitle>
@@ -91,8 +107,27 @@ export default async function AdminPlayerDetailPage({
                 <p className="font-mono font-semibold text-xs tracking-wide">{player.share_token}</p>
               </div>
             </div>
+            <div className="pt-2">
+              <PlayerPhotoUpload playerId={player.id} />
+            </div>
           </CardContent>
         </Card>
+
+        {/* Attributes card */}
+        {ATTRS.some(({ key }) => player[key] != null) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Attributes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {ATTRS.map(({ key, label }) => {
+                const val = player[key as keyof typeof player] as number | null;
+                if (val == null) return null;
+                return <StatBar key={key} label={label} value={val} />;
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="space-y-3 lg:col-span-2">
           <h2 className="text-lg font-semibold">Rating history</h2>

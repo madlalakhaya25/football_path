@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users } from "lucide-react";
+import { TeamActions } from "./team-actions";
 
 export default async function AdminTeamsPage() {
   const supabase = await createClient();
@@ -77,6 +78,8 @@ export default async function AdminTeamsPage() {
                   <p className="text-xs text-muted-foreground">Invite code</p>
                   <p className="font-mono font-bold tracking-widest">{t.invite_code}</p>
                 </div>
+
+                <TeamActions teamId={t.id} name={t.name} ageGroup={t.age_group ?? ""} />
               </div>
             );
           })}

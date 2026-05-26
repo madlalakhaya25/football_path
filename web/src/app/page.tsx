@@ -1,7 +1,7 @@
 import {
-  Eye,
   LineChart,
   ShieldCheck,
+  Shield,
   Star,
   Target,
   Trophy,
@@ -27,7 +27,7 @@ const ROLES = [
     Icon: Target,
     title: "Player",
     description:
-      "Build your digital passport, track attributes, and get seen by scouts.",
+      "Build your digital passport, track attributes, and showcase your development.",
   },
   {
     Icon: Users,
@@ -36,10 +36,10 @@ const ROLES = [
       "Manage your squad, log match results, and rate performances in seconds.",
   },
   {
-    Icon: Eye,
-    title: "Scout",
+    Icon: Shield,
+    title: "Parent",
     description:
-      "Discover talent across academies with rich, verified player profiles.",
+      "Follow your child's progress live — ratings, fixtures, and stats in one place.",
   },
 ];
 

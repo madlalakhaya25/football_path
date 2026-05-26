@@ -172,6 +172,29 @@ function CreateTab() {
 
       <Field label="Date of birth" name="date_of_birth" type="date" />
 
+      {/* Attributes */}
+      <details className="group">
+        <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground select-none">
+          Player attributes (optional) ▸
+        </summary>
+        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+          {(["pace","shooting","passing","dribbling","defending","physical"] as const).map((attr) => (
+            <div key={attr} className="space-y-1">
+              <label htmlFor={attr} className="text-xs font-medium capitalize text-muted-foreground">{attr}</label>
+              <input
+                id={attr}
+                name={attr}
+                type="number"
+                min="0"
+                max="100"
+                placeholder="—"
+                className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            </div>
+          ))}
+        </div>
+      </details>
+
       {state?.error && (
         <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {state.error}
