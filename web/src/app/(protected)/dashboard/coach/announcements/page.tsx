@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { Megaphone } from "lucide-react";
+import { Megaphone, PenLine } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AnnouncementForm } from "./announcement-form";
 import { DeleteAnnouncementButton } from "./delete-announcement-button";
@@ -21,7 +20,7 @@ export default async function CoachAnnouncementsPage() {
 
   if (!allTeams?.length) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-2xl">
         <h1 className="text-2xl font-bold">Announcements</h1>
         <EmptyState
           icon={<Megaphone className="size-8 text-muted-foreground/40" />}
@@ -45,35 +44,31 @@ export default async function CoachAnnouncementsPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Announcements</h1>
-        {(announcements ?? []).length > 0 && (
-          <span className="text-sm text-muted-foreground">
-            {(announcements ?? []).length} posted
-          </span>
-        )}
-      </div>
+      <h1 className="text-2xl font-bold">Announcements</h1>
 
-      {/* Compose */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">New announcement</CardTitle>
-          <CardDescription>Broadcast a message to your squad.</CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* ── Compose ────────────────────────────────────────────── */}
+      <section className="rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+          <PenLine className="size-4 text-primary" aria-hidden="true" />
+          <span className="text-sm font-semibold">Post to squad</span>
+        </div>
+        <div className="p-4">
           <AnnouncementForm teams={allTeams} />
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      {/* Feed */}
+      {/* ── Feed ───────────────────────────────────────────────── */}
       {(announcements ?? []).length === 0 ? (
         <EmptyState
           icon={<Megaphone className="size-8 text-muted-foreground/40" />}
           title="Nothing posted yet"
-          description="Your announcements will appear here once you send one."
+          description="Use the form above to send your first message."
         />
       ) : (
-        <div className="space-y-2">
+        <section className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Posted · {(announcements ?? []).length}
+          </p>
           {(announcements ?? []).map((a) => {
             const teamName = teamMap.get(a.team_id);
             const isRecent = Date.now() - new Date(a.created_at).getTime() < 24 * 3_600_000;
@@ -82,9 +77,7 @@ export default async function CoachAnnouncementsPage() {
                 key={a.id}
                 className="group flex gap-0 overflow-hidden rounded-xl border border-border bg-card"
               >
-                {/* Left accent bar */}
                 <div className="w-1 shrink-0 bg-primary" />
-
                 <div className="flex flex-1 items-start gap-3 px-4 py-3.5">
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
@@ -112,20 +105,14 @@ export default async function CoachAnnouncementsPage() {
               </article>
             );
           })}
-        </div>
+        </section>
       )}
     </div>
   );
 }
 
-function EmptyState({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
+function EmptyState({ icon, title, description }: {
+  icon: React.ReactNode; title: string; description: string;
 }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">

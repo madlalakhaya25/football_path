@@ -95,14 +95,14 @@ export default async function SquadPage({
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Squad</h1>
           <p className="text-sm text-muted-foreground">
-            {team.name} {team.age_group && `· ${team.age_group}`} · {squad.length} players
+            {team.name}{team.age_group && ` · ${team.age_group}`} · {squad.length} {squad.length === 1 ? "player" : "players"}
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="shrink-0">
           <Link href={`/dashboard/coach/squad/add?team=${team.id}`}>
             <Plus className="size-4" aria-hidden="true" />
             Add player
