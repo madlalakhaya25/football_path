@@ -65,6 +65,20 @@ export async function deleteAnnouncement(id: string) {
   return { success: true };
 }
 
+export async function dismissAnnouncement(announcementId: string) {
+  const { supabase, user } = await requireUser();
+
+  const { error } = await supabase.from("announcement_reads").upsert(
+    { user_id: user.id, announcement_id: announcementId, dismissed_at: new Date().toISOString() },
+    { onConflict: "user_id,announcement_id" }
+  );
+
+  if (error) return { error: error.message };
+  revalidatePath("/dashboard/player/announcements", "page");
+  revalidatePath("/dashboard/parent/announcements", "page");
+  return { success: true };
+}
+
 function revalidateAnnouncementFeeds() {
   revalidatePath("/dashboard/coach/announcements", "page");
   revalidatePath("/dashboard/player/announcements", "page");

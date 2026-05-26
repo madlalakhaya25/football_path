@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
+import { DismissAnnouncementButton } from "@/components/dismiss-announcement-button";
 import { formatRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export default async function PlayerAnnouncementsPage() {
   const supabase = await createClient();
@@ -49,7 +52,10 @@ export default async function PlayerAnnouncementsPage() {
   }
 
   const teamMap = new Map(
-    (memberRows ?? []).map((m: { team_id: string; teams: { name: string } | { name: string }[] | null }) => [
+    (memberRows ?? []).map((m: {
+      team_id: string;
+      teams: { name: string } | { name: string }[] | null;
+    }) => [
       m.team_id,
       Array.isArray(m.teams) ? m.teams[0]?.name : (m.teams as { name: string } | null)?.name,
     ])
@@ -57,15 +63,22 @@ export default async function PlayerAnnouncementsPage() {
 
   const { data: announcements } = await supabase
     .from("announcements")
-    .select("id, title, body, created_at, team_id")
+    .select("id, title, body, created_at, team_id, announcement_reads(read_at, dismissed_at)")
     .in("team_id", teamIds)
     .order("created_at", { ascending: false });
+
+  type ReadRecord = { read_at: string | null; dismissed_at: string | null };
+
+  const visible = (announcements ?? []).filter((a) => {
+    const reads = a.announcement_reads as ReadRecord[] | null;
+    return !reads?.[0]?.dismissed_at;
+  });
 
   const multiTeam = teamIds.length > 1;
 
   return (
-    <PageShell count={(announcements ?? []).length}>
-      {(announcements ?? []).length === 0 ? (
+    <PageShell count={visible.length}>
+      {visible.length === 0 ? (
         <EmptyState
           icon={<Megaphone className="size-8 text-muted-foreground/40" />}
           title="Nothing yet"
@@ -73,27 +86,36 @@ export default async function PlayerAnnouncementsPage() {
         />
       ) : (
         <div className="space-y-2">
-          {(announcements ?? []).map((a) => {
-            const teamName = teamMap.get(a.team_id);
+          {visible.map((a) => {
+            const reads = a.announcement_reads as ReadRecord[] | null;
+            const readRecord = reads?.[0] ?? null;
+            const isUnread = !readRecord?.read_at;
             const isRecent = Date.now() - new Date(a.created_at).getTime() < 24 * 3_600_000;
+            const teamName = teamMap.get(a.team_id);
             return (
               <article
                 key={a.id}
-                className="flex gap-0 overflow-hidden rounded-xl border border-border bg-card"
+                className="group flex gap-0 overflow-hidden rounded-xl border border-border bg-card hover:border-primary/40 transition-colors"
               >
-                {/* Left accent bar */}
-                <div className="w-1 shrink-0 bg-primary" />
-
-                <div className="flex-1 px-4 py-3.5 space-y-1.5">
+                <div className={cn("w-1 shrink-0", isUnread ? "bg-primary" : "bg-border")} />
+                <Link
+                  href={`/dashboard/player/announcements/${a.id}`}
+                  className="flex-1 px-4 py-3.5 space-y-1.5 min-w-0"
+                >
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold leading-snug">{a.title}</p>
+                    {isUnread && (
+                      <span className="size-2 rounded-full bg-primary shrink-0" aria-label="Unread" />
+                    )}
+                    <p className={cn("font-semibold leading-snug", isUnread ? "text-foreground" : "text-foreground/80")}>
+                      {a.title}
+                    </p>
                     {isRecent && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                         New
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                     {a.body}
                   </p>
                   <div className="flex flex-wrap items-center gap-2 pt-0.5">
@@ -104,6 +126,9 @@ export default async function PlayerAnnouncementsPage() {
                       {formatRelativeTime(a.created_at)}
                     </span>
                   </div>
+                </Link>
+                <div className="flex items-start pt-3 pr-3">
+                  <DismissAnnouncementButton id={a.id} />
                 </div>
               </article>
             );
@@ -114,13 +139,7 @@ export default async function PlayerAnnouncementsPage() {
   );
 }
 
-function PageShell({
-  children,
-  count,
-}: {
-  children: React.ReactNode;
-  count?: number;
-}) {
+function PageShell({ children, count }: { children: React.ReactNode; count?: number }) {
   return (
     <div className="space-y-4 max-w-2xl">
       <div className="flex items-center justify-between">
@@ -134,14 +153,8 @@ function PageShell({
   );
 }
 
-function EmptyState({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
+function EmptyState({ icon, title, description }: {
+  icon: React.ReactNode; title: string; description: string;
 }) {
   return (
     <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
