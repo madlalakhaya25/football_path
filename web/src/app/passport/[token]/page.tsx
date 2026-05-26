@@ -187,7 +187,7 @@ export default async function PublicPassportPage({
       </main>
 
       <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
-        Powered by <span className="font-semibold text-foreground">GrowFit Path</span>
+        Powered by <span className="font-semibold text-foreground">Growfit FA</span>
       </footer>
     </div>
   );

@@ -10,9 +10,15 @@ import { supabase } from '@/lib/supabase';
 import { showAlert } from '@/lib/alert';
 import { otpSchema, type OtpInput } from '@/lib/validation';
 
+const DEFAULT_ACADEMY_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function VerifyScreen() {
   const router = useRouter();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, full_name, role } = useLocalSearchParams<{
+    phone: string;
+    full_name?: string;
+    role?: string;
+  }>();
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
@@ -27,18 +33,30 @@ export default function VerifyScreen() {
 
   const onVerify = async ({ token }: OtpInput) => {
     setLoading(true);
-    const { error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-    setLoading(false);
+    const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
 
     if (error) {
+      setLoading(false);
       showAlert('Invalid code', 'Please check the code and try again.');
       return;
     }
-    // AuthGate in _layout.tsx handles redirect after session is set
+
+    // New registration: create profile with captured data
+    if (full_name && role) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').upsert({
+          id: user.id,
+          full_name,
+          role,
+          phone,
+          academy_id: DEFAULT_ACADEMY_ID,
+        });
+      }
+    }
+
+    setLoading(false);
+    // AuthGate in _layout.tsx handles redirect once session + profile are set
   };
 
   const onResend = async () => {

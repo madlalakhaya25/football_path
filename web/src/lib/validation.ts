@@ -2,6 +2,18 @@ import { z } from "zod";
 
 /** Validation schemas — ported from the Expo app (framework-agnostic). */
 
+export const registerSchema = z.object({
+  full_name: z.string().min(2, "Enter your full name"),
+  phone: z
+    .string()
+    .min(9, "Enter a valid phone number")
+    .regex(/^(\+27|0)[6-8][0-9]{8}$/, "Enter a valid South African number"),
+  role: z.enum(["player", "coach", "parent"], {
+    required_error: "Choose a role",
+  }),
+});
+export type RegisterInput = z.infer<typeof registerSchema>;
+
 export const loginSchema = z.object({
   phone: z
     .string()

@@ -17,22 +17,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "GrowFit Path",
-    template: "%s · GrowFit Path",
+    default: "Growfit FA",
+    template: "%s · Growfit FA",
   },
   description:
     "Track development, build digital player passports, and connect coaches, players, and parents.",
-  applicationName: "GrowFit Path",
+  applicationName: "Growfit FA",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "GrowFit Path",
+    title: "Growfit FA",
   },
   formatDetection: { telephone: false },
   openGraph: {
     type: "website",
-    siteName: "GrowFit Path",
-    title: "GrowFit Path — Football Development Platform",
+    siteName: "Growfit FA",
+    title: "Growfit FA — Football Development Platform",
     description: "Build the next generation of footballers through structured training and digital player passports.",
   },
 };
@@ -42,8 +42,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#4d7c0f" },
-    { media: "(prefers-color-scheme: dark)", color: "#4d7c0f" },
+    { media: "(prefers-color-scheme: light)", color: "#AF2D35" },
+    { media: "(prefers-color-scheme: dark)", color: "#AF2D35" },
   ],
 };
 

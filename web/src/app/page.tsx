@@ -7,6 +7,7 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
@@ -65,17 +66,16 @@ export default function Home() {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo />
           <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
-            <a className="text-sm text-muted-foreground hover:text-foreground" href="#roles">For players</a>
-            <a className="text-sm text-muted-foreground hover:text-foreground" href="#roles">For coaches</a>
+            <a className="text-sm text-muted-foreground hover:text-foreground" href="#roles">Roles</a>
             <a className="text-sm text-muted-foreground hover:text-foreground" href="#features">Features</a>
           </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
-              Sign in
+            <Button variant="ghost" size="sm" className="hidden sm:inline-flex" asChild>
+              <Link href="/auth/login">Sign in</Link>
             </Button>
-            <Button variant="primary" size="sm">
-              Get started
+            <Button variant="primary" size="sm" asChild>
+              <Link href="/auth/register">Get started</Link>
             </Button>
           </div>
         </div>
@@ -97,9 +97,11 @@ export default function Home() {
               training, performance ratings, and digital player passports.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg">Create your passport</Button>
-              <Button size="lg" variant="outline">
-                Watch demo
+              <Button size="lg" asChild>
+                <Link href="/auth/register">Create your passport</Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <a href="#features">Watch demo</a>
               </Button>
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">
@@ -154,15 +156,17 @@ export default function Home() {
           </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {ROLES.map(({ Icon, title, description }) => (
-              <Card key={title} className="transition-colors hover:border-primary/50">
-                <CardHeader>
-                  <span className="mb-2 grid size-11 place-items-center rounded-lg bg-brand/15 text-primary">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </span>
-                  <CardTitle>{title}</CardTitle>
-                  <CardDescription>{description}</CardDescription>
-                </CardHeader>
-              </Card>
+              <Link key={title} href="/auth/login">
+                <Card className="h-full transition-colors hover:border-primary/50">
+                  <CardHeader>
+                    <span className="mb-2 grid size-11 place-items-center rounded-lg bg-brand/15 text-primary">
+                      <Icon className="size-5" aria-hidden="true" />
+                    </span>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>
@@ -193,7 +197,7 @@ export default function Home() {
             footballers.
           </p>
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} GrowFit Academy
+            © {new Date().getFullYear()} Growfit FA
           </p>
         </div>
       </footer>

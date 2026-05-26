@@ -1,4 +1,4 @@
-const CACHE_VERSION = "growfit-v1";
+const CACHE_VERSION = "growfit-fa-v1";
 const OFFLINE_URL = "/offline";
 
 // App shell — pages that should always be cached on install
@@ -95,11 +95,11 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data.json();
   } catch {
-    data = { title: "GrowFit Path", body: event.data.text() };
+    data = { title: "Growfit FA", body: event.data.text() };
   }
   event.waitUntil(
     self.registration
-      .showNotification(data.title ?? "GrowFit Path", {
+      .showNotification(data.title ?? "Growfit FA", {
         body: data.body,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-192.png",

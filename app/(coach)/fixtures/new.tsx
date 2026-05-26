@@ -105,7 +105,7 @@ export default function NewFixtureScreen() {
             <View>
               <Text className="text-ink-primary font-semibold text-body">Home Game</Text>
               <Text className="text-ink-tertiary text-caption mt-0.5">
-                {value ? 'GrowFit is the home team' : 'GrowFit is playing away'}
+                {value ? 'Growfit FA is the home team' : 'Growfit FA is playing away'}
               </Text>
             </View>
             <Switch

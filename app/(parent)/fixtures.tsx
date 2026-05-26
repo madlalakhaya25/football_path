@@ -67,7 +67,7 @@ export default function ParentFixturesScreen() {
               </View>
               <View className="flex-row items-center">
                 <Text className={`flex-1 font-bold text-heading ${isHome ? 'text-green' : 'text-ink-primary'}`}>
-                  {isHome ? 'GrowFit' : f.opponent}
+                  {isHome ? 'Growfit FA' : f.opponent}
                 </Text>
                 {result ? (
                   <Text className="text-ink-primary font-black text-title mx-4">
@@ -83,7 +83,7 @@ export default function ParentFixturesScreen() {
                   </Text>
                 )}
                 <Text className={`flex-1 font-bold text-heading text-right ${!isHome ? 'text-green' : 'text-ink-primary'}`}>
-                  {isHome ? f.opponent : 'GrowFit'}
+                  {isHome ? f.opponent : 'Growfit FA'}
                 </Text>
               </View>
               {f.venue && (

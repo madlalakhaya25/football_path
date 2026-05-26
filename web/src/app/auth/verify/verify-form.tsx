@@ -8,6 +8,8 @@ import { useAuthStore } from "@/store/authStore";
 import type { AuthProfile } from "@/store/authStore";
 import type { UserRole } from "@/lib/types";
 
+const DEFAULT_ACADEMY_ID = "00000000-0000-0000-0000-000000000001";
+
 const ROLE_ROUTES: Record<UserRole, string> = {
   admin: "/dashboard/admin",
   coach: "/dashboard/coach",
@@ -15,6 +17,12 @@ const ROLE_ROUTES: Record<UserRole, string> = {
   parent: "/dashboard/parent",
   scout: "/dashboard/player",
 };
+
+interface RegistrationData {
+  full_name: string;
+  role: UserRole;
+  phone: string;
+}
 
 export function VerifyForm() {
   const router = useRouter();
@@ -28,9 +36,7 @@ export function VerifyForm() {
   const [loading, setLoading] = useState(false);
   const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-  useEffect(() => {
-    inputs.current[0]?.focus();
-  }, []);
+  useEffect(() => { inputs.current[0]?.focus(); }, []);
 
   function handleChange(idx: number, value: string) {
     if (!/^\d?$/.test(value)) return;
@@ -49,28 +55,52 @@ export function VerifyForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const token = otp.join("");
-    if (token.length !== 6) {
-      setError("Enter all 6 digits.");
-      return;
-    }
+    if (token.length !== 6) { setError("Enter all 6 digits."); return; }
     setLoading(true);
     setError(null);
 
-    const { error: authErr } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: "sms",
-    });
-
-    if (authErr) {
-      setError(authErr.message);
-      setLoading(false);
-      return;
-    }
+    const { error: authErr } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
+    if (authErr) { setError(authErr.message); setLoading(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
 
+    // ── New registration: create profile from sessionStorage ──
+    const raw = sessionStorage.getItem("gf-register");
+    if (raw) {
+      sessionStorage.removeItem("gf-register");
+      const reg: RegistrationData = JSON.parse(raw);
+
+      const { data, error: upsertErr } = await supabase
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          full_name: reg.full_name,
+          role: reg.role,
+          phone: reg.phone,
+          academy_id: DEFAULT_ACADEMY_ID,
+        })
+        .select("id, role, academy_id, full_name")
+        .single();
+
+      if (upsertErr || !data) {
+        setError(upsertErr?.message ?? "Could not save profile.");
+        setLoading(false);
+        return;
+      }
+
+      const profile: AuthProfile = {
+        userId: data.id,
+        role: data.role as UserRole,
+        academyId: data.academy_id,
+        fullName: data.full_name,
+      };
+      setProfile(profile);
+      router.push(ROLE_ROUTES[profile.role] ?? "/dashboard/player");
+      return;
+    }
+
+    // ── Returning sign-in: look up existing profile ───────────
     const { data: profileData } = await supabase
       .from("profiles")
       .select("id, role, academy_id, full_name")

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/Button';
@@ -18,11 +18,8 @@ export default function WelcomeScreen() {
       <View className="flex-1 px-6 justify-between py-10">
         {/* Logo + Academy */}
         <View className="items-center mt-6">
-          <View className="w-20 h-20 rounded-2xl bg-green items-center justify-center mb-5 shadow-green-glow">
-            <Text className="text-pitch text-4xl font-black">FP</Text>
-          </View>
-          <Text className="text-white text-3xl font-black tracking-tight">FootballPath</Text>
-          <Text className="text-ink-secondary text-sm mt-1">GrowFit Football Academy</Text>
+          <Image source={require('@/assets/growfit.png')} style={{ width: 80, height: 80, borderRadius: 16 }} resizeMode="contain" />
+          <Text className="text-white text-3xl font-black tracking-tight mt-4">Growfit FA</Text>
         </View>
 
         {/* Hero tagline */}
@@ -50,7 +47,12 @@ export default function WelcomeScreen() {
         {/* CTA */}
         <View className="gap-3">
           <Button
-            label="Get Started"
+            label="Create Account"
+            onPress={() => router.push('/(auth)/register')}
+          />
+          <Button
+            label="Sign In"
+            variant="ghost"
             onPress={() => router.push('/(auth)/login')}
           />
           <Text className="text-ink-tertiary text-xs text-center leading-4">

@@ -25,7 +25,7 @@ function FixtureCard({ fixture }: { fixture: any }) {
       </View>
       <View className="flex-row items-center">
         <Text className={`flex-1 font-bold text-heading ${isHome ? 'text-green' : 'text-ink-primary'}`}>
-          {isHome ? 'GrowFit' : fixture.opponent}
+          {isHome ? 'Growfit FA' : fixture.opponent}
         </Text>
         {result ? (
           <Text className="text-ink-primary font-black text-title mx-4">
@@ -41,7 +41,7 @@ function FixtureCard({ fixture }: { fixture: any }) {
           </Text>
         )}
         <Text className={`flex-1 font-bold text-heading text-right ${!isHome ? 'text-green' : 'text-ink-primary'}`}>
-          {isHome ? fixture.opponent : 'GrowFit'}
+          {isHome ? fixture.opponent : 'Growfit FA'}
         </Text>
       </View>
       {fixture.venue && (

@@ -54,7 +54,7 @@ export default function AdminDashboard() {
         {/* Header */}
         <View className="px-4 pt-6 pb-4">
           <Text className="text-ink-tertiary text-caption uppercase tracking-wide">Admin</Text>
-          <Text className="text-ink-primary text-hero font-black">GrowFit Academy</Text>
+          <Text className="text-ink-primary text-hero font-black">Growfit FA</Text>
         </View>
 
         {/* Stats grid */}

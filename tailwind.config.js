@@ -14,13 +14,13 @@ module.exports = {
         border:        '#2A2A2A',    // Subtle dividers
         'border-light':'#333333',    // Slightly visible borders
 
-        // ── Brand: Electric Green (primary action) ─
+        // ── Brand: Growfit Red (primary action) ─────
         green: {
-          DEFAULT:  '#00FF7F',
-          muted:    '#00C45A',
-          dark:     '#007A38',
-          bg:       '#00FF7F14',     // 8% opacity tint
-          border:   '#00FF7F40',     // 25% opacity border
+          DEFAULT:  '#AF2D35',
+          muted:    '#8B2329',
+          dark:     '#6B1B1F',
+          bg:       '#AF2D3514',     // 8% opacity tint
+          border:   '#AF2D3540',     // 25% opacity border
         },
 
         // ── Accent: Amber (streaks, warnings, live) ─
@@ -76,7 +76,7 @@ module.exports = {
       },
 
       boxShadow: {
-        'green-glow': '0 0 20px rgba(0, 255, 127, 0.15)',
+        'green-glow': '0 0 20px rgba(175, 45, 53, 0.25)',
         'card':       '0 2px 8px rgba(0, 0, 0, 0.4)',
       },
     },

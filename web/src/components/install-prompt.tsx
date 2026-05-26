@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { Download, X, Share } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -55,11 +56,9 @@ export function InstallPrompt() {
           "fixed bottom-20 left-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-lg lg:bottom-4 lg:left-auto lg:right-6 lg:max-w-sm"
         )}
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand text-brand-foreground text-xl">
-          ⚽
-        </span>
+        <Image src="/growfit.png" alt="Growfit FA" width={40} height={40} className="shrink-0 rounded-lg" unoptimized />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm leading-tight">Install GrowFit Path</p>
+          <p className="font-semibold text-sm leading-tight">Install Growfit FA</p>
           <p className="text-xs text-muted-foreground mt-0.5">Add to home screen for the best experience</p>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -89,7 +88,7 @@ export function InstallPrompt() {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <p className="font-semibold text-sm">Install GrowFit Path</p>
+            <p className="font-semibold text-sm">Install Growfit FA</p>
             <p className="text-xs text-muted-foreground">
               Tap the{" "}
               <Share className="inline size-3.5 align-text-bottom" aria-hidden="true" />{" "}
