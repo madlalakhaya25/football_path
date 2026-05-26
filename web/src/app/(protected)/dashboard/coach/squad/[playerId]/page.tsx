@@ -25,15 +25,17 @@ const ATTR_LABELS = [
 
 export default async function PlayerDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ playerId: string }>;
+  searchParams: Promise<{ team?: string }>;
 }) {
-  const { playerId } = await params;
+  const [{ playerId }, { team: teamParam }] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const [{ data: player }, { data: myAttrs }] = await Promise.all([
+  const [{ data: player }, { data: myAttrs }, { data: coachTeams }] = await Promise.all([
     supabase
       .from("players")
       .select(`
@@ -51,9 +53,24 @@ export default async function PlayerDetailPage({
       .eq("player_id", playerId)
       .eq("coach_id", user.id)
       .single(),
+    supabase.from("teams").select("id").eq("coach_id", user.id).eq("active", true),
   ]);
 
   if (!player) notFound();
+
+  const coachTeamIds = (coachTeams ?? []).map((t: { id: string }) => t.id);
+  let teamId: string | null = teamParam && coachTeamIds.includes(teamParam) ? teamParam : null;
+  if (!teamId && coachTeamIds.length) {
+    const { data: membership } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("player_id", playerId)
+      .in("team_id", coachTeamIds)
+      .eq("active", true)
+      .limit(1)
+      .single();
+    teamId = membership?.team_id ?? null;
+  }
 
   type Rating = {
     id: string;
@@ -144,9 +161,11 @@ export default async function PlayerDetailPage({
               </div>
             )}
 
-            <div className="pt-2">
-              <RemovePlayerButton playerId={player.id} playerName={player.full_name} />
-            </div>
+            {teamId && (
+              <div className="pt-2">
+                <RemovePlayerButton playerId={player.id} playerName={player.full_name} teamId={teamId} />
+              </div>
+            )}
           </CardContent>
         </Card>
 

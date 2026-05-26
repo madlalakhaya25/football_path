@@ -32,14 +32,19 @@ export default async function PlayerFixturesPage() {
 
   const { data: memberRows } = await supabase
     .from("team_members")
-    .select("team_id")
+    .select("team_id, teams ( name, age_group )")
     .eq("player_id", player.id)
-    .eq("active", true)
-    .limit(1);
+    .eq("active", true);
 
-  const teamId = memberRows?.[0]?.team_id;
+  const teamIds = (memberRows ?? []).map((m: { team_id: string }) => m.team_id);
+  const teamMap = new Map(
+    (memberRows ?? []).map((m: { team_id: string; teams: { name: string; age_group: string | null } | { name: string; age_group: string | null }[] | null }) => [
+      m.team_id,
+      Array.isArray(m.teams) ? m.teams[0] : m.teams,
+    ])
+  );
 
-  if (!teamId) {
+  if (!teamIds.length) {
     return (
       <div className="space-y-4">
         <h1 className="text-2xl font-bold">Fixtures</h1>
@@ -54,10 +59,10 @@ export default async function PlayerFixturesPage() {
     supabase
       .from("fixtures")
       .select(`
-        id, opponent, venue, fixture_date, is_home, status,
+        id, team_id, opponent, venue, fixture_date, is_home, status,
         match_results ( team_score, opponent_score )
       `)
-      .eq("team_id", teamId)
+      .in("team_id", teamIds)
       .order("fixture_date", { ascending: false }),
     supabase
       .from("match_appearances")
@@ -80,6 +85,7 @@ export default async function PlayerFixturesPage() {
     const date   = new Date(f.fixture_date);
     const result = Array.isArray(f.match_results) ? f.match_results[0] : f.match_results;
     const appearance = appearanceMap.get(f.id);
+    const teamInfo = teamMap.get(f.team_id) as { name: string; age_group: string | null } | null | undefined;
 
     return (
       <div className="flex items-center justify-between px-4 py-3">
@@ -89,6 +95,9 @@ export default async function PlayerFixturesPage() {
             {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" })}
             {f.venue && ` · ${f.venue}`}
           </p>
+          {teamIds.length > 1 && teamInfo && (
+            <span className="text-xs text-muted-foreground">{teamInfo.name}</span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {result && (

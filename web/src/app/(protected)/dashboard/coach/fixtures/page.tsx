@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const STATUS_VARIANT = {
   upcoming: "neutral",
@@ -13,19 +14,26 @@ const STATUS_VARIANT = {
   postponed: "warning",
 } as const;
 
-export default async function CoachFixturesPage() {
+export default async function CoachFixturesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ team?: string }>;
+}) {
+  const { team: teamParam } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: team } = await supabase
+  const { data: allTeams } = await supabase
     .from("teams")
-    .select("id, name")
+    .select("id, name, age_group")
     .eq("coach_id", user.id)
     .eq("active", true)
-    .single();
+    .order("created_at");
 
-  if (!team) redirect("/dashboard/coach");
+  if (!allTeams?.length) redirect("/dashboard/coach");
+
+  const team = allTeams.find((t) => t.id === teamParam) ?? allTeams[0];
 
   const { data: fixtures } = await supabase
     .from("fixtures")
@@ -66,10 +74,29 @@ export default async function CoachFixturesPage() {
 
   return (
     <div className="space-y-6">
+      {allTeams.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {allTeams.map((t) => (
+            <Link
+              key={t.id}
+              href={`/dashboard/coach/fixtures?team=${t.id}`}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm font-medium border transition-colors",
+                t.id === team.id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50"
+              )}
+            >
+              {t.name} {t.age_group && `· ${t.age_group}`}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Fixtures</h1>
         <Button asChild>
-          <Link href="/dashboard/coach/fixtures/new">
+          <Link href={`/dashboard/coach/fixtures/new?team=${team.id}`}>
             <Plus className="size-4" aria-hidden="true" />
             New fixture
           </Link>

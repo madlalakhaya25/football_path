@@ -2,19 +2,26 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AddPlayerTabs } from "./add-player-tabs";
 
-export default async function AddPlayerPage() {
+export default async function AddPlayerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ team?: string }>;
+}) {
+  const { team: teamParam } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: team } = await supabase
+  const { data: allTeams } = await supabase
     .from("teams")
     .select("id, academy_id")
     .eq("coach_id", user.id)
     .eq("active", true)
-    .single();
+    .order("created_at");
 
-  if (!team) redirect("/dashboard/coach");
+  if (!allTeams?.length) redirect("/dashboard/coach");
+
+  const team = allTeams.find((t) => t.id === teamParam) ?? allTeams[0];
 
   // Players in the academy NOT already in this squad
   const { data: squadMembers } = await supabase
@@ -38,7 +45,7 @@ export default async function AddPlayerPage() {
         <h1 className="text-2xl font-bold">Add player</h1>
         <p className="text-sm text-muted-foreground">Search your academy or create a new player.</p>
       </div>
-      <AddPlayerTabs available={available ?? []} />
+      <AddPlayerTabs available={available ?? []} teamId={team.id} />
     </div>
   );
 }

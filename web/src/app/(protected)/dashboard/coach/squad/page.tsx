@@ -1,27 +1,35 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { Plus, UserX } from "lucide-react";
+import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RemovePlayerButton } from "./remove-player-button";
 import { POSITIONS } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-export default async function SquadPage() {
+export default async function SquadPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ team?: string }>;
+}) {
+  const { team: teamParam } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: team } = await supabase
+  const { data: allTeams } = await supabase
     .from("teams")
     .select("id, name, age_group")
     .eq("coach_id", user.id)
     .eq("active", true)
-    .single();
+    .order("created_at");
 
-  if (!team) redirect("/dashboard/coach");
+  if (!allTeams?.length) redirect("/dashboard/coach");
+
+  const team = allTeams.find((t) => t.id === teamParam) ?? allTeams[0];
 
   const { data: members } = await supabase
     .from("team_members")
@@ -68,6 +76,25 @@ export default async function SquadPage() {
 
   return (
     <div className="space-y-6">
+      {allTeams.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {allTeams.map((t) => (
+            <Link
+              key={t.id}
+              href={`/dashboard/coach/squad?team=${t.id}`}
+              className={cn(
+                "rounded-full px-3 py-1 text-sm font-medium border transition-colors",
+                t.id === team.id
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50"
+              )}
+            >
+              {t.name} {t.age_group && `· ${t.age_group}`}
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Squad</h1>
@@ -76,7 +103,7 @@ export default async function SquadPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/dashboard/coach/squad/add">
+          <Link href={`/dashboard/coach/squad/add?team=${team.id}`}>
             <Plus className="size-4" aria-hidden="true" />
             Add player
           </Link>
@@ -91,7 +118,7 @@ export default async function SquadPage() {
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline">
-              <Link href="/dashboard/coach/squad/add">
+              <Link href={`/dashboard/coach/squad/add?team=${team.id}`}>
                 <Plus className="size-4" aria-hidden="true" />
                 Add player
               </Link>
@@ -159,7 +186,7 @@ export default async function SquadPage() {
                         </Link>
 
                         {/* Remove */}
-                        <RemovePlayerButton playerId={player.id} playerName={player.full_name} />
+                        <RemovePlayerButton playerId={player.id} playerName={player.full_name} teamId={team.id} />
                       </div>
                     );
                   })}

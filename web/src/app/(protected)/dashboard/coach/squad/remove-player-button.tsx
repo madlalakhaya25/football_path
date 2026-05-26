@@ -7,15 +7,16 @@ import { cn } from "@/lib/utils";
 interface Props {
   playerId: string;
   playerName: string;
+  teamId: string;
 }
 
-export function RemovePlayerButton({ playerId, playerName }: Props) {
+export function RemovePlayerButton({ playerId, playerName, teamId }: Props) {
   const [pending, startTransition] = useTransition();
 
   function handleRemove() {
     if (!confirm(`Remove ${playerName} from the squad?`)) return;
     startTransition(async () => {
-      await removePlayerFromSquad(playerId);
+      await removePlayerFromSquad(playerId, teamId);
     });
   }
 

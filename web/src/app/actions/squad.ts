@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createPlayerSchema, createTeamSchema } from "@/lib/validation";
 
-async function getCoachTeam() {
+async function getCoachTeamById(teamId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
@@ -12,6 +12,7 @@ async function getCoachTeam() {
   const { data: team } = await supabase
     .from("teams")
     .select("id, academy_id")
+    .eq("id", teamId)
     .eq("coach_id", user.id)
     .eq("active", true)
     .single();
@@ -19,8 +20,8 @@ async function getCoachTeam() {
   return { supabase, user, team };
 }
 
-export async function addPlayerToSquad(playerId: string) {
-  const { supabase, team } = await getCoachTeam();
+export async function addPlayerToSquad(playerId: string, teamId: string) {
+  const { supabase, team } = await getCoachTeamById(teamId);
   if (!team) return { error: "No team found." };
 
   const { error } = await supabase
@@ -32,8 +33,8 @@ export async function addPlayerToSquad(playerId: string) {
   return { success: true };
 }
 
-export async function removePlayerFromSquad(playerId: string) {
-  const { supabase, team } = await getCoachTeam();
+export async function removePlayerFromSquad(playerId: string, teamId: string) {
+  const { supabase, team } = await getCoachTeamById(teamId);
   if (!team) return { error: "No team found." };
 
   const { error } = await supabase
@@ -48,7 +49,8 @@ export async function removePlayerFromSquad(playerId: string) {
 }
 
 export async function createPlayer(formData: FormData) {
-  const { supabase, team } = await getCoachTeam();
+  const teamId = formData.get("team_id") as string;
+  const { supabase, team } = await getCoachTeamById(teamId);
   if (!team) return { error: "No team found." };
 
   const num = (key: string) => {

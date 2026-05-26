@@ -65,10 +65,9 @@ export default async function ChildDetailPage({
       .eq("player_id", childId),
     supabase
       .from("team_members")
-      .select("team_id")
+      .select("team_id, teams ( name, age_group )")
       .eq("player_id", childId)
-      .eq("active", true)
-      .limit(1),
+      .eq("active", true),
   ]);
 
   if (!player) notFound();
@@ -101,14 +100,20 @@ export default async function ChildDetailPage({
     : 0;
   const overall = attrsAvg() ?? matchAvg;
 
-  const teamId = memberRows?.[0]?.team_id;
+  const teamIds = (memberRows ?? []).map((m: { team_id: string }) => m.team_id);
+  const teamMap = new Map(
+    (memberRows ?? []).map((m: { team_id: string; teams: { name: string; age_group: string | null } | { name: string; age_group: string | null }[] | null }) => [
+      m.team_id,
+      Array.isArray(m.teams) ? m.teams[0] : m.teams,
+    ])
+  );
 
   const [{ data: fixtures }, { data: appearances }] = await Promise.all([
-    teamId
+    teamIds.length
       ? supabase
           .from("fixtures")
-          .select(`id, opponent, venue, fixture_date, is_home, status, match_results ( team_score, opponent_score )`)
-          .eq("team_id", teamId)
+          .select(`id, team_id, opponent, venue, fixture_date, is_home, status, match_results ( team_score, opponent_score )`)
+          .in("team_id", teamIds)
           .order("fixture_date", { ascending: false })
       : Promise.resolve({ data: [] }),
     supabase
@@ -138,6 +143,7 @@ export default async function ChildDetailPage({
     const date = new Date(f.fixture_date);
     const result = Array.isArray(f.match_results) ? f.match_results[0] : f.match_results;
     const appearance = appearanceMap.get(f.id);
+    const teamInfo = teamMap.get(f.team_id) as { name: string; age_group: string | null } | null | undefined;
     return (
       <div className="flex items-center justify-between px-4 py-3">
         <div className="min-w-0">
@@ -146,6 +152,9 @@ export default async function ChildDetailPage({
             {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" })}
             {f.venue && ` · ${f.venue}`}
           </p>
+          {teamIds.length > 1 && teamInfo && (
+            <span className="text-xs text-muted-foreground">{teamInfo.name}</span>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {result && (
@@ -274,7 +283,7 @@ export default async function ChildDetailPage({
           {/* Fixtures */}
           <section className="space-y-3">
             <h2 className="text-lg font-semibold">Fixtures</h2>
-            {!teamId ? (
+            {!teamIds.length ? (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Not in a team yet</CardTitle>

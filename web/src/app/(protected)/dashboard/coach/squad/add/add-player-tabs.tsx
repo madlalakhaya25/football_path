@@ -18,7 +18,7 @@ type Player = {
 
 const TABS = ["Find existing", "Create new"] as const;
 
-export function AddPlayerTabs({ available }: { available: Player[] }) {
+export function AddPlayerTabs({ available, teamId }: { available: Player[]; teamId: string }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Find existing");
   const router = useRouter();
 
@@ -44,15 +44,15 @@ export function AddPlayerTabs({ available }: { available: Player[] }) {
       </div>
 
       {tab === "Find existing" ? (
-        <SearchTab players={available} onBack={() => router.push("/dashboard/coach/squad")} />
+        <SearchTab players={available} teamId={teamId} onBack={() => router.push(`/dashboard/coach/squad?team=${teamId}`)} />
       ) : (
-        <CreateTab />
+        <CreateTab teamId={teamId} />
       )}
     </div>
   );
 }
 
-function SearchTab({ players, onBack }: { players: Player[]; onBack: () => void }) {
+function SearchTab({ players, teamId, onBack }: { players: Player[]; teamId: string; onBack: () => void }) {
   const [query, setQuery] = useState("");
   const [adding, startAdd] = useTransition();
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
@@ -63,7 +63,7 @@ function SearchTab({ players, onBack }: { players: Player[]; onBack: () => void 
 
   function handleAdd(id: string) {
     startAdd(async () => {
-      const res = await addPlayerToSquad(id);
+      const res = await addPlayerToSquad(id, teamId);
       if (!res?.error) setAddedIds((prev) => new Set([...prev, id]));
     });
   }
@@ -130,7 +130,7 @@ function SearchTab({ players, onBack }: { players: Player[]; onBack: () => void 
   );
 }
 
-function CreateTab() {
+function CreateTab({ teamId }: { teamId: string }) {
   const [state, formAction, pending] = useActionState(
     async (_prev: { error?: string } | null, formData: FormData) => {
       return (await createPlayer(formData)) ?? null;
@@ -140,6 +140,7 @@ function CreateTab() {
 
   return (
     <form action={formAction} className="max-w-md space-y-5">
+      <input type="hidden" name="team_id" value={teamId} />
       <Field label="Full name *" name="full_name" required placeholder="e.g. Sipho Dlamini" />
 
       <div className="space-y-1.5">

@@ -5,22 +5,32 @@ import { createClient } from "@/lib/supabase/server";
 import { createFixtureSchema } from "@/lib/validation";
 import { z } from "zod";
 
-async function getCoach() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
-  const { data: team } = await supabase
+async function getCoachTeamIds(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
+  const { data: teams } = await supabase
     .from("teams")
-    .select("id, academy_id, name")
-    .eq("coach_id", user.id)
-    .eq("active", true)
-    .single();
-  return { supabase, user, team };
+    .select("id")
+    .eq("coach_id", userId)
+    .eq("active", true);
+  return (teams ?? []).map((t: { id: string }) => t.id);
 }
 
 export async function createFixture(formData: FormData) {
-  const { supabase, team } = await getCoach();
-  if (!team) return { error: "No team found." };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const teamId = formData.get("team_id") as string;
+  if (!teamId) return { error: "No team selected." };
+
+  const { data: team } = await supabase
+    .from("teams")
+    .select("id")
+    .eq("id", teamId)
+    .eq("coach_id", user.id)
+    .eq("active", true)
+    .single();
+
+  if (!team) return { error: "Team not found." };
 
   const raw = {
     opponent: formData.get("opponent") as string,
@@ -38,22 +48,26 @@ export async function createFixture(formData: FormData) {
 
   const { error } = await supabase
     .from("fixtures")
-    .insert({ ...parsed.data, team_id: team.id });
+    .insert({ ...parsed.data, team_id: teamId });
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard/coach/fixtures");
-  redirect("/dashboard/coach/fixtures");
+  redirect(`/dashboard/coach/fixtures?team=${teamId}`);
 }
 
 export async function cancelFixture(fixtureId: string) {
-  const { supabase, team } = await getCoach();
-  if (!team) return { error: "No team found." };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const teamIds = await getCoachTeamIds(supabase, user.id);
+  if (!teamIds.length) return { error: "No team found." };
 
   const { error } = await supabase
     .from("fixtures")
     .update({ status: "cancelled" })
     .eq("id", fixtureId)
-    .eq("team_id", team.id);
+    .in("team_id", teamIds);
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard/coach/fixtures");
@@ -74,13 +88,26 @@ const logMatchSchema = z.object({
 });
 
 export async function logMatch(payload: unknown) {
-  const { supabase, user, team } = await getCoach();
-  if (!team) return { error: "No team found." };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const teamIds = await getCoachTeamIds(supabase, user.id);
+  if (!teamIds.length) return { error: "No team found." };
 
   const parsed = logMatchSchema.safeParse(payload);
   if (!parsed.success) return { error: "Invalid payload." };
 
   const { fixture_id, team_score, opponent_score, match_notes, appearances, ratings } = parsed.data;
+
+  const { data: fixture } = await supabase
+    .from("fixtures")
+    .select("id")
+    .eq("id", fixture_id)
+    .in("team_id", teamIds)
+    .single();
+
+  if (!fixture) return { error: "Fixture not found." };
 
   const { error: fnError } = await supabase.functions.invoke("log-match", {
     body: { fixture_id, team_score, opponent_score, match_notes, appearances, ratings },

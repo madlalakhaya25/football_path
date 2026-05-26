@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Calendar, Trophy, Plus } from "lucide-react";
 import { CreateTeamForm } from "@/components/create-team-form";
 
 export default async function CoachDashboardPage() {
@@ -10,39 +12,45 @@ export default async function CoachDashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");
 
-  const { data: team } = await supabase
+  const { data: teams } = await supabase
     .from("teams")
-    .select("id, name, age_group, invite_code")
+    .select(`
+      id, name, age_group, invite_code,
+      team_members ( player_id, active ),
+      fixtures ( id, status )
+    `)
     .eq("coach_id", user.id)
-    .eq("active", true)
-    .single();
+    .eq("active", true);
 
-  const [squadResult, fixturesResult] = await Promise.all([
-    team
-      ? supabase.from("team_members").select("player_id").eq("team_id", team.id).eq("active", true)
-      : Promise.resolve({ data: [] }),
-    team
-      ? supabase.from("fixtures").select("id, opponent, fixture_date, status").eq("team_id", team.id).order("fixture_date", { ascending: false }).limit(5)
-      : Promise.resolve({ data: [] }),
-  ]);
-
-  const squadCount = squadResult.data?.length ?? 0;
-  const fixtures = fixturesResult.data ?? [];
-  const upcoming = fixtures.filter((f: { status: string }) => f.status === "upcoming");
+  const allTeams = (teams ?? []).map((team: {
+    id: string;
+    name: string;
+    age_group: string | null;
+    invite_code: string;
+    team_members: { player_id: string; active: boolean }[];
+    fixtures: { id: string; status: string }[];
+  }) => ({
+    ...team,
+    squadCount: team.team_members.filter((m) => m.active).length,
+    upcomingCount: team.fixtures.filter((f) => f.status === "upcoming").length,
+  }));
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Coach Dashboard</h1>
-        {team && (
-          <Badge variant="brand" className="text-sm">
-            {team.name} {team.age_group && `· ${team.age_group}`}
-          </Badge>
+        {allTeams.length > 0 && (
+          <Button asChild>
+            <Link href="#create-team">
+              <Plus className="size-4" aria-hidden="true" />
+              New team
+            </Link>
+          </Button>
         )}
       </div>
 
-      {!team ? (
-        <Card>
+      {allTeams.length === 0 ? (
+        <Card id="create-team">
           <CardHeader>
             <CardTitle>Create your team</CardTitle>
             <CardDescription>Set up your team to start managing your squad and fixtures.</CardDescription>
@@ -52,72 +60,61 @@ export default async function CoachDashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
-            <CardHeader className="flex-row items-center gap-3 pb-2">
-              <span className="grid size-9 place-items-center rounded-lg bg-brand/15 text-primary">
-                <Users className="size-4" aria-hidden="true" />
-              </span>
-              <CardTitle className="text-sm font-medium text-muted-foreground">Squad size</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold tabular-nums">{squadCount}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex-row items-center gap-3 pb-2">
-              <span className="grid size-9 place-items-center rounded-lg bg-brand/15 text-primary">
-                <Calendar className="size-4" aria-hidden="true" />
-              </span>
-              <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold tabular-nums">{upcoming.length}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex-row items-center gap-3 pb-2">
-              <span className="grid size-9 place-items-center rounded-lg bg-brand/15 text-primary">
-                <Trophy className="size-4" aria-hidden="true" />
-              </span>
-              <CardTitle className="text-sm font-medium text-muted-foreground">Invite code</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="font-mono text-lg font-bold tracking-widest">{team.invite_code}</p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {fixtures.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Recent fixtures</h2>
-          <div className="divide-y divide-border rounded-xl border border-border">
-            {fixtures.map((f: { id: string; opponent: string; fixture_date: string; status: string }) => (
-              <div key={f.id} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <p className="font-medium">vs {f.opponent}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(f.fixture_date).toLocaleDateString("en-ZA", {
-                      day: "numeric", month: "short", year: "numeric",
-                    })}
-                  </p>
-                </div>
-                <Badge
-                  variant={
-                    f.status === "completed" ? "success"
-                    : f.status === "cancelled" ? "danger"
-                    : "neutral"
-                  }
-                  className="capitalize"
-                >
-                  {f.status}
-                </Badge>
-              </div>
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {allTeams.map((team) => (
+              <Card key={team.id} className="flex flex-col">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle className="text-lg leading-tight">{team.name}</CardTitle>
+                    {team.age_group && (
+                      <Badge variant="brand" className="shrink-0 text-xs">
+                        {team.age_group}
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="flex flex-1 flex-col gap-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium">
+                      <Users className="size-3 text-muted-foreground" aria-hidden="true" />
+                      {team.squadCount} players
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium">
+                      <Calendar className="size-3 text-muted-foreground" aria-hidden="true" />
+                      {team.upcomingCount} upcoming
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium">
+                      <Trophy className="size-3 text-muted-foreground" aria-hidden="true" />
+                      <span className="font-mono tracking-widest">{team.invite_code}</span>
+                    </span>
+                  </div>
+                  <div className="mt-auto flex gap-2">
+                    <Button asChild size="sm" variant="outline" className="flex-1">
+                      <Link href={`/dashboard/coach/squad?team=${team.id}`}>
+                        Squad →
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline" className="flex-1">
+                      <Link href={`/dashboard/coach/fixtures?team=${team.id}`}>
+                        Fixtures →
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
+
+          <Card id="create-team">
+            <CardHeader>
+              <CardTitle>Create another team</CardTitle>
+              <CardDescription>Add a new team to your coaching portfolio.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CreateTeamForm />
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
