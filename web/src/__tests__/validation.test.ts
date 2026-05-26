@@ -1,6 +1,8 @@
 import {
   loginSchema,
-  otpSchema,
+  registerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   createPlayerSchema,
   createTeamSchema,
   createFixtureSchema,
@@ -9,42 +11,122 @@ import {
 } from "@/lib/validation";
 
 describe("loginSchema", () => {
-  it("accepts a valid 10-digit number starting with 0", () => {
-    expect(loginSchema.safeParse({ phone: "0712345678" }).success).toBe(true);
+  it("accepts valid email and password", () => {
+    expect(loginSchema.safeParse({ email: "user@example.com", password: "secret1" }).success).toBe(true);
   });
 
-  it("accepts a +27 international format", () => {
-    expect(loginSchema.safeParse({ phone: "+27712345678" }).success).toBe(true);
+  it("rejects an invalid email", () => {
+    expect(loginSchema.safeParse({ email: "not-an-email", password: "secret1" }).success).toBe(false);
   });
 
-  it("rejects a landline (starts with 01)", () => {
-    expect(loginSchema.safeParse({ phone: "0112345678" }).success).toBe(false);
+  it("rejects a password shorter than 6 characters", () => {
+    expect(loginSchema.safeParse({ email: "user@example.com", password: "abc" }).success).toBe(false);
   });
 
-  it("rejects a number that is too short", () => {
-    expect(loginSchema.safeParse({ phone: "071234" }).success).toBe(false);
+  it("rejects an empty password", () => {
+    expect(loginSchema.safeParse({ email: "user@example.com", password: "" }).success).toBe(false);
   });
 
-  it("rejects an empty string", () => {
-    expect(loginSchema.safeParse({ phone: "" }).success).toBe(false);
+  it("rejects an empty email", () => {
+    expect(loginSchema.safeParse({ email: "", password: "secret1" }).success).toBe(false);
   });
 });
 
-describe("otpSchema", () => {
-  it("accepts exactly 6 digits", () => {
-    expect(otpSchema.safeParse({ token: "123456" }).success).toBe(true);
+describe("registerSchema", () => {
+  it("accepts valid registration data", () => {
+    expect(
+      registerSchema.safeParse({
+        full_name: "Sipho Dlamini",
+        email: "sipho@example.com",
+        password: "password123",
+        role: "player",
+      }).success
+    ).toBe(true);
   });
 
-  it("rejects 5 digits", () => {
-    expect(otpSchema.safeParse({ token: "12345" }).success).toBe(false);
+  it("accepts with optional share_token for parent", () => {
+    expect(
+      registerSchema.safeParse({
+        full_name: "Jane Doe",
+        email: "jane@example.com",
+        password: "password123",
+        role: "parent",
+        share_token: "a3f9b2c1d4",
+      }).success
+    ).toBe(true);
   });
 
-  it("rejects 7 digits", () => {
-    expect(otpSchema.safeParse({ token: "1234567" }).success).toBe(false);
+  it("rejects a name shorter than 2 characters", () => {
+    expect(
+      registerSchema.safeParse({
+        full_name: "J",
+        email: "j@example.com",
+        password: "password123",
+        role: "player",
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects a password shorter than 8 characters", () => {
+    expect(
+      registerSchema.safeParse({
+        full_name: "Sipho Dlamini",
+        email: "sipho@example.com",
+        password: "short",
+        role: "player",
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects an invalid role", () => {
+    expect(
+      registerSchema.safeParse({
+        full_name: "Sipho Dlamini",
+        email: "sipho@example.com",
+        password: "password123",
+        role: "admin",
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe("forgotPasswordSchema", () => {
+  it("accepts a valid email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "user@example.com" }).success).toBe(true);
+  });
+
+  it("rejects an invalid email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "not-an-email" }).success).toBe(false);
   });
 
   it("rejects an empty string", () => {
-    expect(otpSchema.safeParse({ token: "" }).success).toBe(false);
+    expect(forgotPasswordSchema.safeParse({ email: "" }).success).toBe(false);
+  });
+});
+
+describe("resetPasswordSchema", () => {
+  it("accepts matching passwords of at least 8 characters", () => {
+    expect(
+      resetPasswordSchema.safeParse({ password: "newpassword", confirm: "newpassword" }).success
+    ).toBe(true);
+  });
+
+  it("rejects when passwords don't match", () => {
+    expect(
+      resetPasswordSchema.safeParse({ password: "newpassword", confirm: "different" }).success
+    ).toBe(false);
+  });
+
+  it("rejects a password shorter than 8 characters", () => {
+    expect(
+      resetPasswordSchema.safeParse({ password: "short", confirm: "short" }).success
+    ).toBe(false);
+  });
+
+  it("rejects an empty confirm field", () => {
+    expect(
+      resetPasswordSchema.safeParse({ password: "newpassword", confirm: "" }).success
+    ).toBe(false);
   });
 });
 
