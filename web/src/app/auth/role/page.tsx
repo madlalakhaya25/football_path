@@ -48,7 +48,7 @@ export default function RolePage() {
         id: user.id,
         role: selected,
         academy_id: DEFAULT_ACADEMY_ID,
-        full_name: user.phone ?? "New user",
+        full_name: user.email?.split("@")[0] ?? "New user",
       })
       .select("id, role, academy_id, full_name")
       .single();

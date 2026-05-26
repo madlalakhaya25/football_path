@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { loginSchema, type LoginInput } from "@/lib/validation";
 import { createClient } from "@/lib/supabase/client";
 
+const INPUT_CLASS =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
+const ROLE_ROUTES: Record<string, string> = {
+  admin: "/dashboard/admin",
+  coach: "/dashboard/coach",
+  player: "/dashboard/player",
+  parent: "/dashboard/parent",
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -22,21 +32,30 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  async function onSubmit({ phone }: LoginInput) {
+  async function onSubmit({ email, password }: LoginInput) {
     setServerError(null);
     const supabase = createClient();
     if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); return; }
 
-    const normalised = phone.startsWith("+27")
-      ? phone
-      : "+27" + phone.replace(/^0/, "");
-
-    const { error } = await supabase.auth.signInWithOtp({ phone: normalised });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setServerError(error.message);
       return;
     }
-    router.push(`/auth/verify?phone=${encodeURIComponent(normalised)}`);
+
+    const user = data.user;
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("id, role, academy_id, full_name")
+      .eq("id", user.id)
+      .single();
+
+    if (!profileData?.role) {
+      router.push("/auth/role");
+      return;
+    }
+
+    router.push(ROLE_ROUTES[profileData.role] ?? "/dashboard/player");
   }
 
   return (
@@ -51,28 +70,55 @@ export default function LoginPage() {
           <Logo />
           <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
           <p className="text-center text-sm text-muted-foreground">
-            Enter your South African mobile number to receive a one-time PIN.
+            Enter your email and password to sign in.
           </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="space-y-1.5">
-            <label htmlFor="phone" className="text-sm font-medium">
-              Phone number
+            <label htmlFor="email" className="text-sm font-medium">
+              Email address
             </label>
             <input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="071 234 5678"
-              {...register("phone")}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              {...register("email")}
+              className={INPUT_CLASS}
             />
-            {errors.phone && (
+            {errors.email && (
               <p role="alert" className="text-xs text-destructive">
-                {errors.phone.message}
+                {errors.email.message}
               </p>
             )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              {...register("password")}
+              className={INPUT_CLASS}
+            />
+            {errors.password && (
+              <p role="alert" className="text-xs text-destructive">
+                {errors.password.message}
+              </p>
+            )}
+            <div className="text-right">
+              <Link
+                href="/auth/forgot-password"
+                className="text-xs text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {serverError && (
@@ -82,7 +128,7 @@ export default function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Sending…" : "Send OTP"}
+            {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
         </form>
         <p className="text-center text-sm text-muted-foreground">

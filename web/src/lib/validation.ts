@@ -2,28 +2,34 @@ import { z } from "zod";
 
 /** Validation schemas — ported from the Expo app (framework-agnostic). */
 
+export const loginSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
+  password: z.string().min(6, "Enter your password"),
+});
+export type LoginInput = z.infer<typeof loginSchema>;
+
 export const registerSchema = z.object({
   full_name: z.string().min(2, "Enter your full name"),
-  phone: z
-    .string()
-    .min(9, "Enter a valid phone number")
-    .regex(/^(\+27|0)[6-8][0-9]{8}$/, "Enter a valid South African number"),
-  role: z.enum(["player", "coach", "parent"], {
-    error: "Choose a role",
-  }),
+  email: z.string().email("Enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  role: z.enum(["player", "coach", "parent"], { error: "Choose a role" }),
+  share_token: z.string().optional(),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
 
-export const loginSchema = z.object({
-  phone: z
-    .string()
-    .min(9, "Enter a valid phone number")
-    .regex(/^(\+27|0)[6-8][0-9]{8}$/, "Enter a valid South African number"),
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Enter a valid email address"),
 });
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
-export const otpSchema = z.object({
-  token: z.string().length(6, "OTP must be 6 digits"),
+export const resetPasswordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirm: z.string().min(1, "Confirm your password"),
+}).refine((d) => d.password === d.confirm, {
+  message: "Passwords don't match",
+  path: ["confirm"],
 });
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 const attrField = z.coerce.number().int().min(0).max(100).optional();
 
@@ -65,8 +71,6 @@ export const linkChildSchema = z.object({
   share_token: z.string().min(6, "Enter your child's code"),
 });
 
-export type LoginInput = z.infer<typeof loginSchema>;
-export type OtpInput = z.infer<typeof otpSchema>;
 export type CreatePlayerInput = z.infer<typeof createPlayerSchema>;
 export type CreateTeamInput = z.infer<typeof createTeamSchema>;
 export type CreateFixtureInput = z.infer<typeof createFixtureSchema>;

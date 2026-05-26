@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronRight,
   Shield,
+  Megaphone,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -34,10 +35,12 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { href: "/dashboard/coach", label: "Overview", Icon: LayoutDashboard },
     { href: "/dashboard/coach/squad", label: "Squad", Icon: Users },
     { href: "/dashboard/coach/fixtures", label: "Fixtures", Icon: Calendar },
+    { href: "/dashboard/coach/announcements", label: "Announcements", Icon: Megaphone },
   ],
   player: [
     { href: "/dashboard/player", label: "My Passport", Icon: UserCircle },
     { href: "/dashboard/player/fixtures", label: "Fixtures", Icon: Calendar },
+    { href: "/dashboard/player/announcements", label: "Announcements", Icon: Megaphone },
   ],
   parent: [
     { href: "/dashboard/parent", label: "My Children", Icon: UserCircle },

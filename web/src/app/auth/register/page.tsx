@@ -10,16 +10,28 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { registerSchema, type RegisterInput } from "@/lib/validation";
 import { createClient } from "@/lib/supabase/client";
+import { DEFAULT_ACADEMY_ID } from "@/lib/constants";
+
+const INPUT_CLASS =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
+const ROLE_ROUTES: Record<string, string> = {
+  admin: "/dashboard/admin",
+  coach: "/dashboard/coach",
+  player: "/dashboard/player",
+  parent: "/dashboard/parent",
+};
 
 const ROLES = [
-  { value: "player" as const,  label: "Player",  description: "Build your passport and get seen.", Icon: Target },
-  { value: "coach"  as const,  label: "Coach",   description: "Manage your squad and log results.", Icon: Users },
-  { value: "parent" as const,  label: "Parent",  description: "Follow your child's progress.", Icon: Shield },
+  { value: "player" as const, label: "Player",  description: "Build your passport and get seen.", Icon: Target },
+  { value: "coach"  as const, label: "Coach",   description: "Manage your squad and log results.", Icon: Users },
+  { value: "parent" as const, label: "Parent",  description: "Follow your child's progress.", Icon: Shield },
 ];
 
 export default function RegisterPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   const {
     register,
@@ -36,18 +48,59 @@ export default function RegisterPage() {
     const supabase = createClient();
     if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); return; }
 
-    const normalised = data.phone.startsWith("+27")
-      ? data.phone
-      : "+27" + data.phone.replace(/^0/, "");
-
-    const { error } = await supabase.auth.signInWithOtp({ phone: normalised });
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: { data: { full_name: data.full_name, role: data.role } },
+    });
     if (error) { setServerError(error.message); return; }
 
-    sessionStorage.setItem(
-      "gf-register",
-      JSON.stringify({ full_name: data.full_name, role: data.role, phone: normalised })
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setConfirmationSent(true);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setServerError("Could not retrieve user after sign-up."); return; }
+
+    await supabase
+      .from("profiles")
+      .update({ full_name: data.full_name, role: data.role, academy_id: DEFAULT_ACADEMY_ID })
+      .eq("id", user.id);
+
+    if (data.role === "parent" && data.share_token && data.share_token.trim() !== "") {
+      const { data: player } = await supabase
+        .from("players")
+        .select("id")
+        .eq("share_token", data.share_token.trim().toLowerCase())
+        .single();
+
+      if (player) {
+        await supabase
+          .from("parent_player_links")
+          .upsert({ parent_id: user.id, player_id: player.id }, { onConflict: "parent_id,player_id" });
+      }
+    }
+
+    router.push(ROLE_ROUTES[data.role]);
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center px-4">
+        <div className="w-full max-w-sm space-y-4 text-center">
+          <Logo />
+          <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+          <p className="text-sm text-muted-foreground">
+            Check your email to confirm your account.
+          </p>
+          <Link href="/auth/login" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+            Back to sign in
+          </Link>
+        </div>
+      </div>
     );
-    router.push(`/auth/verify?phone=${encodeURIComponent(normalised)}`);
   }
 
   return (
@@ -79,23 +132,37 @@ export default function RegisterPage() {
               autoComplete="name"
               placeholder="Sipho Dlamini"
               {...register("full_name")}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+              className={INPUT_CLASS}
             />
             {errors.full_name && <p role="alert" className="text-xs text-destructive">{errors.full_name.message}</p>}
           </div>
 
-          {/* Phone */}
+          {/* Email */}
           <div className="space-y-1.5">
-            <label htmlFor="phone" className="text-sm font-medium">Phone number</label>
+            <label htmlFor="email" className="text-sm font-medium">Email address</label>
             <input
-              id="phone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="071 234 5678"
-              {...register("phone")}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              {...register("email")}
+              className={INPUT_CLASS}
             />
-            {errors.phone && <p role="alert" className="text-xs text-destructive">{errors.phone.message}</p>}
+            {errors.email && <p role="alert" className="text-xs text-destructive">{errors.email.message}</p>}
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1.5">
+            <label htmlFor="password" className="text-sm font-medium">Password</label>
+            <input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="••••••••"
+              {...register("password")}
+              className={INPUT_CLASS}
+            />
+            {errors.password && <p role="alert" className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
 
           {/* Role */}
@@ -129,6 +196,24 @@ export default function RegisterPage() {
             {errors.role && <p role="alert" className="text-xs text-destructive">{errors.role.message}</p>}
           </div>
 
+          {/* Player code — shown only for parents */}
+          {selectedRole === "parent" && (
+            <div className="space-y-1.5">
+              <label htmlFor="share_token" className="text-sm font-medium">
+                Child&apos;s player code <span className="text-muted-foreground font-normal">(optional)</span>
+              </label>
+              <input
+                id="share_token"
+                type="text"
+                autoComplete="off"
+                placeholder="e.g. a3f9b2c1d4"
+                {...register("share_token")}
+                className={INPUT_CLASS}
+              />
+              <p className="text-xs text-muted-foreground">You can also add this later from your dashboard.</p>
+            </div>
+          )}
+
           {serverError && (
             <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {serverError}
@@ -136,7 +221,7 @@ export default function RegisterPage() {
           )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Sending OTP…" : "Continue"}
+            {isSubmitting ? "Creating account…" : "Create account"}
           </Button>
         </form>
       </div>
