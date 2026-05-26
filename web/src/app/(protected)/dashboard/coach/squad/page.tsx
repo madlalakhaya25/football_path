@@ -149,7 +149,7 @@ export default async function SquadPage({
                         className="group relative flex items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40"
                       >
                         {/* Avatar */}
-                        <Link href={`/dashboard/coach/squad/${player.id}`} className="flex-shrink-0">
+                        <Link href={`/dashboard/coach/squad/${player.id}?team=${team.id}`} className="flex-shrink-0">
                           {player.photo_url ? (
                             <Image
                               src={player.photo_url}
@@ -166,7 +166,7 @@ export default async function SquadPage({
                         </Link>
 
                         {/* Info */}
-                        <Link href={`/dashboard/coach/squad/${player.id}`} className="min-w-0 flex-1">
+                        <Link href={`/dashboard/coach/squad/${player.id}?team=${team.id}`} className="min-w-0 flex-1">
                           <p className="truncate font-semibold leading-tight">{player.full_name}</p>
                           <div className="mt-1 flex flex-wrap gap-1">
                             {player.age && (

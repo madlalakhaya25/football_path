@@ -110,7 +110,7 @@ export default async function PlayerDetailPage({
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
-          <Link href="/dashboard/coach/squad">
+          <Link href={teamId ? `/dashboard/coach/squad?team=${teamId}` : "/dashboard/coach/squad"}>
             <ArrowLeft className="size-4" aria-hidden="true" />
             Squad
           </Link>
