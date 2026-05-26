@@ -12,6 +12,11 @@ import { POSITIONS, FEET } from "@/lib/types";
 
 export const revalidate = 60;
 
+type AttrData = {
+  pace: number; shooting: number; passing: number;
+  dribbling: number; defending: number; physical: number;
+} | null;
+
 interface PassportData {
   id: string;
   full_name: string;
@@ -22,8 +27,18 @@ interface PassportData {
   photo_url: string | null;
   share_token: string;
   academy_name: string | null;
-  ratings: { rating: number; note: string | null; fixture_date: string | null; opponent: string | null }[];
+  ratings: { rating: number; note: string | null; fixture_date: string | null; opponent: string | null; created_at: string }[];
+  attributes: AttrData;
 }
+
+const ATTR_LABELS = [
+  { key: "pace",      label: "Pace" },
+  { key: "shooting",  label: "Shooting" },
+  { key: "passing",   label: "Passing" },
+  { key: "dribbling", label: "Dribbling" },
+  { key: "defending", label: "Defending" },
+  { key: "physical",  label: "Physical" },
+] as const;
 
 export default async function PublicPassportPage({
   params,
@@ -59,11 +74,7 @@ export default async function PublicPassportPage({
     : null;
   const initials = passport.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
 
-  // Simulated attribute bars from avg rating (no granular attrs stored yet)
-  const ATTRS = [
-    { label: "Overall", value: avg },
-    { label: "Appearances", value: Math.min(100, ratings.length * 5) },
-  ];
+  const attrs = passport.attributes;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -111,11 +122,15 @@ export default async function PublicPassportPage({
                   {footLabel && <Badge variant="neutral">{footLabel} foot</Badge>}
                 </div>
 
-                <div className="space-y-2 pt-1">
-                  {ATTRS.map((a) => (
-                    <StatBar key={a.label} label={a.label} value={a.value} />
-                  ))}
-                </div>
+                {attrs ? (
+                  <div className="space-y-2 pt-1">
+                    {ATTR_LABELS.map(({ key, label }) => (
+                      <StatBar key={key} label={label} value={attrs[key]} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground pt-1">No ability assessment yet.</p>
+                )}
 
                 <div className="grid grid-cols-2 gap-3 pt-2 text-sm border-t border-border">
                   <div>
@@ -152,9 +167,7 @@ export default async function PublicPassportPage({
               ) : (
                 <div className="divide-y divide-border rounded-xl border border-border">
                   {[...ratings]
-                    .sort((a, b) =>
-                      (b.fixture_date ?? "").localeCompare(a.fixture_date ?? "")
-                    )
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((r, i) => (
                       <div key={i} className="flex items-start gap-4 px-4 py-3">
                         <div className="flex shrink-0 gap-0.5 pt-0.5">
@@ -168,14 +181,13 @@ export default async function PublicPassportPage({
                         </div>
                         <div className="min-w-0 flex-1">
                           {r.opponent && <p className="font-medium text-sm">vs {r.opponent}</p>}
+                          {!r.opponent && <p className="font-medium text-sm text-muted-foreground">Standalone assessment</p>}
                           {r.note && <p className="text-sm text-muted-foreground mt-0.5">&ldquo;{r.note}&rdquo;</p>}
-                          {r.fixture_date && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {new Date(r.fixture_date).toLocaleDateString("en-ZA", {
-                                day: "numeric", month: "short", year: "numeric",
-                              })}
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(r.created_at).toLocaleDateString("en-ZA", {
+                              day: "numeric", month: "short", year: "numeric",
+                            })}
+                          </p>
                         </div>
                       </div>
                     ))}

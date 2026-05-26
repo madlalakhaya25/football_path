@@ -9,6 +9,38 @@ const updateRatingSchema = z.object({
   note: z.string().max(200).optional(),
 });
 
+export async function addStandaloneRating(
+  playerId: string,
+  payload: { rating: number; note: string }
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  const parsed = updateRatingSchema.safeParse({
+    rating: payload.rating,
+    note: payload.note || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors.rating?.[0] ?? "Invalid input." };
+  }
+
+  const { error } = await supabase
+    .from("player_ratings")
+    .insert({
+      player_id: playerId,
+      coach_id: user.id,
+      fixture_id: null,
+      rating: parsed.data.rating,
+      note: parsed.data.note ?? null,
+    });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/dashboard/coach/squad/${playerId}`);
+  return { success: true };
+}
+
 export async function updateRating(
   ratingId: string,
   playerId: string,
