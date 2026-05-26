@@ -18,7 +18,7 @@ export default function WelcomeScreen() {
       <View className="flex-1 px-6 justify-between py-10">
         {/* Logo + Academy */}
         <View className="items-center mt-6">
-          <Image source={require('@/assets/growfit.png')} style={{ width: 80, height: 80, borderRadius: 16 }} resizeMode="contain" />
+          <Image source={require('../../assets/growfit.png')} style={{ width: 80, height: 80, borderRadius: 16 }} resizeMode="contain" />
           <Text className="text-white text-3xl font-black tracking-tight mt-4">Growfit FA</Text>
         </View>
 
