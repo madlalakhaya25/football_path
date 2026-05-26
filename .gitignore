@@ -118,3 +118,4 @@ vite.config.ts.timestamp-*
 
 # Misc
 *.tgz
+.claude/worktrees/
