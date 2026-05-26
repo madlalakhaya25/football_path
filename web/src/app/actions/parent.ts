@@ -29,6 +29,5 @@ export async function linkChild(formData: FormData) {
     .upsert({ parent_id: user.id, player_id: player.id }, { onConflict: "parent_id,player_id" });
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard/parent");
-  return { success: true };
+  redirect("/dashboard/parent");
 }
