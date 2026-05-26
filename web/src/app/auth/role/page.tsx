@@ -9,8 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import type { AuthProfile } from "@/store/authStore";
 import type { UserRole } from "@/lib/types";
-
-const DEFAULT_ACADEMY_ID = "00000000-0000-0000-0000-000000000001";
+import { DEFAULT_ACADEMY_ID } from "@/lib/constants";
 
 const ROLES: { value: UserRole; label: string; description: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "player", label: "Player", description: "Track your stats and build your passport.", Icon: Target },
