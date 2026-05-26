@@ -12,7 +12,6 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -25,6 +24,9 @@ export default function LoginPage() {
 
   async function onSubmit({ phone }: LoginInput) {
     setServerError(null);
+    const supabase = createClient();
+    if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); return; }
+
     const normalised = phone.startsWith("+27")
       ? phone
       : "+27" + phone.replace(/^0/, "");

@@ -19,7 +19,6 @@ const ROLES = [
 
 export default function RegisterPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
@@ -34,6 +33,9 @@ export default function RegisterPage() {
 
   async function onSubmit(data: RegisterInput) {
     setServerError(null);
+    const supabase = createClient();
+    if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); return; }
+
     const normalised = data.phone.startsWith("+27")
       ? data.phone
       : "+27" + data.phone.replace(/^0/, "");

@@ -27,7 +27,6 @@ const ROLE_ROUTES: Record<UserRole, string> = {
 
 export default function RolePage() {
   const router = useRouter();
-  const supabase = createClient();
   const setProfile = useAuthStore((s) => s.setProfile);
 
   const [selected, setSelected] = useState<UserRole | null>(null);
@@ -38,6 +37,8 @@ export default function RolePage() {
     if (!selected) return;
     setLoading(true);
     setError(null);
+    const supabase = createClient();
+    if (!supabase) { setError("Auth service unavailable — check Supabase env vars."); setLoading(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/auth/login"); return; }

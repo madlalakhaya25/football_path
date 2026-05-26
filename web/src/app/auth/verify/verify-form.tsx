@@ -29,7 +29,6 @@ export function VerifyForm() {
   const router = useRouter();
   const params = useSearchParams();
   const phone = params.get("phone") ?? "";
-  const supabase = createClient();
   const setProfile = useAuthStore((s) => s.setProfile);
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -59,6 +58,8 @@ export function VerifyForm() {
     if (token.length !== 6) { setError("Enter all 6 digits."); return; }
     setLoading(true);
     setError(null);
+    const supabase = createClient();
+    if (!supabase) { setError("Auth service unavailable — check Supabase env vars."); setLoading(false); return; }
 
     const { error: authErr } = await supabase.auth.verifyOtp({ phone, token, type: "sms" });
     if (authErr) { setError(authErr.message); setLoading(false); return; }
@@ -124,6 +125,8 @@ export function VerifyForm() {
   }
 
   async function resend() {
+    const supabase = createClient();
+    if (!supabase) return;
     await supabase.auth.signInWithOtp({ phone });
     setError(null);
     setOtp(["", "", "", "", "", ""]);
