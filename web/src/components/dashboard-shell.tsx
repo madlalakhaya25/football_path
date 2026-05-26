@@ -10,6 +10,8 @@ import {
   ChevronRight,
   Shield,
   Megaphone,
+  Dumbbell,
+  Settings,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -35,11 +37,13 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { href: "/dashboard/coach", label: "Overview", Icon: LayoutDashboard },
     { href: "/dashboard/coach/squad", label: "Squad", Icon: Users },
     { href: "/dashboard/coach/fixtures", label: "Fixtures", Icon: Calendar },
+    { href: "/dashboard/coach/training", label: "Training", Icon: Dumbbell },
     { href: "/dashboard/coach/announcements", label: "Announcements", Icon: Megaphone },
   ],
   player: [
     { href: "/dashboard/player", label: "My Passport", Icon: UserCircle },
     { href: "/dashboard/player/fixtures", label: "Fixtures", Icon: Calendar },
+    { href: "/dashboard/player/training", label: "Training", Icon: Dumbbell },
     { href: "/dashboard/player/announcements", label: "Announcements", Icon: Megaphone },
   ],
   parent: [
@@ -106,6 +110,16 @@ export function DashboardShell({ profile, children }: Props) {
               <p className="text-xs capitalize text-muted-foreground">{profile.role}</p>
             </div>
           </div>
+          <Link
+            href={`/dashboard/${profile.role}/settings`}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+              pathname.startsWith(`/dashboard/${profile.role}/settings`) && "bg-primary/10 text-primary"
+            )}
+          >
+            <Settings className="size-4" aria-hidden="true" />
+            Settings
+          </Link>
           <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleSignOut}>
             <LogOut className="size-4" aria-hidden="true" />
             Sign out

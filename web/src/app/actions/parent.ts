@@ -22,9 +22,14 @@ export async function linkChild(formData: FormData) {
 
   if (!player) return { error: "No player found with that code. Double-check and try again." };
 
+  const relationship = (formData.get("relationship") as string) || "Parent";
+
   const { error } = await supabase
     .from("parent_player_links")
-    .upsert({ parent_id: user.id, player_id: player.id }, { onConflict: "parent_id,player_id" });
+    .upsert(
+      { parent_id: user.id, player_id: player.id, relationship },
+      { onConflict: "parent_id,player_id" }
+    );
 
   if (error) return { error: error.message };
   revalidatePath("/dashboard/parent");
