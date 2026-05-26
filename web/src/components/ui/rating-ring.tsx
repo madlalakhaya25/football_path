@@ -9,9 +9,9 @@ interface RatingRingProps {
 }
 
 function ratingColor(value: number) {
-  if (value >= 80) return "var(--rating-high)";
-  if (value >= 65) return "var(--rating-mid)";
-  return "var(--rating-low)";
+  if (value >= 80) return "var(--color-rating-high)";
+  if (value >= 65) return "var(--color-rating-mid)";
+  return "var(--color-rating-low)";
 }
 
 /** Circular overall-rating gauge (the signature "78 Overall" badge). */
@@ -43,7 +43,7 @@ export function RatingRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--secondary)"
+          stroke="var(--color-secondary)"
           strokeWidth={stroke}
         />
         <circle

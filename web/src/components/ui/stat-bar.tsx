@@ -9,9 +9,9 @@ interface StatBarProps {
 
 /** Colour the fill by performance band — high (lime) / mid (amber) / low (red). */
 function ratingColor(value: number) {
-  if (value >= 80) return "var(--rating-high)";
-  if (value >= 65) return "var(--rating-mid)";
-  return "var(--rating-low)";
+  if (value >= 80) return "var(--color-rating-high)";
+  if (value >= 65) return "var(--color-rating-mid)";
+  return "var(--color-rating-low)";
 }
 
 /** FIFA-card style attribute bar: label, animated fill, numeric value. */
