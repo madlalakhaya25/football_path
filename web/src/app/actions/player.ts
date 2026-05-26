@@ -10,24 +10,16 @@ export async function claimPlayerProfile(formData: FormData) {
   const token = (formData.get("share_token") as string ?? "").toLowerCase().trim();
   if (!token) return { error: "Share token is required." };
 
-  // Find the unclaimed player record with this token
-  const { data: player } = await supabase
-    .from("players")
-    .select("id, full_name")
-    .eq("share_token", token)
-    .is("profile_id", null)
-    .single();
-
-  if (!player) return { error: "Token not found, or this profile has already been claimed." };
-
-  // Claim it — the player_self_claim RLS policy (migration 003) permits this
-  const { error } = await supabase
-    .from("players")
-    .update({ profile_id: user.id })
-    .eq("id", player.id)
-    .is("profile_id", null);
+  // Use a SECURITY DEFINER RPC so the lookup works regardless of whether
+  // the player's profile has academy_id populated yet (migration 004)
+  const { data, error } = await supabase.rpc("claim_player_profile", {
+    p_share_token: token,
+  });
 
   if (error) return { error: error.message };
+
+  const result = data as { error?: string; success?: boolean };
+  if (result?.error) return { error: result.error };
 
   redirect("/dashboard/player");
 }
