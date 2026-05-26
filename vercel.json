@@ -1,8 +1,6 @@
 {
-  "buildCommand": "expo export -p web",
-  "outputDirectory": "dist",
-  "framework": null,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "framework": "nextjs",
+  "buildCommand": "cd web && npm install && next build",
+  "outputDirectory": "web/.next",
+  "installCommand": "npm install"
 }
