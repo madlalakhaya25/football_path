@@ -101,7 +101,7 @@ export default function Home() {
                 <Link href="/auth/register">Create your passport</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <a href="#features">Watch demo</a>
+                <Link href="/auth/login">Sign in</Link>
               </Button>
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">

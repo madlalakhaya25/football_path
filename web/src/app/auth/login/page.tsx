@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { loginSchema, type LoginInput } from "@/lib/validation";
@@ -36,7 +38,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4">
+    <div className="flex min-h-dvh flex-col px-4 py-6">
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground w-fit">
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back
+      </Link>
+      <div className="flex flex-1 flex-col items-center justify-center">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center gap-3">
           <Logo />
@@ -76,6 +83,13 @@ export default function LoginPage() {
             {isSubmitting ? "Sending…" : "Send OTP"}
           </Button>
         </form>
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link href="/auth/register" className="font-medium text-primary underline-offset-4 hover:underline">
+            Create one
+          </Link>
+        </p>
+      </div>
       </div>
     </div>
   );

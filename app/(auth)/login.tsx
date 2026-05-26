@@ -42,7 +42,7 @@ export default function LoginScreen() {
 
   return (
     <Screen>
-      <TouchableOpacity className="mb-8" onPress={() => router.back()}>
+      <TouchableOpacity className="mb-8" onPress={() => router.replace('/(auth)/welcome')}>
         <Text className="text-ink-secondary text-sm">← Back</Text>
       </TouchableOpacity>
 

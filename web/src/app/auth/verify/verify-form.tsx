@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -15,7 +17,6 @@ const ROLE_ROUTES: Record<UserRole, string> = {
   coach: "/dashboard/coach",
   player: "/dashboard/player",
   parent: "/dashboard/parent",
-  scout: "/dashboard/player",
 };
 
 interface RegistrationData {
@@ -130,7 +131,12 @@ export function VerifyForm() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4">
+    <div className="flex min-h-dvh flex-col px-4 py-6">
+      <Link href="/auth/login" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground w-fit">
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back
+      </Link>
+      <div className="flex flex-1 flex-col items-center justify-center">
       <div className="w-full max-w-sm space-y-8">
         <div className="flex flex-col items-center gap-3">
           <Logo />
@@ -180,6 +186,7 @@ export function VerifyForm() {
             Resend
           </button>
         </p>
+      </div>
       </div>
     </div>
   );

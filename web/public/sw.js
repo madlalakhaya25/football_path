@@ -1,4 +1,4 @@
-const CACHE_VERSION = "growfit-fa-v1";
+const CACHE_VERSION = "growfit-fa-v2";
 const OFFLINE_URL = "/offline";
 
 // App shell — pages that should always be cached on install
