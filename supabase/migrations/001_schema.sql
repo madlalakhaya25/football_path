@@ -209,6 +209,8 @@ $$;
 -- POLICIES: academies
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "academy_read_own"  ON academies;
+DROP POLICY IF EXISTS "academy_admin_all" ON academies;
 CREATE POLICY "academy_read_own"  ON academies FOR SELECT USING (id = auth_academy_id());
 CREATE POLICY "academy_admin_all" ON academies FOR ALL    USING (id = auth_academy_id() AND auth_role() = 'admin');
 
@@ -216,6 +218,10 @@ CREATE POLICY "academy_admin_all" ON academies FOR ALL    USING (id = auth_acade
 -- POLICIES: profiles
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "profile_read_own"   ON profiles;
+DROP POLICY IF EXISTS "profile_update_own" ON profiles;
+DROP POLICY IF EXISTS "profile_admin_read" ON profiles;
+DROP POLICY IF EXISTS "profile_coach_read" ON profiles;
 CREATE POLICY "profile_read_own"    ON profiles FOR SELECT USING (id = auth.uid());
 CREATE POLICY "profile_update_own"  ON profiles FOR UPDATE USING (id = auth.uid());
 CREATE POLICY "profile_admin_read"  ON profiles FOR SELECT USING (academy_id = auth_academy_id() AND auth_role() = 'admin');
@@ -225,6 +231,12 @@ CREATE POLICY "profile_coach_read"  ON profiles FOR SELECT USING (academy_id = a
 -- POLICIES: players
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "player_academy_read" ON players;
+DROP POLICY IF EXISTS "player_self_read"    ON players;
+DROP POLICY IF EXISTS "player_parent_read"  ON players;
+DROP POLICY IF EXISTS "player_staff_write"  ON players;
+DROP POLICY IF EXISTS "player_staff_update" ON players;
+DROP POLICY IF EXISTS "player_self_claim"   ON players;
 CREATE POLICY "player_academy_read" ON players FOR SELECT USING (academy_id = auth_academy_id());
 CREATE POLICY "player_self_read"    ON players FOR SELECT USING (profile_id = auth.uid());
 CREATE POLICY "player_parent_read"  ON players FOR SELECT USING (
@@ -243,6 +255,9 @@ CREATE POLICY "player_self_claim" ON players
 -- POLICIES: teams
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "team_read_academy" ON teams;
+DROP POLICY IF EXISTS "team_staff_write"  ON teams;
+DROP POLICY IF EXISTS "team_staff_update" ON teams;
 CREATE POLICY "team_read_academy"  ON teams FOR SELECT USING    (academy_id = auth_academy_id());
 CREATE POLICY "team_staff_write"   ON teams FOR INSERT WITH CHECK (academy_id = auth_academy_id() AND is_admin_or_coach());
 CREATE POLICY "team_staff_update"  ON teams FOR UPDATE USING    (academy_id = auth_academy_id() AND is_admin_or_coach());
@@ -251,6 +266,9 @@ CREATE POLICY "team_staff_update"  ON teams FOR UPDATE USING    (academy_id = au
 -- POLICIES: team_members
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "team_member_read"         ON team_members;
+DROP POLICY IF EXISTS "team_member_staff_write"  ON team_members;
+DROP POLICY IF EXISTS "team_member_staff_delete" ON team_members;
 CREATE POLICY "team_member_read" ON team_members FOR SELECT USING (
   EXISTS (SELECT 1 FROM teams t WHERE t.id = team_members.team_id AND t.academy_id = auth_academy_id())
 );
@@ -267,6 +285,10 @@ CREATE POLICY "team_member_staff_delete" ON team_members FOR DELETE USING (
 -- POLICIES: parent_player_links
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "parent_link_own"    ON parent_player_links;
+DROP POLICY IF EXISTS "parent_link_insert" ON parent_player_links;
+DROP POLICY IF EXISTS "parent_link_delete" ON parent_player_links;
+DROP POLICY IF EXISTS "parent_link_admin"  ON parent_player_links;
 CREATE POLICY "parent_link_own"    ON parent_player_links FOR SELECT USING (parent_id = auth.uid());
 CREATE POLICY "parent_link_insert" ON parent_player_links FOR INSERT WITH CHECK (parent_id = auth.uid() AND auth_role() = 'parent');
 CREATE POLICY "parent_link_delete" ON parent_player_links FOR DELETE USING (parent_id = auth.uid());
@@ -276,6 +298,9 @@ CREATE POLICY "parent_link_admin"  ON parent_player_links FOR ALL    USING (auth
 -- POLICIES: fixtures
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "fixture_read_academy"  ON fixtures;
+DROP POLICY IF EXISTS "fixture_staff_write"   ON fixtures;
+DROP POLICY IF EXISTS "fixture_staff_update"  ON fixtures;
 CREATE POLICY "fixture_read_academy" ON fixtures FOR SELECT USING (
   EXISTS (SELECT 1 FROM teams t WHERE t.id = fixtures.team_id AND t.academy_id = auth_academy_id())
 );
@@ -292,6 +317,9 @@ CREATE POLICY "fixture_staff_update" ON fixtures FOR UPDATE USING (
 -- POLICIES: match_results
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "result_read_academy" ON match_results;
+DROP POLICY IF EXISTS "result_staff_write"  ON match_results;
+DROP POLICY IF EXISTS "result_staff_update" ON match_results;
 CREATE POLICY "result_read_academy" ON match_results FOR SELECT USING (
   EXISTS (SELECT 1 FROM fixtures f JOIN teams t ON t.id = f.team_id WHERE f.id = match_results.fixture_id AND t.academy_id = auth_academy_id())
 );
@@ -308,6 +336,8 @@ CREATE POLICY "result_staff_update" ON match_results FOR UPDATE USING (
 -- POLICIES: match_appearances
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "appearance_read_academy" ON match_appearances;
+DROP POLICY IF EXISTS "appearance_staff_write"  ON match_appearances;
 CREATE POLICY "appearance_read_academy" ON match_appearances FOR SELECT USING (
   EXISTS (SELECT 1 FROM fixtures f JOIN teams t ON t.id = f.team_id WHERE f.id = match_appearances.fixture_id AND t.academy_id = auth_academy_id())
 );
@@ -320,6 +350,12 @@ CREATE POLICY "appearance_staff_write" ON match_appearances FOR INSERT WITH CHEC
 -- POLICIES: player_ratings
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "rating_coach_insert" ON player_ratings;
+DROP POLICY IF EXISTS "rating_coach_update" ON player_ratings;
+DROP POLICY IF EXISTS "rating_coach_delete" ON player_ratings;
+DROP POLICY IF EXISTS "rating_player_read"  ON player_ratings;
+DROP POLICY IF EXISTS "rating_parent_read"  ON player_ratings;
+DROP POLICY IF EXISTS "rating_staff_read"   ON player_ratings;
 CREATE POLICY "rating_coach_insert" ON player_ratings FOR INSERT WITH CHECK (coach_id = auth.uid() AND is_admin_or_coach());
 CREATE POLICY "rating_coach_update" ON player_ratings FOR UPDATE USING (coach_id = auth.uid());
 CREATE POLICY "rating_coach_delete" ON player_ratings FOR DELETE USING (coach_id = auth.uid());
@@ -348,6 +384,12 @@ CREATE POLICY "rating_staff_read" ON player_ratings FOR SELECT USING (
 -- POLICIES: player_attributes
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "attrs_coach_insert" ON player_attributes;
+DROP POLICY IF EXISTS "attrs_coach_update" ON player_attributes;
+DROP POLICY IF EXISTS "attrs_coach_delete" ON player_attributes;
+DROP POLICY IF EXISTS "attrs_staff_read"   ON player_attributes;
+DROP POLICY IF EXISTS "attrs_player_read"  ON player_attributes;
+DROP POLICY IF EXISTS "attrs_parent_read"  ON player_attributes;
 CREATE POLICY "attrs_coach_insert" ON player_attributes FOR INSERT WITH CHECK (coach_id = auth.uid() AND is_admin_or_coach());
 CREATE POLICY "attrs_coach_update" ON player_attributes FOR UPDATE USING (coach_id = auth.uid());
 CREATE POLICY "attrs_coach_delete" ON player_attributes FOR DELETE USING (coach_id = auth.uid());
@@ -365,6 +407,8 @@ CREATE POLICY "attrs_parent_read"  ON player_attributes FOR SELECT USING (
 -- POLICIES: announcements
 -- ─────────────────────────────────────────
 
+DROP POLICY IF EXISTS "announcement_read_academy" ON announcements;
+DROP POLICY IF EXISTS "announcement_coach_write"  ON announcements;
 CREATE POLICY "announcement_read_academy" ON announcements FOR SELECT USING (
   EXISTS (SELECT 1 FROM teams t WHERE t.id = announcements.team_id AND t.academy_id = auth_academy_id())
 );
