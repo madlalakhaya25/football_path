@@ -42,9 +42,6 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   parent: [
     { href: "/dashboard/parent", label: "My Children", Icon: UserCircle },
   ],
-  scout: [
-    { href: "/dashboard/player", label: "Discover", Icon: Users },
-  ],
 };
 
 interface Props {
