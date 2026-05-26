@@ -7,7 +7,6 @@ const ROLE_ROUTES: Record<UserRole, string> = {
   coach: "/dashboard/coach",
   player: "/dashboard/player",
   parent: "/dashboard/parent",
-  scout: "/dashboard/player",
 };
 
 export default async function DashboardPage() {
