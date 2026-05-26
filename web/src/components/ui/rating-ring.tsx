@@ -22,10 +22,12 @@ export function RatingRing({
   className,
 }: RatingRingProps) {
   const clamped = Math.max(0, Math.min(100, value));
-  const stroke = Math.max(5, Math.round(size * 0.08));
+  const stroke = Math.max(4, Math.round(size * 0.08));
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (clamped / 100) * circumference;
+  const valueFontSize = Math.max(11, Math.round(size * 0.27));
+  const labelFontSize = Math.max(7, Math.round(size * 0.115));
 
   return (
     <div
@@ -60,8 +62,8 @@ export function RatingRing({
         />
       </svg>
       <div className="absolute flex flex-col items-center leading-none">
-        <span className="text-2xl font-bold tabular-nums">{clamped}</span>
-        <span className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+        <span className="font-bold tabular-nums" style={{ fontSize: valueFontSize }}>{clamped}</span>
+        <span className="mt-0.5 uppercase tracking-wide text-muted-foreground" style={{ fontSize: labelFontSize }}>
           {label}
         </span>
       </div>
