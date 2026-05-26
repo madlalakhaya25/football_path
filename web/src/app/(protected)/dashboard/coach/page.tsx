@@ -3,8 +3,14 @@ import { requireUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, Trophy, Plus } from "lucide-react";
+import { Users, Calendar, Trophy, Plus, Dumbbell, ChevronRight } from "lucide-react";
 import { CreateTeamForm } from "@/components/create-team-form";
+import { daysFromNow } from "@/lib/utils";
+
+const SESSION_TYPE_LABEL: Record<string, string> = {
+  general: "General", technical: "Technical", tactical: "Tactical",
+  fitness: "Fitness", match_prep: "Match Prep", recovery: "Recovery",
+};
 
 export default async function CoachDashboardPage() {
   const { supabase, user } = await requireUser();
@@ -33,10 +39,39 @@ export default async function CoachDashboardPage() {
     })
   );
 
+  const teamIds = allTeams.map((t) => t.id);
+  const now = new Date().toISOString();
+
+  const [{ data: nextFixtures }, { data: nextSessions }] = await Promise.all([
+    teamIds.length
+      ? supabase
+          .from("fixtures")
+          .select("id, opponent, fixture_date, is_home, team_id, teams(name)")
+          .in("team_id", teamIds)
+          .eq("status", "upcoming")
+          .gte("fixture_date", now)
+          .order("fixture_date")
+          .limit(1)
+      : Promise.resolve({ data: null }),
+    teamIds.length
+      ? supabase
+          .from("training_sessions")
+          .select("id, title, session_date, location, session_type, team_id, teams(name)")
+          .in("team_id", teamIds)
+          .gte("session_date", now)
+          .order("session_date")
+          .limit(1)
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const nextFixture = nextFixtures?.[0] ?? null;
+  const nextSession = nextSessions?.[0] ?? null;
+  const multiTeam = allTeams.length > 1;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Coach Dashboard</h1>
+        <h1 className="text-2xl font-bold">Dashboard</h1>
         {allTeams.length > 0 && (
           <Button asChild>
             <Link href="#create-team">
@@ -50,8 +85,8 @@ export default async function CoachDashboardPage() {
       {allTeams.length === 0 ? (
         <Card id="create-team">
           <CardHeader>
-            <CardTitle>Create your team</CardTitle>
-            <CardDescription>Set up your team to start managing your squad and fixtures.</CardDescription>
+            <CardTitle>Create your first team</CardTitle>
+            <CardDescription>Set up a team to start managing your squad, fixtures, and training.</CardDescription>
           </CardHeader>
           <CardContent>
             <CreateTeamForm />
@@ -59,9 +94,86 @@ export default async function CoachDashboardPage() {
         </Card>
       ) : (
         <div className="space-y-6">
+
+          {/* ── What's Next ───────────────────────────────────────── */}
+          {(nextFixture || nextSession) && (
+            <section className="grid gap-3 sm:grid-cols-2">
+              {nextFixture && (() => {
+                const days = daysFromNow(nextFixture.fixture_date);
+                const date = new Date(nextFixture.fixture_date);
+                const teamName = multiTeam
+                  ? (Array.isArray(nextFixture.teams)
+                    ? nextFixture.teams[0]?.name
+                    : (nextFixture.teams as { name: string } | null)?.name)
+                  : null;
+                const daysLabel = days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+                return (
+                  <Link href={`/dashboard/coach/fixtures/${nextFixture.id}`}>
+                    <div className="group flex h-full items-start gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Calendar className="size-5 text-primary" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                          Next fixture · {daysLabel}
+                        </p>
+                        <p className="mt-1 font-semibold leading-snug">
+                          {nextFixture.is_home ? "vs" : "@"} {nextFixture.opponent}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" })}
+                          {" · "}
+                          {date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
+                          {teamName && ` · ${teamName}`}
+                        </p>
+                      </div>
+                      <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </Link>
+                );
+              })()}
+
+              {nextSession && (() => {
+                const days = daysFromNow(nextSession.session_date);
+                const date = new Date(nextSession.session_date);
+                const teamName = multiTeam
+                  ? (Array.isArray(nextSession.teams)
+                    ? nextSession.teams[0]?.name
+                    : (nextSession.teams as { name: string } | null)?.name)
+                  : null;
+                const daysLabel = days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+                return (
+                  <Link href={`/dashboard/coach/training/${nextSession.id}`}>
+                    <div className="group flex h-full items-start gap-3 overflow-hidden rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Dumbbell className="size-5 text-primary" aria-hidden="true" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                          Next training · {daysLabel}
+                        </p>
+                        <p className="mt-1 font-semibold leading-snug">{nextSession.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short" })}
+                          {" · "}
+                          {date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
+                          {nextSession.location && ` · ${nextSession.location}`}
+                          {teamName && ` · ${teamName}`}
+                        </p>
+                      </div>
+                      <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+                    </div>
+                  </Link>
+                );
+              })()}
+            </section>
+          )}
+
+          {/* ── Teams ─────────────────────────────────────────────── */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {allTeams.map((team) => (
-              <Card key={team.id} className="flex flex-col">
+              <Card key={team.id} className="flex flex-col overflow-hidden">
+                <div className="h-1 bg-primary" />
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg leading-tight">{team.name}</CardTitle>
@@ -89,14 +201,13 @@ export default async function CoachDashboardPage() {
                   </div>
                   <div className="mt-auto flex gap-2">
                     <Button asChild size="sm" variant="outline" className="flex-1">
-                      <Link href={`/dashboard/coach/squad?team=${team.id}`}>
-                        Squad →
-                      </Link>
+                      <Link href={`/dashboard/coach/squad?team=${team.id}`}>Squad</Link>
                     </Button>
                     <Button asChild size="sm" variant="outline" className="flex-1">
-                      <Link href={`/dashboard/coach/fixtures?team=${team.id}`}>
-                        Fixtures →
-                      </Link>
+                      <Link href={`/dashboard/coach/fixtures?team=${team.id}`}>Fixtures</Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline" className="flex-1">
+                      <Link href={`/dashboard/coach/training?team=${team.id}`}>Training</Link>
                     </Button>
                   </div>
                 </CardContent>
@@ -106,8 +217,8 @@ export default async function CoachDashboardPage() {
 
           <Card id="create-team">
             <CardHeader>
-              <CardTitle>Create another team</CardTitle>
-              <CardDescription>Add a new team to your coaching portfolio.</CardDescription>
+              <CardTitle>Add another team</CardTitle>
+              <CardDescription>Manage multiple squads from a single account.</CardDescription>
             </CardHeader>
             <CardContent>
               <CreateTeamForm />

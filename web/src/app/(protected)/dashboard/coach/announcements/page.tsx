@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
+import { Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AnnouncementForm } from "./announcement-form";
 import { DeleteAnnouncementButton } from "./delete-announcement-button";
+import { formatRelativeTime } from "@/lib/utils";
 
 export default async function CoachAnnouncementsPage() {
   const supabase = await createClient();
@@ -21,12 +23,11 @@ export default async function CoachAnnouncementsPage() {
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Announcements</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>No teams yet</CardTitle>
-            <CardDescription>Create a team first before posting announcements.</CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState
+          icon={<Megaphone className="size-8 text-muted-foreground/40" />}
+          title="No teams yet"
+          description="Create a team first before posting announcements."
+        />
       </div>
     );
   }
@@ -35,67 +36,104 @@ export default async function CoachAnnouncementsPage() {
 
   const { data: announcements } = await supabase
     .from("announcements")
-    .select("id, title, body, created_at, team_id, teams(name)")
+    .select("id, title, body, created_at, team_id")
     .in("team_id", teamIds)
     .order("created_at", { ascending: false });
 
   const teamMap = new Map(allTeams.map((t) => [t.id, t.name]));
+  const multiTeam = allTeams.length > 1;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Announcements</h1>
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Announcements</h1>
+        {(announcements ?? []).length > 0 && (
+          <span className="text-sm text-muted-foreground">
+            {(announcements ?? []).length} posted
+          </span>
+        )}
+      </div>
 
+      {/* Compose */}
       <Card>
-        <CardHeader>
-          <CardTitle>New announcement</CardTitle>
-          <CardDescription>Post a message to your squad.</CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">New announcement</CardTitle>
+          <CardDescription>Broadcast a message to your squad.</CardDescription>
         </CardHeader>
         <CardContent>
           <AnnouncementForm teams={allTeams} />
         </CardContent>
       </Card>
 
+      {/* Feed */}
       {(announcements ?? []).length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>No announcements yet</CardTitle>
-            <CardDescription>Your posted announcements will appear here.</CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState
+          icon={<Megaphone className="size-8 text-muted-foreground/40" />}
+          title="Nothing posted yet"
+          description="Your announcements will appear here once you send one."
+        />
       ) : (
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Posted · {(announcements ?? []).length}
-          </h2>
-          <div className="space-y-3">
-            {(announcements ?? []).map((a) => {
-              const teamName = teamMap.get(a.team_id) ?? (Array.isArray(a.teams) ? a.teams[0]?.name : (a.teams as { name: string } | null)?.name);
-              const date = new Date(a.created_at);
-              return (
-                <div key={a.id} className="group relative rounded-xl border border-border p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold">{a.title}</p>
-                        {allTeams.length > 1 && teamName && (
-                          <Badge variant="outline" className="text-xs">{teamName}</Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.body}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-                        {" · "}
-                        {date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
-                      </p>
+        <div className="space-y-2">
+          {(announcements ?? []).map((a) => {
+            const teamName = teamMap.get(a.team_id);
+            const isRecent = Date.now() - new Date(a.created_at).getTime() < 24 * 3_600_000;
+            return (
+              <article
+                key={a.id}
+                className="group flex gap-0 overflow-hidden rounded-xl border border-border bg-card"
+              >
+                {/* Left accent bar */}
+                <div className="w-1 shrink-0 bg-primary" />
+
+                <div className="flex flex-1 items-start gap-3 px-4 py-3.5">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-semibold leading-snug">{a.title}</p>
+                      {isRecent && (
+                        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                          New
+                        </span>
+                      )}
                     </div>
-                    <DeleteAnnouncementButton id={a.id} title={a.title} />
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                      {a.body}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                      {multiTeam && teamName && (
+                        <Badge variant="outline" className="text-xs">{teamName}</Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatRelativeTime(a.created_at)}
+                      </span>
+                    </div>
                   </div>
+                  <DeleteAnnouncementButton id={a.id} title={a.title} />
                 </div>
-              );
-            })}
-          </div>
-        </section>
+              </article>
+            );
+          })}
+        </div>
       )}
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
+      {icon}
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+      </div>
     </div>
   );
 }

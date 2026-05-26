@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
+import { Megaphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatRelativeTime } from "@/lib/utils";
 
 export default async function PlayerAnnouncementsPage() {
   const supabase = await createClient();
@@ -17,10 +18,13 @@ export default async function PlayerAnnouncementsPage() {
 
   if (!player) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Announcements</h1>
-        <p className="text-muted-foreground">No player profile found. Ask your coach to add you to the squad.</p>
-      </div>
+      <PageShell>
+        <EmptyState
+          icon={<Megaphone className="size-8 text-muted-foreground/40" />}
+          title="No player profile"
+          description="Ask your coach to add you to the squad."
+        />
+      </PageShell>
     );
   }
 
@@ -34,10 +38,13 @@ export default async function PlayerAnnouncementsPage() {
 
   if (!teamIds.length) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold">Announcements</h1>
-        <p className="text-muted-foreground">You&apos;re not in a team yet. Ask your coach for the team invite code.</p>
-      </div>
+      <PageShell>
+        <EmptyState
+          icon={<Megaphone className="size-8 text-muted-foreground/40" />}
+          title="Not in a team yet"
+          description="Ask your coach for the team invite code."
+        />
+      </PageShell>
     );
   }
 
@@ -50,45 +57,99 @@ export default async function PlayerAnnouncementsPage() {
 
   const { data: announcements } = await supabase
     .from("announcements")
-    .select("id, title, body, created_at, team_id, teams(name)")
+    .select("id, title, body, created_at, team_id")
     .in("team_id", teamIds)
     .order("created_at", { ascending: false });
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Announcements</h1>
+  const multiTeam = teamIds.length > 1;
 
+  return (
+    <PageShell count={(announcements ?? []).length}>
       {(announcements ?? []).length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>No announcements yet</CardTitle>
-            <CardDescription>Your coach&apos;s announcements will appear here.</CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState
+          icon={<Megaphone className="size-8 text-muted-foreground/40" />}
+          title="Nothing yet"
+          description="Your coach's announcements will appear here."
+        />
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {(announcements ?? []).map((a) => {
-            const teamName = teamMap.get(a.team_id) ?? (Array.isArray(a.teams) ? a.teams[0]?.name : (a.teams as { name: string } | null)?.name);
-            const date = new Date(a.created_at);
+            const teamName = teamMap.get(a.team_id);
+            const isRecent = Date.now() - new Date(a.created_at).getTime() < 24 * 3_600_000;
             return (
-              <div key={a.id} className="rounded-xl border border-border p-4 space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-semibold">{a.title}</p>
-                  {teamIds.length > 1 && teamName && (
-                    <Badge variant="outline" className="text-xs">{teamName}</Badge>
-                  )}
+              <article
+                key={a.id}
+                className="flex gap-0 overflow-hidden rounded-xl border border-border bg-card"
+              >
+                {/* Left accent bar */}
+                <div className="w-1 shrink-0 bg-primary" />
+
+                <div className="flex-1 px-4 py-3.5 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-semibold leading-snug">{a.title}</p>
+                    {isRecent && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                        New
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                    {a.body}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    {multiTeam && teamName && (
+                      <Badge variant="outline" className="text-xs">{teamName}</Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {formatRelativeTime(a.created_at)}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{a.body}</p>
-                <p className="text-xs text-muted-foreground">
-                  {date.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-                  {" · "}
-                  {date.toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
+              </article>
             );
           })}
         </div>
       )}
+    </PageShell>
+  );
+}
+
+function PageShell({
+  children,
+  count,
+}: {
+  children: React.ReactNode;
+  count?: number;
+}) {
+  return (
+    <div className="space-y-4 max-w-2xl">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Announcements</h1>
+        {count != null && count > 0 && (
+          <span className="text-sm text-muted-foreground">{count} messages</span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-12 text-center">
+      {icon}
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">{description}</p>
+      </div>
     </div>
   );
 }

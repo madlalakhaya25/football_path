@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RatingRing } from "@/components/ui/rating-ring";
+import { Users } from "lucide-react";
 import { POSITIONS } from "@/lib/types";
 import { LinkChildForm } from "./link-child-form";
 
@@ -54,21 +55,17 @@ export default async function ParentDashboardPage() {
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">My Children</h1>
 
-      <div className="rounded-xl border border-border bg-card p-5">
-        <h2 className="font-semibold mb-1">Link a child</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Enter your child&apos;s share code (found on their passport page or ask the coach).
-        </p>
-        <LinkChildForm />
-      </div>
-
+      {/* Children grid */}
       {children.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>No children linked yet</CardTitle>
-            <CardDescription>Ask your child&apos;s coach for their share code.</CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border py-16 text-center">
+          <Users className="size-10 text-muted-foreground/30" aria-hidden="true" />
+          <div>
+            <p className="font-medium">No children linked yet</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Enter your child&apos;s share code below to follow their progress.
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {children.map((child) => {
@@ -77,29 +74,63 @@ export default async function ParentDashboardPage() {
             const age = child.date_of_birth
               ? Math.floor((Date.now() - new Date(child.date_of_birth).getTime()) / 31_557_600_000)
               : null;
+            const ratingCount = child.player_ratings.length;
+            const initials = child.full_name
+              .split(" ")
+              .slice(0, 2)
+              .map((w) => w[0])
+              .join("")
+              .toUpperCase();
 
             return (
               <Link key={child.id} href={`/dashboard/parent/${child.id}`} className="block">
-                <Card className="overflow-hidden transition-colors hover:border-primary/50">
-                  <div className="h-1 bg-brand" />
-                  <CardHeader className="flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>{child.full_name}</CardTitle>
-                      <CardDescription>{pos}</CardDescription>
+                <div className="group overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
+                  <div className="h-1 bg-primary" />
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand/20 text-sm font-bold text-primary">
+                          {initials}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="font-semibold leading-tight truncate">{child.full_name}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{pos}{age ? ` · Age ${age}` : ""}</p>
+                        </div>
+                      </div>
+                      <RatingRing value={overall} size={56} />
                     </div>
-                    <RatingRing value={overall} size={64} />
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap gap-2">
-                    <Badge variant="brand">{pos}</Badge>
-                    {age && <Badge variant="neutral">Age {age}</Badge>}
-                    <Badge variant="neutral">{child.player_ratings.length} ratings</Badge>
-                  </CardContent>
-                </Card>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {child.position && (
+                        <Badge variant="brand" className="text-xs">{pos}</Badge>
+                      )}
+                      <Badge variant="neutral" className="text-xs">
+                        {ratingCount} {ratingCount === 1 ? "rating" : "ratings"}
+                      </Badge>
+                      {overall > 0 && (
+                        <Badge variant="outline" className="text-xs font-bold">{overall}</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </Link>
             );
           })}
         </div>
       )}
+
+      {/* Link child */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Link a child</CardTitle>
+          <CardDescription>
+            Enter the share code from your child&apos;s passport page, or ask their coach.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <LinkChildForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }
