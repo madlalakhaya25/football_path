@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,32 +7,31 @@ import { Users, Calendar, Trophy, Plus } from "lucide-react";
 import { CreateTeamForm } from "@/components/create-team-form";
 
 export default async function CoachDashboardPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
-  const { data: teams } = await supabase
+  const { data: teamRows } = await supabase
     .from("teams")
-    .select(`
-      id, name, age_group, invite_code,
-      team_members ( player_id, active ),
-      fixtures ( id, status )
-    `)
+    .select("id, name, age_group, invite_code")
     .eq("coach_id", user.id)
     .eq("active", true);
 
-  const allTeams = (teams ?? []).map((team: {
-    id: string;
-    name: string;
-    age_group: string | null;
-    invite_code: string;
-    team_members: { player_id: string; active: boolean }[];
-    fixtures: { id: string; status: string }[];
-  }) => ({
-    ...team,
-    squadCount: team.team_members.filter((m) => m.active).length,
-    upcomingCount: team.fixtures.filter((f) => f.status === "upcoming").length,
-  }));
+  const allTeams = await Promise.all(
+    (teamRows ?? []).map(async (team) => {
+      const [{ count: squadCount }, { count: upcomingCount }] = await Promise.all([
+        supabase
+          .from("team_members")
+          .select("*", { count: "exact", head: true })
+          .eq("team_id", team.id)
+          .eq("active", true),
+        supabase
+          .from("fixtures")
+          .select("*", { count: "exact", head: true })
+          .eq("team_id", team.id)
+          .eq("status", "upcoming"),
+      ]);
+      return { ...team, squadCount: squadCount ?? 0, upcomingCount: upcomingCount ?? 0 };
+    })
+  );
 
   return (
     <div className="space-y-6">

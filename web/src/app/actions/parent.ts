@@ -1,13 +1,11 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { linkChildSchema } from "@/lib/validation";
 
 export async function linkChild(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const raw = { share_token: formData.get("share_token") as string };
   const parsed = linkChildSchema.safeParse(raw);
@@ -29,5 +27,6 @@ export async function linkChild(formData: FormData) {
     .upsert({ parent_id: user.id, player_id: player.id }, { onConflict: "parent_id,player_id" });
 
   if (error) return { error: error.message };
+  revalidatePath("/dashboard/parent");
   redirect("/dashboard/parent");
 }

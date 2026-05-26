@@ -1,8 +1,7 @@
 "use server";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 
 const updateRatingSchema = z.object({
   rating: z.number().int().min(1).max(5),
@@ -13,9 +12,7 @@ export async function addStandaloneRating(
   playerId: string,
   payload: { rating: number; note: string }
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const parsed = updateRatingSchema.safeParse({
     rating: payload.rating,
@@ -46,9 +43,7 @@ export async function updateRating(
   playerId: string,
   payload: { rating: number; note: string }
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const parsed = updateRatingSchema.safeParse({
     rating: payload.rating,
@@ -80,9 +75,7 @@ export async function updateRating(
 }
 
 export async function deleteRating(ratingId: string, playerId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   // Verify this rating belongs to the requesting coach before deleting
   const { data: existing } = await supabase

@@ -3,11 +3,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createPlayerSchema, createTeamSchema } from "@/lib/validation";
+import { requireUser } from "@/lib/auth";
 
 async function getCoachTeamById(teamId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const { data: team } = await supabase
     .from("teams")
@@ -29,7 +28,7 @@ export async function addPlayerToSquad(playerId: string, teamId: string) {
     .upsert({ team_id: team.id, player_id: playerId, active: true }, { onConflict: "team_id,player_id" });
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard/coach/squad");
+  revalidatePath("/dashboard/coach/squad", "page");
   return { success: true };
 }
 
@@ -44,7 +43,7 @@ export async function removePlayerFromSquad(playerId: string, teamId: string) {
     .eq("player_id", playerId);
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard/coach/squad");
+  revalidatePath("/dashboard/coach/squad", "page");
   return { success: true };
 }
 
@@ -90,14 +89,12 @@ export async function createPlayer(formData: FormData) {
 
   if (memberErr) return { error: memberErr.message };
 
-  revalidatePath("/dashboard/coach/squad");
+  revalidatePath("/dashboard/coach/squad", "page");
   redirect("/dashboard/coach/squad");
 }
 
 export async function updateTeam(teamId: string, formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const raw = {
     name: formData.get("name") as string,
@@ -122,9 +119,7 @@ export async function updateTeam(teamId: string, formData: FormData) {
 }
 
 export async function deleteTeam(teamId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const { error } = await supabase
     .from("teams")
@@ -139,9 +134,7 @@ export async function deleteTeam(teamId: string) {
 }
 
 export async function createTeam(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const { data: profile } = await supabase
     .from("profiles")

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createFixtureSchema } from "@/lib/validation";
 import { z } from "zod";
+import { requireUser } from "@/lib/auth";
 
 async function getCoachTeamIds(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data: teams } = await supabase
@@ -15,9 +16,7 @@ async function getCoachTeamIds(supabase: Awaited<ReturnType<typeof createClient>
 }
 
 export async function createFixture(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const teamId = formData.get("team_id") as string;
   if (!teamId) return { error: "No team selected." };
@@ -51,26 +50,26 @@ export async function createFixture(formData: FormData) {
     .insert({ ...parsed.data, team_id: teamId });
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard/coach/fixtures");
+  revalidatePath("/dashboard/coach/fixtures", "page");
   redirect(`/dashboard/coach/fixtures?team=${teamId}`);
 }
 
 export async function cancelFixture(fixtureId: string) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const teamIds = await getCoachTeamIds(supabase, user.id);
   if (!teamIds.length) return { error: "No team found." };
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("fixtures")
     .update({ status: "cancelled" })
     .eq("id", fixtureId)
-    .in("team_id", teamIds);
+    .in("team_id", teamIds)
+    .select("id");
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard/coach/fixtures");
+  if (!data?.length) return { error: "Fixture not found or already cancelled." };
+  revalidatePath("/dashboard/coach/fixtures", "page");
   return { success: true };
 }
 
@@ -88,9 +87,7 @@ const logMatchSchema = z.object({
 });
 
 export async function logMatch(payload: unknown) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const teamIds = await getCoachTeamIds(supabase, user.id);
   if (!teamIds.length) return { error: "No team found." };
@@ -100,45 +97,19 @@ export async function logMatch(payload: unknown) {
 
   const { fixture_id, team_score, opponent_score, match_notes, appearances, ratings } = parsed.data;
 
-  const { data: fixture } = await supabase
-    .from("fixtures")
-    .select("id")
-    .eq("id", fixture_id)
-    .in("team_id", teamIds)
-    .single();
-
-  if (!fixture) return { error: "Fixture not found." };
-
-  const { error: fnError } = await supabase.functions.invoke("log-match", {
-    body: { fixture_id, team_score, opponent_score, match_notes, appearances, ratings },
+  const { data, error } = await supabase.rpc("log_match_result", {
+    p_fixture_id:     fixture_id,
+    p_team_score:     team_score,
+    p_opponent_score: opponent_score,
+    p_match_notes:    match_notes ?? null,
+    p_appearances:    appearances,
+    p_ratings:        ratings,
   });
 
-  if (fnError) {
-    // Fallback: write directly if edge function unavailable
-    const [r1, r2, r3, r4] = await Promise.all([
-      supabase.from("match_results").upsert(
-        { fixture_id, team_score, opponent_score, match_notes, logged_by: user.id },
-        { onConflict: "fixture_id" }
-      ),
-      supabase.from("fixtures").update({ status: "completed" }).eq("id", fixture_id),
-      appearances.length
-        ? supabase.from("match_appearances").upsert(
-            appearances.map((a) => ({ fixture_id, ...a })),
-            { onConflict: "fixture_id,player_id" }
-          )
-        : Promise.resolve({ error: null }),
-      ratings.length
-        ? supabase.from("player_ratings").upsert(
-            ratings.map((r) => ({ fixture_id, ...r, coach_id: user.id })),
-            { onConflict: "fixture_id,player_id,coach_id" }
-          )
-        : Promise.resolve({ error: null }),
-    ]);
-    const err = r1.error ?? r2.error ?? r3.error ?? r4.error;
-    if (err) return { error: err.message };
-  }
+  if (error) return { error: error.message };
+  if ((data as { error?: string } | null)?.error) return { error: (data as { error: string }).error };
 
   revalidatePath(`/dashboard/coach/fixtures/${fixture_id}`);
-  revalidatePath("/dashboard/coach/fixtures");
+  revalidatePath("/dashboard/coach/fixtures", "page");
   redirect(`/dashboard/coach/fixtures/${fixture_id}`);
 }

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { AddPlayerTabs } from "./add-player-tabs";
 
 export default async function AddPlayerPage({
@@ -8,9 +8,7 @@ export default async function AddPlayerPage({
   searchParams: Promise<{ team?: string }>;
 }) {
   const { team: teamParam } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const { data: allTeams } = await supabase
     .from("teams")
@@ -32,12 +30,16 @@ export default async function AddPlayerPage({
 
   const squadIds = (squadMembers ?? []).map((m: { player_id: string }) => m.player_id);
 
-  const { data: available } = await supabase
+  // squadIds empty → no exclusions needed; query all academy players
+  const availableQuery = supabase
     .from("players")
     .select("id, full_name, position, date_of_birth, preferred_foot")
     .eq("academy_id", team.academy_id)
-    .eq("active", true)
-    .not("id", "in", squadIds.length ? `(${squadIds.join(",")})` : "(00000000-0000-0000-0000-000000000000)");
+    .eq("active", true);
+
+  const { data: available } = squadIds.length
+    ? await availableQuery.not("id", "in", `(${squadIds.join(",")})`)
+    : await availableQuery;
 
   return (
     <div className="space-y-6">

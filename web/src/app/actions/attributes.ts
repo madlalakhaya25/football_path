@@ -1,8 +1,7 @@
 "use server";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 
 const attributesSchema = z.object({
   pace:      z.number().int().min(1).max(99),
@@ -22,9 +21,7 @@ export async function upsertPlayerAttributes(
     notes: string;
   }
 ) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
   const parsed = attributesSchema.safeParse({
     ...payload,

@@ -1,11 +1,9 @@
 "use server";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 
 export async function claimPlayerProfile(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase } = await requireUser();
 
   const token = (formData.get("share_token") as string ?? "").toLowerCase().trim();
   if (!token) return { error: "Share token is required." };

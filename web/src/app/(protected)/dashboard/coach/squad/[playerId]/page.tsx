@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,11 +31,9 @@ export default async function PlayerDetailPage({
   searchParams: Promise<{ team?: string }>;
 }) {
   const [{ playerId }, { team: teamParam }] = await Promise.all([params, searchParams]);
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/auth/login");
+  const { supabase, user } = await requireUser();
 
-  const [{ data: player }, { data: myAttrs }, { data: coachTeams }] = await Promise.all([
+  const [{ data: player }, { data: myAttrs }, { data: coachTeams }, { data: memberships }] = await Promise.all([
     supabase
       .from("players")
       .select(`
@@ -54,23 +52,17 @@ export default async function PlayerDetailPage({
       .eq("coach_id", user.id)
       .single(),
     supabase.from("teams").select("id").eq("coach_id", user.id).eq("active", true),
+    supabase.from("team_members").select("team_id").eq("player_id", playerId).eq("active", true),
   ]);
 
   if (!player) notFound();
 
   const coachTeamIds = (coachTeams ?? []).map((t: { id: string }) => t.id);
-  let teamId: string | null = teamParam && coachTeamIds.includes(teamParam) ? teamParam : null;
-  if (!teamId && coachTeamIds.length) {
-    const { data: membership } = await supabase
-      .from("team_members")
-      .select("team_id")
-      .eq("player_id", playerId)
-      .in("team_id", coachTeamIds)
-      .eq("active", true)
-      .limit(1)
-      .single();
-    teamId = membership?.team_id ?? null;
-  }
+  const playerTeamIds = (memberships ?? []).map((m: { team_id: string }) => m.team_id);
+  const teamId: string | null =
+    teamParam && coachTeamIds.includes(teamParam)
+      ? teamParam
+      : playerTeamIds.find((id) => coachTeamIds.includes(id)) ?? null;
 
   type Rating = {
     id: string;
