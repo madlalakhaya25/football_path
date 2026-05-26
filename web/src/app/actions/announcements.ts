@@ -45,7 +45,7 @@ export async function createAnnouncement(formData: FormData) {
   });
 
   if (error) return { error: error.message };
-  revalidatePath("/dashboard/coach/announcements", "page");
+  revalidateAnnouncementFeeds();
   return { success: true };
 }
 
@@ -61,6 +61,12 @@ export async function deleteAnnouncement(id: string) {
 
   if (error) return { error: error.message };
   if (!data?.length) return { error: "Announcement not found." };
-  revalidatePath("/dashboard/coach/announcements", "page");
+  revalidateAnnouncementFeeds();
   return { success: true };
+}
+
+function revalidateAnnouncementFeeds() {
+  revalidatePath("/dashboard/coach/announcements", "page");
+  revalidatePath("/dashboard/player/announcements", "page");
+  revalidatePath("/dashboard/parent/announcements", "page");
 }

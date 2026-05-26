@@ -26,7 +26,8 @@ export function DeleteAnnouncementButton({ id, title }: Props) {
       disabled={pending}
       aria-label={`Delete announcement: ${title}`}
       className={cn(
-        "shrink-0 rounded-md p-1.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100",
+        "shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "lg:opacity-0 lg:group-hover:opacity-100 lg:focus-visible:opacity-100",
         pending && "opacity-50 cursor-wait"
       )}
     >

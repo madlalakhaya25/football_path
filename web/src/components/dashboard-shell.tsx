@@ -48,6 +48,7 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
   ],
   parent: [
     { href: "/dashboard/parent", label: "My Children", Icon: UserCircle },
+    { href: "/dashboard/parent/announcements", label: "Announcements", Icon: Megaphone },
   ],
 };
 

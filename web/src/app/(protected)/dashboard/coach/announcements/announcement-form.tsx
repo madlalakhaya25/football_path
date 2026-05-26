@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createAnnouncement } from "@/app/actions/announcements";
 import { Button } from "@/components/ui/button";
 
@@ -8,20 +8,23 @@ interface Team {
   name: string;
 }
 
-interface Props {
-  teams: Team[];
-}
+export function AnnouncementForm({ teams }: { teams: Team[] }) {
+  const formRef = useRef<HTMLFormElement>(null);
 
-export function AnnouncementForm({ teams }: Props) {
   const [state, formAction, pending] = useActionState(
     async (_prev: { error?: string; success?: boolean } | null, formData: FormData) =>
       (await createAnnouncement(formData)) ?? null,
     null
   );
 
+  // Reset form fields after a successful post
+  useEffect(() => {
+    if (state?.success) formRef.current?.reset();
+  }, [state?.success]);
+
   return (
-    <form action={formAction} className="space-y-4">
-      {teams.length > 1 && (
+    <form ref={formRef} action={formAction} className="space-y-4">
+      {teams.length > 1 ? (
         <div className="space-y-1.5">
           <label htmlFor="team_id" className="text-sm font-medium">Team</label>
           <select
@@ -35,15 +38,14 @@ export function AnnouncementForm({ teams }: Props) {
             ))}
           </select>
         </div>
-      )}
-      {teams.length === 1 && (
+      ) : (
         <input type="hidden" name="team_id" value={teams[0].id} />
       )}
 
       <div className="space-y-1.5">
-        <label htmlFor="title" className="text-sm font-medium">Title *</label>
+        <label htmlFor="ann-title" className="text-sm font-medium">Title *</label>
         <input
-          id="title"
+          id="ann-title"
           name="title"
           type="text"
           required
@@ -54,9 +56,9 @@ export function AnnouncementForm({ teams }: Props) {
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="body" className="text-sm font-medium">Message *</label>
+        <label htmlFor="ann-body" className="text-sm font-medium">Message *</label>
         <textarea
-          id="body"
+          id="ann-body"
           name="body"
           required
           rows={4}
