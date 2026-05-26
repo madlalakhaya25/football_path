@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Star } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { RatingRing } from "@/components/ui/rating-ring";
 import { POSITIONS, FEET } from "@/lib/types";
 import { RemovePlayerButton } from "../remove-player-button";
+import { RatingEditRow } from "./rating-edit-row";
 
 export default async function PlayerDetailPage({
   params,
@@ -123,30 +124,15 @@ export default async function PlayerDetailPage({
                 .map((r) => {
                   const fixture = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
                   return (
-                    <div key={r.id} className="flex items-start gap-4 px-4 py-3">
-                      <div className="flex shrink-0 gap-0.5 pt-0.5">
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <Star
-                            key={n}
-                            className={`size-4 ${n <= r.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}`}
-                            aria-hidden="true"
-                          />
-                        ))}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        {fixture && (
-                          <p className="font-medium text-sm">vs {fixture.opponent}</p>
-                        )}
-                        {r.note && (
-                          <p className="text-sm text-muted-foreground mt-0.5">&ldquo;{r.note}&rdquo;</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(r.created_at).toLocaleDateString("en-ZA", {
-                            day: "numeric", month: "short", year: "numeric",
-                          })}
-                        </p>
-                      </div>
-                    </div>
+                    <RatingEditRow
+                      key={r.id}
+                      ratingId={r.id}
+                      playerId={player.id}
+                      initialRating={r.rating}
+                      initialNote={r.note}
+                      opponent={fixture?.opponent ?? null}
+                      date={r.created_at}
+                    />
                   );
                 })}
             </div>
