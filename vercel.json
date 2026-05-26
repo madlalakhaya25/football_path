@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npm install && next build",
+  "buildCommand": "npm install --include=dev && next build",
   "outputDirectory": ".next",
   "installCommand": "npm install"
 }
