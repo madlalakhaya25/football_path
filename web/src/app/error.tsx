@@ -27,6 +27,9 @@ export default function GlobalError({
         <p className="max-w-sm text-muted-foreground">
           An unexpected error occurred. Our team has been notified.
         </p>
+        <p className="max-w-sm font-mono text-xs text-destructive">
+          {error.message}
+        </p>
         {error.digest && (
           <p className="font-mono text-xs text-muted-foreground">
             Error ID: {error.digest}
