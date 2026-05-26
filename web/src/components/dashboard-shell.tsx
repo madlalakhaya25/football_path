@@ -24,6 +24,7 @@ import type { UserRole } from "@/lib/types";
 interface NavItem {
   href: string;
   label: string;
+  mobileLabel?: string;
   Icon: React.ComponentType<{ className?: string }>;
 }
 
@@ -34,21 +35,21 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { href: "/dashboard/admin/teams", label: "Teams", Icon: Shield },
   ],
   coach: [
-    { href: "/dashboard/coach", label: "Overview", Icon: LayoutDashboard },
+    { href: "/dashboard/coach", label: "Overview", mobileLabel: "Home", Icon: LayoutDashboard },
     { href: "/dashboard/coach/squad", label: "Squad", Icon: Users },
     { href: "/dashboard/coach/fixtures", label: "Fixtures", Icon: Calendar },
     { href: "/dashboard/coach/training", label: "Training", Icon: Dumbbell },
-    { href: "/dashboard/coach/announcements", label: "Announcements", Icon: Megaphone },
+    { href: "/dashboard/coach/announcements", label: "Announcements", mobileLabel: "Posts", Icon: Megaphone },
   ],
   player: [
-    { href: "/dashboard/player", label: "My Passport", Icon: UserCircle },
+    { href: "/dashboard/player", label: "My Passport", mobileLabel: "Passport", Icon: UserCircle },
     { href: "/dashboard/player/fixtures", label: "Fixtures", Icon: Calendar },
     { href: "/dashboard/player/training", label: "Training", Icon: Dumbbell },
-    { href: "/dashboard/player/announcements", label: "Announcements", Icon: Megaphone },
+    { href: "/dashboard/player/announcements", label: "Announcements", mobileLabel: "Posts", Icon: Megaphone },
   ],
   parent: [
-    { href: "/dashboard/parent", label: "My Children", Icon: UserCircle },
-    { href: "/dashboard/parent/announcements", label: "Announcements", Icon: Megaphone },
+    { href: "/dashboard/parent", label: "My Children", mobileLabel: "Children", Icon: UserCircle },
+    { href: "/dashboard/parent/announcements", label: "Announcements", mobileLabel: "Posts", Icon: Megaphone },
   ],
 };
 
@@ -150,19 +151,19 @@ export function DashboardShell({ profile, children }: Props) {
 
         {/* ── Mobile bottom nav ─────────────────────────────── */}
         <nav className="flex border-t border-border bg-background lg:hidden" aria-label="Mobile navigation">
-          {navItems.slice(0, 4).map(({ href, label, Icon }) => {
+          {navItems.map(({ href, label, mobileLabel, Icon }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={href}
                 href={href}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors",
+                  "flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors",
                   active ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 <Icon className={cn("size-5", active && "text-primary")} aria-hidden="true" />
-                {label}
+                {mobileLabel ?? label}
               </Link>
             );
           })}
