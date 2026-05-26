@@ -9,7 +9,7 @@ export const registerSchema = z.object({
     .min(9, "Enter a valid phone number")
     .regex(/^(\+27|0)[6-8][0-9]{8}$/, "Enter a valid South African number"),
   role: z.enum(["player", "coach", "parent"], {
-    required_error: "Choose a role",
+    error: "Choose a role",
   }),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
