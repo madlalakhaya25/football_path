@@ -29,8 +29,8 @@ const webStorageAdapter = {
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storage: Platform.OS === 'web' ? webStorageAdapter : ExpoSecureStoreAdapter,
-    autoRefreshToken: true,
-    persistSession: true,
+    autoRefreshToken: false,
+    persistSession: false,
     detectSessionInUrl: false,
   },
 });

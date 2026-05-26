@@ -15,9 +15,11 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Strip maxAge so cookies are session-only (cleared on browser close)
+              const { maxAge: _, ...sessionOnlyOptions } = options ?? {};
+              cookieStore.set(name, value, sessionOnlyOptions);
+            });
           } catch {
             // setAll called from a Server Component — middleware handles refresh
           }

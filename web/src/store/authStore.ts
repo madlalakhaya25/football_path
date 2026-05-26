@@ -1,6 +1,5 @@
 "use client";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type { UserRole } from "@/lib/types";
 
 export interface AuthProfile {
@@ -16,13 +15,8 @@ interface AuthState {
   clear: () => void;
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      profile: null,
-      setProfile: (profile) => set({ profile }),
-      clear: () => set({ profile: null }),
-    }),
-    { name: "gf-auth" }
-  )
-);
+export const useAuthStore = create<AuthState>()((set) => ({
+  profile: null,
+  setProfile: (profile) => set({ profile }),
+  clear: () => set({ profile: null }),
+}));
