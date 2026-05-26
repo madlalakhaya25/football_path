@@ -58,13 +58,24 @@ export default async function PublicPassportPage({
   const passport = data as PassportData;
 
   const ratings = passport.ratings ?? [];
+  const attrs = passport.attributes;
+
   const ratingValues = ratings.map((r) => r.rating);
-  const avg = ratingValues.length
+  const matchAvg = ratingValues.length
     ? Math.round((ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length) * 20)
     : 0;
   const ratingAvgStars = ratingValues.length
     ? ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length
     : 0;
+
+  // Overall = mean of ability attributes when assessed; falls back to match rating average
+  const attrsOverall = attrs
+    ? Math.round(
+        (attrs.pace + attrs.shooting + attrs.passing +
+         attrs.dribbling + attrs.defending + attrs.physical) / 6
+      )
+    : null;
+  const overall = attrsOverall ?? matchAvg;
 
   const posLabel = POSITIONS.find((p) => p.value === passport.position)?.label ?? "—";
   const secPosLabel = POSITIONS.find((p) => p.value === passport.secondary_pos)?.label;
@@ -73,8 +84,6 @@ export default async function PublicPassportPage({
     ? Math.floor((Date.now() - new Date(passport.date_of_birth).getTime()) / 31_557_600_000)
     : null;
   const initials = passport.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
-
-  const attrs = passport.attributes;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -106,7 +115,7 @@ export default async function PublicPassportPage({
                       {initials}
                     </span>
                   )}
-                  <RatingRing value={avg} size={88} />
+                  <RatingRing value={overall} size={88} />
                 </div>
                 <CardTitle className="mt-3 text-xl">{passport.full_name}</CardTitle>
                 <CardDescription>

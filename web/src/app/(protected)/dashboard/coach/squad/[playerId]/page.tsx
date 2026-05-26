@@ -64,10 +64,23 @@ export default async function PlayerDetailPage({
   };
 
   const ratings: Rating[] = player.player_ratings ?? [];
+
+  type AttrKey = "pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical";
+  const initialAttrs = myAttrs as Record<AttrKey, number> | null;
+
   const ratingValues = ratings.map((r) => r.rating);
-  const avg = ratingValues.length
+  const matchAvg = ratingValues.length
     ? Math.round((ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length) * 20)
     : 0;
+
+  // Overall = mean of ability attributes when assessed; falls back to match rating average
+  const attrsOverall = initialAttrs
+    ? Math.round(
+        (initialAttrs.pace + initialAttrs.shooting + initialAttrs.passing +
+         initialAttrs.dribbling + initialAttrs.defending + initialAttrs.physical) / 6
+      )
+    : null;
+  const overall = attrsOverall ?? matchAvg;
 
   const posLabel = POSITIONS.find((p) => p.value === player.position)?.label ?? "—";
   const footLabel = FEET.find((f) => f.value === player.preferred_foot)?.label;
@@ -75,9 +88,6 @@ export default async function PlayerDetailPage({
     ? Math.floor((Date.now() - new Date(player.date_of_birth).getTime()) / 31_557_600_000)
     : null;
   const initials = player.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
-
-  type AttrKey = "pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical";
-  const initialAttrs = myAttrs as Record<AttrKey, number> | null;
 
   return (
     <div className="space-y-6">
@@ -103,7 +113,7 @@ export default async function PlayerDetailPage({
                   {initials}
                 </span>
               )}
-              <RatingRing value={avg} size={72} />
+              <RatingRing value={overall} size={72} />
             </div>
             <CardTitle className="mt-3">{player.full_name}</CardTitle>
             <CardDescription>{posLabel}</CardDescription>
