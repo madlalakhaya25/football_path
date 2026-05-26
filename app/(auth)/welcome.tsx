@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/Button';
 const FEATURES = [
   { emoji: '🪪', text: 'Digital player passports' },
   { emoji: '⭐', text: 'Coach ratings after every match' },
-  { emoji: '👨‍👦', text: 'Parents follow progress live' },
+  { emoji: '🏋️', text: 'Structured training sessions & drills' },
+  { emoji: '📣', text: 'Instant announcements to your squad' },
 ];
 
 export default function WelcomeScreen() {
@@ -29,7 +30,7 @@ export default function WelcomeScreen() {
             <Text className="text-green">to be seen.</Text>
           </Text>
           <Text className="text-ink-secondary text-base text-center mt-4 leading-6">
-            Digital passports. Real progress.{'\n'}
+            Passports. Training. Fixtures. Announcements.{'\n'}
             Coaches, players, and parents — connected.
           </Text>
 

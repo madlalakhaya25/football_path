@@ -6,6 +6,8 @@ import {
   Target,
   Trophy,
   Users,
+  Dumbbell,
+  Megaphone,
 } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -27,25 +29,27 @@ const ROLES = [
     Icon: Target,
     title: "Player",
     description:
-      "Build your digital passport, track attributes, and showcase your development.",
+      "Build your digital passport, track training sessions, and let your stats tell your story.",
   },
   {
     Icon: Users,
     title: "Coach",
     description:
-      "Manage your squad, log match results, and rate performances in seconds.",
+      "Manage your squad, plan training, rate performances, and post announcements — all in one place.",
   },
   {
     Icon: Shield,
     title: "Parent",
     description:
-      "Follow your child's progress live — ratings, fixtures, and stats in one place.",
+      "Follow your child's fixtures, training, and ratings live. Never miss an update from the coach.",
   },
 ];
 
 const FEATURES = [
   { Icon: ShieldCheck, title: "Digital passports", text: "A verified profile that travels with every player." },
   { Icon: Star, title: "Coach ratings", text: "Star ratings and notes saved after every match." },
+  { Icon: Dumbbell, title: "Training sessions", text: "Plan sessions with drill lists, types, and notes." },
+  { Icon: Megaphone, title: "Announcements", text: "Coaches post updates; players and parents stay informed instantly." },
   { Icon: LineChart, title: "Progress tracking", text: "Attribute trends that show real development over time." },
   { Icon: Trophy, title: "Match centre", text: "Fixtures, results, and squad appearances in one place." },
 ];
@@ -106,9 +110,9 @@ export default function Home() {
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">
               {[
-                ["18", "Players"],
-                ["3", "Coaches"],
-                ["12", "Matches"],
+                ["4", "User roles"],
+                ["6", "Session types"],
+                ["360°", "Player view"],
               ].map(([n, label]) => (
                 <div key={label}>
                   <dt className="text-2xl font-bold tabular-nums">{n}</dt>
@@ -176,7 +180,7 @@ export default function Home() {
           id="features"
           className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6"
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ Icon, title, text }) => (
               <div key={title} className="rounded-xl border border-border bg-card p-5">
                 <Icon className="size-5 text-primary" aria-hidden="true" />
