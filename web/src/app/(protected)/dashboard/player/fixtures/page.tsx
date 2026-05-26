@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Badge } from "@/components/ui/badge";
 
 const STATUS_VARIANT = {
-  upcoming: "neutral",
+  upcoming:  "neutral",
   completed: "success",
   cancelled: "danger",
   postponed: "warning",
@@ -48,31 +48,38 @@ export default async function PlayerFixturesPage() {
     );
   }
 
-  const { data: fixtures } = await supabase
-    .from("fixtures")
-    .select(`
-      id, opponent, venue, fixture_date, is_home, status,
-      match_results ( team_score, opponent_score ),
-      match_appearances!inner ( played )
-    `)
-    .eq("team_id", teamId)
-    .eq("match_appearances.player_id", player.id)
-    .order("fixture_date", { ascending: false });
+  // Fetch all team fixtures + this player's appearances separately to avoid
+  // the INNER JOIN problem (upcoming fixtures have no match_appearances yet)
+  const [{ data: fixtures }, { data: appearances }] = await Promise.all([
+    supabase
+      .from("fixtures")
+      .select(`
+        id, opponent, venue, fixture_date, is_home, status,
+        match_results ( team_score, opponent_score )
+      `)
+      .eq("team_id", teamId)
+      .order("fixture_date", { ascending: false }),
+    supabase
+      .from("match_appearances")
+      .select("fixture_id, played")
+      .eq("player_id", player.id),
+  ]);
 
-  const upcoming = (fixtures ?? []).filter((f: { status: string }) => f.status === "upcoming");
-  const past = (fixtures ?? []).filter((f: { status: string }) => f.status !== "upcoming");
+  // Build a lookup map: fixture_id → appearance
+  const appearanceMap = new Map(
+    (appearances ?? []).map((a: { fixture_id: string; played: boolean }) => [a.fixture_id, a])
+  );
 
-  function FixtureRow({ f }: {
-    f: {
-      id: string; opponent: string; venue: string | null; fixture_date: string;
-      is_home: boolean; status: string;
-      match_results: { team_score: number; opponent_score: number } | { team_score: number; opponent_score: number }[] | null;
-      match_appearances: { played: boolean }[];
-    }
-  }) {
-    const date = new Date(f.fixture_date);
+  const allFixtures = fixtures ?? [];
+  const upcoming = allFixtures.filter((f) => f.status === "upcoming");
+  const past     = allFixtures.filter((f) => f.status !== "upcoming");
+
+  type Fixture = (typeof allFixtures)[number];
+
+  function FixtureRow({ f }: { f: Fixture }) {
+    const date   = new Date(f.fixture_date);
     const result = Array.isArray(f.match_results) ? f.match_results[0] : f.match_results;
-    const appearance = f.match_appearances?.[0];
+    const appearance = appearanceMap.get(f.id);
 
     return (
       <div className="flex items-center justify-between px-4 py-3">
@@ -86,7 +93,9 @@ export default async function PlayerFixturesPage() {
         <div className="flex items-center gap-2 shrink-0">
           {result && (
             <span className="font-bold tabular-nums text-sm">
-              {f.is_home ? result.team_score : result.opponent_score} – {f.is_home ? result.opponent_score : result.team_score}
+              {f.is_home ? result.team_score : result.opponent_score}
+              {" – "}
+              {f.is_home ? result.opponent_score : result.team_score}
             </span>
           )}
           {appearance && (
@@ -94,7 +103,10 @@ export default async function PlayerFixturesPage() {
               {appearance.played ? "Played" : "Absent"}
             </Badge>
           )}
-          <Badge variant={STATUS_VARIANT[f.status as keyof typeof STATUS_VARIANT] ?? "neutral"} className="capitalize">
+          <Badge
+            variant={STATUS_VARIANT[f.status as keyof typeof STATUS_VARIANT] ?? "neutral"}
+            className="capitalize"
+          >
             {f.status}
           </Badge>
         </div>
@@ -106,7 +118,7 @@ export default async function PlayerFixturesPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">My Fixtures</h1>
 
-      {(fixtures ?? []).length === 0 ? (
+      {allFixtures.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>No fixtures yet</CardTitle>
@@ -117,17 +129,21 @@ export default async function PlayerFixturesPage() {
         <div className="space-y-6">
           {upcoming.length > 0 && (
             <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Upcoming</h2>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Upcoming
+              </h2>
               <div className="divide-y divide-border rounded-xl border border-border">
-                {upcoming.map((f: Parameters<typeof FixtureRow>[0]["f"]) => <FixtureRow key={f.id} f={f} />)}
+                {upcoming.map((f) => <FixtureRow key={f.id} f={f} />)}
               </div>
             </section>
           )}
           {past.length > 0 && (
             <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">Past</h2>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Past
+              </h2>
               <div className="divide-y divide-border rounded-xl border border-border">
-                {past.map((f: Parameters<typeof FixtureRow>[0]["f"]) => <FixtureRow key={f.id} f={f} />)}
+                {past.map((f) => <FixtureRow key={f.id} f={f} />)}
               </div>
             </section>
           )}
