@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS } from "@/lib/types";
@@ -147,12 +150,18 @@ export default async function PlayerDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Share Passport</CardTitle>
-            <CardDescription>Give coaches and scouts your unique code.</CardDescription>
+            <CardDescription>Your public page includes a QR code scouts can scan.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
             <p className="rounded-md bg-muted px-4 py-3 text-center font-mono text-lg font-bold tracking-widest">
               {player.share_token}
             </p>
+            <Button asChild variant="outline" size="sm" className="w-full gap-2">
+              <Link href={`/passport/${player.share_token}`} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="size-4" aria-hidden="true" />
+                View public passport &amp; QR
+              </Link>
+            </Button>
           </CardContent>
         </Card>
       </div>

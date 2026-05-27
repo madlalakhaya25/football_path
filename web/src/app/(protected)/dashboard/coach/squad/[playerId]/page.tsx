@@ -153,8 +153,15 @@ export default async function PlayerDetailPage({
                 <p className="font-semibold">{ratings.length}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs">Share token</p>
-                <p className="font-mono font-semibold tracking-wide">{player.share_token}</p>
+                <p className="text-muted-foreground text-xs">Public passport</p>
+                <Link
+                  href={`/passport/${player.share_token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs font-semibold tracking-wide text-primary hover:underline"
+                >
+                  {player.share_token} ↗
+                </Link>
               </div>
             </div>
 
