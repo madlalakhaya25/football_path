@@ -9,6 +9,7 @@ import { StatBar } from "@/components/ui/stat-bar";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { POSITIONS, FEET } from "@/lib/types";
+import QRCode from "qrcode";
 
 export const revalidate = 60;
 
@@ -76,6 +77,9 @@ export default async function PublicPassportPage({
       )
     : null;
   const overall = attrsOverall ?? matchAvg;
+
+  const shareUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://growfitfa.com"}/passport/${passport.share_token}`;
+  const qrDataUrl = await QRCode.toDataURL(shareUrl, { width: 160, margin: 1 });
 
   const posLabel = POSITIONS.find((p) => p.value === passport.position)?.label ?? "—";
   const secPosLabel = POSITIONS.find((p) => p.value === passport.secondary_pos)?.label;
@@ -158,6 +162,12 @@ export default async function PublicPassportPage({
                       ))}
                     </div>
                   </div>
+                </div>
+                <div className="pt-3 border-t border-border space-y-2">
+                  <p className="text-xs text-muted-foreground">Share this passport</p>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrDataUrl} alt="Passport QR code" width={80} height={80} className="rounded-lg" />
+                  <p className="text-[10px] text-muted-foreground font-mono break-all">{shareUrl}</p>
                 </div>
               </CardContent>
             </Card>

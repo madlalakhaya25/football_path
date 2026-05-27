@@ -160,3 +160,26 @@ export async function deleteDrill(drillId: string, sessionId: string) {
   revalidatePath(`/dashboard/coach/training/${sessionId}`, "page");
   return { success: true };
 }
+
+export async function setAttendance(sessionId: string, status: "attending" | "unavailable") {
+  const { supabase, user } = await requireUser();
+
+  const { data: player } = await supabase
+    .from("players")
+    .select("id")
+    .eq("profile_id", user.id)
+    .eq("active", true)
+    .single();
+
+  if (!player) return { error: "Player profile not found." };
+
+  const { error } = await supabase.from("training_attendance").upsert(
+    { session_id: sessionId, player_id: player.id, status },
+    { onConflict: "session_id,player_id" }
+  );
+
+  if (error) return { error: error.message };
+  revalidatePath(`/dashboard/player/training/${sessionId}`, "page");
+  revalidatePath(`/dashboard/coach/training/${sessionId}`, "page");
+  return { success: true };
+}

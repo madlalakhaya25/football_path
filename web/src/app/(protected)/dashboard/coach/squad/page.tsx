@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RemovePlayerButton } from "./remove-player-button";
+import { CopyInviteLinkButton } from "@/components/copy-invite-link-button";
 import { POSITIONS } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -22,14 +23,14 @@ export default async function SquadPage({
 
   const { data: allTeams } = await supabase
     .from("teams")
-    .select("id, name, age_group")
+    .select("id, name, age_group, invite_code")
     .eq("coach_id", user.id)
     .eq("active", true)
     .order("created_at");
 
   if (!allTeams?.length) redirect("/dashboard/coach");
 
-  const team = allTeams.find((t) => t.id === teamParam) ?? allTeams[0];
+  const team = allTeams.find((t: { id: string; name: string; age_group: string | null; invite_code: string }) => t.id === teamParam) ?? allTeams[0];
 
   const { data: members } = await supabase
     .from("team_members")
@@ -102,12 +103,15 @@ export default async function SquadPage({
             {team.name}{team.age_group && ` · ${team.age_group}`} · {squad.length} {squad.length === 1 ? "player" : "players"}
           </p>
         </div>
-        <Button asChild className="shrink-0">
-          <Link href={`/dashboard/coach/squad/add?team=${team.id}`}>
-            <Plus className="size-4" aria-hidden="true" />
-            Add player
-          </Link>
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <CopyInviteLinkButton inviteCode={team.invite_code} />
+          <Button asChild className="shrink-0">
+            <Link href={`/dashboard/coach/squad/add?team=${team.id}`}>
+              <Plus className="size-4" aria-hidden="true" />
+              Add player
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {squad.length === 0 ? (

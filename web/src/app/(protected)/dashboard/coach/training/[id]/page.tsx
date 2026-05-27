@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Clock, PlayCircle } from "lucide-react";
+import { MapPin, Clock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { AddDrillForm } from "./add-drill-form";
@@ -40,6 +40,14 @@ export default async function CoachTrainingSessionPage({
     .select("id, title, description, video_url, sort_order")
     .eq("session_id", id)
     .order("sort_order");
+
+  const { data: attendanceRows } = await supabase
+    .from("training_attendance")
+    .select("status")
+    .eq("session_id", id);
+
+  const attending = (attendanceRows ?? []).filter((r: { status: string }) => r.status === "attending").length;
+  const unavailable = (attendanceRows ?? []).filter((r: { status: string }) => r.status === "unavailable").length;
 
   const date = new Date(session.session_date);
   const teamName = Array.isArray(session.teams)
@@ -91,6 +99,20 @@ export default async function CoachTrainingSessionPage({
           <div className="border-t border-border/60 bg-background/60 px-5 py-3">
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">Notes</p>
             <p className="text-sm whitespace-pre-wrap">{session.notes}</p>
+          </div>
+        )}
+
+        {(attending > 0 || unavailable > 0) && (
+          <div className="border-t border-border/60 bg-background/60 px-5 py-3 flex items-center gap-4 text-sm">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Attendance</span>
+            <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+              <CheckCircle2 className="size-3.5" aria-hidden="true" />
+              {attending} going
+            </span>
+            <span className="flex items-center gap-1 text-destructive font-medium">
+              <XCircle className="size-3.5" aria-hidden="true" />
+              {unavailable} can&apos;t make it
+            </span>
           </div>
         )}
       </div>

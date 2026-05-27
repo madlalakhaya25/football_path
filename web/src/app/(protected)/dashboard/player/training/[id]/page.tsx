@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MapPin, Clock, PlayCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { AttendanceButton } from "@/components/attendance-button";
 
 const TYPE_STYLES: Record<string, { label: string; chip: string; header: string }> = {
   general:    { label: "General",    chip: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",       header: "bg-slate-500/10" },
@@ -44,6 +45,13 @@ export default async function PlayerTrainingSessionPage({
     .select("id, title, description, video_url, sort_order")
     .eq("session_id", id)
     .order("sort_order");
+
+  const { data: attendance } = await supabase
+    .from("training_attendance")
+    .select("status")
+    .eq("session_id", id)
+    .eq("player_id", player.id)
+    .maybeSingle();
 
   const date = new Date(session.session_date);
   const teamName = Array.isArray(session.teams)
@@ -91,6 +99,15 @@ export default async function PlayerTrainingSessionPage({
             <p className="text-sm whitespace-pre-wrap">{session.notes}</p>
           </div>
         )}
+      </div>
+
+      {/* Attendance */}
+      <div className="rounded-xl border border-border bg-card px-4 py-3.5">
+        <p className="text-sm font-medium mb-3">Are you attending?</p>
+        <AttendanceButton
+          sessionId={id}
+          current={(attendance?.status as "attending" | "unavailable" | null) ?? null}
+        />
       </div>
 
       {/* Drills */}
