@@ -13,6 +13,7 @@ import { RemovePlayerButton } from "../remove-player-button";
 import { RatingEditRow } from "./rating-edit-row";
 import { StandaloneRatingForm } from "./standalone-rating-form";
 import { PlayerAttributesForm } from "./player-attributes-form";
+import { RatingChart } from "@/components/rating-chart";
 
 const ATTR_LABELS = [
   { key: "pace",      label: "Pace" },
@@ -73,6 +74,19 @@ export default async function PlayerDetailPage({
   };
 
   const ratings: Rating[] = player.player_ratings ?? [];
+
+  // Chart data — sorted ascending by date for the trend line
+  const chartData = [...ratings]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .map((r) => {
+      const fixture = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
+      const dateStr = fixture?.fixture_date ?? r.created_at;
+      return {
+        date: new Date(dateStr).toLocaleDateString("en-ZA", { day: "numeric", month: "short" }),
+        rating: r.rating,
+        opponent: fixture?.opponent ?? undefined,
+      };
+    });
 
   type AttrKey = "pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical";
   const initialAttrs = myAttrs as Record<AttrKey, number> | null;
@@ -164,6 +178,13 @@ export default async function PlayerDetailPage({
         {/* Ratings history */}
         <div className="space-y-3 lg:col-span-2">
           <h2 className="text-lg font-semibold">Rating history</h2>
+
+          {chartData.length >= 2 && (
+            <section className="rounded-xl border border-border bg-card p-4 space-y-2">
+              <p className="text-sm font-semibold">Rating trend</p>
+              <RatingChart data={chartData} />
+            </section>
+          )}
 
           <StandaloneRatingForm playerId={player.id} />
 

@@ -6,6 +6,7 @@ import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS } from "@/lib/types";
 import { ClaimProfileForm } from "./claim-profile-form";
+import { RatingChart } from "@/components/rating-chart";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -24,7 +25,7 @@ export default async function PlayerDashboardPage() {
     .from("players")
     .select(`
       id, full_name, position, preferred_foot, date_of_birth, photo_url, share_token,
-      player_ratings ( rating, created_at ),
+      player_ratings ( rating, created_at, fixtures ( opponent, fixture_date ) ),
       player_attributes ( pace, shooting, passing, dribbling, defending, physical )
     `)
     .eq("profile_id", user.id)
@@ -43,9 +44,26 @@ export default async function PlayerDashboardPage() {
   }
 
   // Ratings
-  type RatingRow = { rating: number; created_at: string };
+  type RatingRow = {
+    rating: number;
+    created_at: string;
+    fixtures: { opponent: string; fixture_date: string } | { opponent: string; fixture_date: string }[] | null;
+  };
   const ratingRows: RatingRow[] = player.player_ratings ?? [];
   const ratingValues = ratingRows.map((r) => r.rating);
+
+  // Chart data — sorted ascending by date
+  const chartData = [...ratingRows]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .map((r) => {
+      const fixture = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
+      const dateStr = fixture?.fixture_date ?? r.created_at;
+      return {
+        date: new Date(dateStr).toLocaleDateString("en-ZA", { day: "numeric", month: "short" }),
+        rating: r.rating,
+        opponent: fixture?.opponent ?? undefined,
+      };
+    });
   const matchAvg = ratingValues.length
     ? Math.round((ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length) * 20)
     : 0;
@@ -138,6 +156,13 @@ export default async function PlayerDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {chartData.length >= 2 && (
+        <section className="rounded-xl border border-border bg-card p-4 space-y-2">
+          <p className="text-sm font-semibold">Rating trend</p>
+          <RatingChart data={chartData} />
+        </section>
+      )}
     </div>
   );
 }
