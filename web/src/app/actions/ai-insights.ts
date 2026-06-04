@@ -3,7 +3,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { requireUser } from "@/lib/auth";
 
-// Initialize Gemini (new SDK style)
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
@@ -15,7 +14,6 @@ export async function getPlayerInsights(playerId: string): Promise<{
   try {
     const { supabase } = await requireUser();
 
-    // Cleaned up array structure to resolve Turbopack compilation errors
     const [
       playerResult,
       ratingsResult,
@@ -102,37 +100,36 @@ export async function getPlayerInsights(playerId: string): Promise<{
       .filter(Boolean)
       .join(", ");
 
-    // Strict prompt constraints enforcing an internal third-person perspective
-    const prompt = `Analyse the following youth football player data and provide specific, technical coaching insights for a coach's internal team management dashboard.
+    // OPTIMIZED PROMPT: Tighter constraints, fewer but higher quality outputs.
+    const prompt = `Analyze the following youth football data to generate a concise, high-impact technical report for the coaching staff dashboard.
 
-CRITICAL PERSPECTIVE RULES: 
-- Write the analysis entirely in the third person. 
-- Refer to the player by name (${player.full_name}) or as "the player". 
-- Do not use second-person pronouns ("you", "your", "yours").
+CRITICAL RULES:
+- Use the third person exclusively (e.g., "${player.full_name}", "the player", "he/she"). No second-person pronouns.
+- Be highly analytical and specific to the provided metrics.
+- Keep the total response strictly between 150 and 200 words.
 
 Player Profile:
 - Name: ${player.full_name}
 - Position: ${player.position ?? "Unknown"}
 - Age: ${age ?? "Unknown"}
 
-Recent Match Ratings (last 10 fixtures): ${ratingsSummary || "None recorded"}
-Attribute Assessments (Average out of 100): ${attributeSummary}
-Completed Development Milestones: ${completedMilestones || "None recorded"}
+Data Context:
+- Match Ratings (Last 10): ${ratingsSummary || "None recorded"}
+- Attributes (Avg/100): ${attributeSummary}
+- Milestones: ${completedMilestones || "None recorded"}
 
-Provide the response using these exact plain text markdown headers:
-1. **Strengths** (2-3 specific technical observations based strictly on the data)
-2. **Priority development areas** (2-3 actionable training focus areas tailored for team environments)
-3. **Recommended drills/activities** (2-3 concrete pitch exercises targeting technical deficits)
-4. **Motivational note** (One concise evaluation summary sentence reflecting the player's current performance trajectory)
-
-Keep the total response under 300 words.`;
+Output format (Use these exact plain text markdown headers):
+1. **Strengths**: 2 bullet points highlighting the strongest technical/physical metrics.
+2. **Priority development areas**: 1-2 bullet points on the most critical deficit limiting their game.
+3. **Recommended drills/activities**: 1-2 specific pitch exercises to directly address the deficit.
+4. **Motivational note**: One concluding sentence summarizing their overall development trajectory.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
-        maxOutputTokens: 600,
-        systemInstruction: "You are an elite youth academy technical director and player development scout who produces internal reports for coaching staff.",
+        maxOutputTokens: 500, // Reduced slightly since we want shorter outputs
+        systemInstruction: "You are an elite youth academy technical director providing sharp, data-driven player evaluations for coaching staff.",
       }
     });
 
