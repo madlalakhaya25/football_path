@@ -100,6 +100,7 @@ export async function signDocumentDigitally(
   if (error) return { error: error.message };
   revalidatePath(`/dashboard/admin/players/${playerId}`, "page");
   revalidatePath("/dashboard/parent", "page");
+  revalidatePath("/dashboard/player", "page");
   return { success: true };
 }
 
@@ -145,5 +146,6 @@ export async function uploadDocumentScan(formData: FormData) {
   if (error) return { error: error.message };
   revalidatePath(`/dashboard/admin/players/${playerId}`, "page");
   revalidatePath("/dashboard/parent", "page");
+  revalidatePath("/dashboard/player", "page");
   return { success: true };
 }

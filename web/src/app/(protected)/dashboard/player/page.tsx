@@ -11,6 +11,7 @@ import { POSITIONS } from "@/lib/types";
 import { ClaimProfileForm } from "./claim-profile-form";
 import { RatingChart } from "@/components/rating-chart";
 import { MediaGallery } from "@/components/media/media-gallery";
+import { DocumentHub } from "@/components/records/document-hub";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -47,11 +48,20 @@ export default async function PlayerDashboardPage() {
     );
   }
 
-  // Fetch media tags for this player
-  const { data: myMediaTags } = await supabase
-    .from("media_tags")
-    .select("media_uploads ( id, url, media_type, caption, created_at )")
-    .eq("player_id", player.id);
+  const currentSeason = new Date().getFullYear().toString();
+
+  // Fetch documents and media in parallel
+  const [{ data: myDocuments }, { data: myMediaTags }] = await Promise.all([
+    supabase
+      .from("player_documents")
+      .select("document_type, status, signer_name, signed_at, uploaded_at, upload_url")
+      .eq("player_id", player.id)
+      .eq("season", currentSeason),
+    supabase
+      .from("media_tags")
+      .select("media_uploads ( id, url, media_type, caption, created_at )")
+      .eq("player_id", player.id),
+  ]);
 
   // Ratings
   type RatingRow = {
@@ -209,6 +219,14 @@ export default async function PlayerDashboardPage() {
           <MediaGallery items={taggedMediaItems} />
         </section>
       )}
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-base font-semibold">Documents &amp; Contracts</h2>
+          <p className="text-sm text-muted-foreground">{currentSeason} season — sign digitally or upload a signed PDF scan.</p>
+        </div>
+        <DocumentHub playerId={player.id} season={currentSeason} documents={myDocuments ?? []} />
+      </section>
     </div>
   );
 }
