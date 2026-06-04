@@ -340,34 +340,32 @@ function StatusBadge({ doc }: { doc: DocumentRecord | undefined }) {
   return null;
 }
 
-function DocumentRow({
+function SigningModal({
   def,
-  record,
   playerId,
   season,
+  onClose,
+  onSigned,
 }: {
   def: DocDef;
-  record: DocumentRecord | undefined;
   playerId: string;
   season: string;
+  onClose: () => void;
+  onSigned: () => void;
 }) {
-  const [signOpen, setSignOpen] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [signerName, setSignerName] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [checkboxValues, setCheckboxValues] = useState<Record<string, boolean>>({});
   const [signError, setSignError] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [isUploading, startUploadTransition] = useTransition();
 
   const allCheckboxesTicked =
-    !def.checkboxes ||
-    def.checkboxes.every((cb) => checkboxValues[cb.id]);
+    !def.checkboxes || def.checkboxes.every((cb) => checkboxValues[cb.id]);
+
+  const canSign = signerName.trim().length > 0 && agreed && allCheckboxesTicked;
 
   function handleSign() {
-    if (!signerName.trim() || !agreed || !allCheckboxesTicked) return;
+    if (!canSign) return;
     setSignError(null);
     startTransition(async () => {
       let result: { error?: string } | undefined;
@@ -384,13 +382,166 @@ function DocumentRow({
       if (result?.error) {
         setSignError(result.error);
       } else {
-        setSignOpen(false);
-        setSignerName("");
-        setAgreed(false);
-        setCheckboxValues({});
+        onSigned();
+        onClose();
       }
     });
   }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Sign ${def.label}`}
+    >
+      {/* backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* modal panel */}
+      <div className="relative z-10 flex flex-col w-full sm:max-w-2xl sm:rounded-xl rounded-t-xl bg-card shadow-2xl max-h-[92dvh] sm:max-h-[88vh] overflow-hidden">
+
+        {/* header */}
+        <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-border shrink-0">
+          <div>
+            <p className="font-semibold text-base leading-tight">{def.label}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{def.form} · {season} season</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-md p-1.5 hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Close"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* scrollable body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+
+          {/* consent checkboxes (CON-02) */}
+          {def.checkboxes && (
+            <div className="space-y-4">
+              <p className="text-sm font-medium text-foreground">
+                Read each statement carefully and tick to confirm your consent.
+              </p>
+              {def.checkboxes.map((cb) => (
+                <label
+                  key={cb.id}
+                  className={`flex items-start gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                    checkboxValues[cb.id]
+                      ? "border-green-500/40 bg-green-500/5"
+                      : "border-border hover:bg-muted/40"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!checkboxValues[cb.id]}
+                    onChange={(e) =>
+                      setCheckboxValues((prev) => ({ ...prev, [cb.id]: e.target.checked }))
+                    }
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-input accent-green-600"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-snug">{cb.label}</p>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{cb.hint}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+
+          {/* document terms */}
+          {def.terms && (
+            <div className="rounded-lg bg-muted/40 border border-border px-4 py-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                {def.checkboxes ? "Additional terms" : "Document terms"}
+              </p>
+              <p className="text-sm text-foreground/80 whitespace-pre-line leading-relaxed">
+                {def.terms}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* sticky footer */}
+        <div className="shrink-0 border-t border-border px-5 py-4 space-y-3 bg-card">
+          <div className="space-y-1.5">
+            <label htmlFor={`modal-signer-${def.type}`} className="text-sm font-medium">
+              Full name <span className="text-muted-foreground font-normal">(typed signature)</span>
+            </label>
+            <input
+              id={`modal-signer-${def.type}`}
+              type="text"
+              value={signerName}
+              onChange={(e) => setSignerName(e.target.value)}
+              placeholder="e.g. Thabo Dlamini"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring placeholder:text-muted-foreground"
+            />
+          </div>
+
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="h-4 w-4 rounded border-input accent-green-600"
+            />
+            <span className="text-sm">
+              I have read this document in full and agree to be bound by its terms.
+            </span>
+          </label>
+
+          {signError && (
+            <p className="text-sm text-destructive">{signError}</p>
+          )}
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex h-10 flex-1 items-center justify-center rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isPending || !canSign}
+              onClick={handleSign}
+              className="inline-flex h-10 flex-[2] items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40 transition-opacity"
+            >
+              {isPending ? "Signing…" : "Sign document"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocumentRow({
+  def,
+  record,
+  playerId,
+  season,
+}: {
+  def: DocDef;
+  record: DocumentRecord | undefined;
+  playerId: string;
+  season: string;
+}) {
+  const [signModalOpen, setSignModalOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [isUploading, startUploadTransition] = useTransition();
 
   function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -410,153 +561,142 @@ function DocumentRow({
     });
   }
 
+  const isSigned = record?.status === "signed" || record?.status === "uploaded";
+
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="flex flex-wrap items-start gap-3 p-4">
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm">{def.label}</p>
-          <p className="text-xs text-muted-foreground">{def.form}</p>
-          <div className="mt-1.5">
-            <StatusBadge doc={record} />
+    <>
+      {signModalOpen && !def.uploadOnly && (
+        <SigningModal
+          def={def}
+          playerId={playerId}
+          season={season}
+          onClose={() => setSignModalOpen(false)}
+          onSigned={() => setSignModalOpen(false)}
+        />
+      )}
+
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="flex flex-wrap items-start gap-3 p-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              {isSigned && (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-4 text-green-600 shrink-0" aria-hidden="true">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              )}
+              <p className="font-medium text-sm truncate">{def.label}</p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">{def.form}</p>
+            <div className="mt-1.5">
+              <StatusBadge doc={record} />
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {!def.uploadOnly && (
+          <div className="flex items-center gap-2 shrink-0">
+            {!def.uploadOnly && (
+              <button
+                type="button"
+                onClick={() => setSignModalOpen(true)}
+                className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+              >
+                {isSigned ? "View / re-sign" : "Sign here"}
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => { setSignOpen((v) => !v); setUploadOpen(false); }}
+              onClick={() => setUploadOpen((v) => !v)}
               className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
             >
-              Sign here
+              {def.uploadOnly ? "Upload scan" : "Upload PDF"}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => { setUploadOpen((v) => !v); setSignOpen(false); }}
-            className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-          >
-            {def.uploadOnly ? "Upload scan" : "Upload PDF"}
-          </button>
+          </div>
         </div>
+
+        {uploadOpen && (
+          <div className="border-t border-border p-4 space-y-3 bg-muted/30">
+            {def.type === "id_document" && (
+              <p className="text-sm text-muted-foreground">
+                Upload a clear scan or photo of the player&apos;s birth certificate or South African ID document. Accepted formats: PDF, JPEG, PNG.
+              </p>
+            )}
+            <form onSubmit={handleUpload} encType="multipart/form-data" className="space-y-3">
+              <input type="hidden" name="player_id" value={playerId} />
+              <input type="hidden" name="document_type" value={def.type} />
+              <input type="hidden" name="season" value={season} />
+
+              <div className="space-y-1.5">
+                <label htmlFor={`file-${def.type}`} className="text-sm font-medium">
+                  {def.uploadOnly ? "Select file" : "Select PDF file"}
+                </label>
+                <input
+                  id={`file-${def.type}`}
+                  type="file"
+                  name="file"
+                  accept={def.accept ?? ".pdf,application/pdf"}
+                  required
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring file:border-0 file:bg-transparent file:text-sm file:font-medium"
+                />
+              </div>
+
+              {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
+              {uploadSuccess && <p className="text-sm text-green-600">Uploaded successfully.</p>}
+
+              <button
+                type="submit"
+                disabled={isUploading}
+                className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {isUploading ? "Uploading…" : "Upload"}
+              </button>
+            </form>
+          </div>
+        )}
       </div>
-
-      {signOpen && !def.uploadOnly && (
-        <div className="border-t border-border p-4 space-y-3 bg-muted/30">
-          {def.checkboxes && (
-            <div className="space-y-3 mb-2">
-              {def.checkboxes.map((cb) => (
-                <div key={cb.id} className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id={`${def.type}-${cb.id}`}
-                    checked={!!checkboxValues[cb.id]}
-                    onChange={(e) =>
-                      setCheckboxValues((prev) => ({ ...prev, [cb.id]: e.target.checked }))
-                    }
-                    className="mt-0.5 h-4 w-4 rounded border-input"
-                  />
-                  <div>
-                    <label htmlFor={`${def.type}-${cb.id}`} className="text-sm font-medium">{cb.label}</label>
-                    <p className="text-xs text-muted-foreground mt-0.5">{cb.hint}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {def.terms && (
-            <blockquote className="border-l-4 border-border pl-4 text-sm text-muted-foreground italic whitespace-pre-line">
-              {def.terms}
-            </blockquote>
-          )}
-
-          <div className="space-y-1.5">
-            <label htmlFor={`signer-${def.type}`} className="text-sm font-medium">
-              Full name (as signature)
-            </label>
-            <input
-              id={`signer-${def.type}`}
-              type="text"
-              value={signerName}
-              onChange={(e) => setSignerName(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id={`agree-${def.type}`}
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="h-4 w-4 rounded border-input"
-            />
-            <label htmlFor={`agree-${def.type}`} className="text-sm">
-              I have read and agree to the above
-            </label>
-          </div>
-
-          {signError && <p className="text-sm text-destructive">{signError}</p>}
-
-          <button
-            type="button"
-            disabled={isPending || !signerName.trim() || !agreed || !allCheckboxesTicked}
-            onClick={handleSign}
-            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {isPending ? "Signing…" : "Sign document"}
-          </button>
-        </div>
-      )}
-
-      {uploadOpen && (
-        <div className="border-t border-border p-4 space-y-3 bg-muted/30">
-          {def.type === "id_document" && (
-            <p className="text-sm text-muted-foreground">
-              Upload a clear scan or photo of the player&apos;s birth certificate or South African ID document. Accepted formats: PDF, JPEG, PNG.
-            </p>
-          )}
-          <form onSubmit={handleUpload} encType="multipart/form-data" className="space-y-3">
-            <input type="hidden" name="player_id" value={playerId} />
-            <input type="hidden" name="document_type" value={def.type} />
-            <input type="hidden" name="season" value={season} />
-
-            <div className="space-y-1.5">
-              <label htmlFor={`file-${def.type}`} className="text-sm font-medium">
-                {def.uploadOnly ? "Select file" : "Select PDF file"}
-              </label>
-              <input
-                id={`file-${def.type}`}
-                type="file"
-                name="file"
-                accept={def.accept ?? ".pdf,application/pdf"}
-                required
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring file:border-0 file:bg-transparent file:text-sm file:font-medium"
-              />
-            </div>
-
-            {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
-            {uploadSuccess && <p className="text-sm text-green-600">Uploaded successfully.</p>}
-
-            <button
-              type="submit"
-              disabled={isUploading}
-              className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-            >
-              {isUploading ? "Uploading…" : "Upload"}
-            </button>
-          </form>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
 export function DocumentHub({ playerId, season, documents }: Props) {
   const docMap = new Map(documents.map((d) => [d.document_type, d]));
 
+  const signableDocs = DOCUMENTS.filter((d) => !d.uploadOnly);
+  const signedCount = signableDocs.filter((d) => {
+    const rec = docMap.get(d.type);
+    return rec?.status === "signed";
+  }).length;
+  const uploadOnlyDocs = DOCUMENTS.filter((d) => d.uploadOnly);
+  const uploadedCount = uploadOnlyDocs.filter((d) => {
+    const rec = docMap.get(d.type);
+    return rec?.status === "uploaded";
+  }).length;
+  const totalComplete = signedCount + uploadedCount;
+  const total = DOCUMENTS.length;
+  const allDone = totalComplete === total;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* progress summary */}
+      <div className="rounded-xl border border-border bg-card px-4 py-3 space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-medium">
+            {allDone ? "All documents complete" : `${totalComplete} of ${total} documents complete`}
+          </span>
+          <span className={`text-xs font-semibold ${allDone ? "text-green-600" : "text-muted-foreground"}`}>
+            {Math.round((totalComplete / total) * 100)}%
+          </span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${allDone ? "bg-green-500" : "bg-primary"}`}
+            style={{ width: `${(totalComplete / total) * 100}%` }}
+          />
+        </div>
+        {!allDone && (
+          <p className="text-xs text-muted-foreground">
+            Sign or upload the remaining documents to complete your registration for the {season} season.
+          </p>
+        )}
+      </div>
+
       {DOCUMENTS.map((def) => (
         <DocumentRow
           key={def.type}
