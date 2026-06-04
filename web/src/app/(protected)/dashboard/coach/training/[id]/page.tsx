@@ -170,6 +170,25 @@ export default async function CoachTrainingSessionPage({
         )}
       </div>
 
+      {/* Photos & Videos */}
+      <section className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Photos &amp; Videos</h2>
+          <MediaUploadForm
+            teamId={session.team_id}
+            sessionId={id}
+            academyId={profile?.academy_id ?? ""}
+            squadPlayers={flattenedSquadPlayers}
+          />
+        </div>
+        {normalizedMediaItems.length > 0 && (
+          <MediaGallery items={normalizedMediaItems} />
+        )}
+        {normalizedMediaItems.length === 0 && (
+          <p className="text-sm text-muted-foreground">No media yet — upload training photos or videos.</p>
+        )}
+      </section>
+
       {/* Drills */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
@@ -215,20 +234,6 @@ export default async function CoachTrainingSessionPage({
         )}
 
         <AddDrillForm sessionId={id} />
-      </section>
-
-      {/* Photos & Videos */}
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold">Photos &amp; Videos</h2>
-        <MediaUploadForm
-          teamId={session.team_id}
-          sessionId={id}
-          academyId={profile?.academy_id ?? ""}
-          squadPlayers={flattenedSquadPlayers}
-        />
-        {normalizedMediaItems.length > 0 && (
-          <MediaGallery items={normalizedMediaItems} />
-        )}
       </section>
     </div>
   );

@@ -222,16 +222,20 @@ export default async function FixtureDetailPage({
       )}
 
       {/* Photos & Videos */}
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold">Photos &amp; Videos</h2>
-        <MediaUploadForm
-          teamId={fixture.team_id ?? ""}
-          fixtureId={id}
-          academyId={profile?.academy_id ?? ""}
-          squadPlayers={flattenedSquadPlayers}
-        />
-        {normalizedMediaItems.length > 0 && (
+      <section className="rounded-xl border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Photos &amp; Videos</h2>
+          <MediaUploadForm
+            teamId={fixture.team_id ?? ""}
+            fixtureId={id}
+            academyId={profile?.academy_id ?? ""}
+            squadPlayers={flattenedSquadPlayers}
+          />
+        </div>
+        {normalizedMediaItems.length > 0 ? (
           <MediaGallery items={normalizedMediaItems} />
+        ) : (
+          <p className="text-sm text-muted-foreground">No media yet — upload match photos or videos.</p>
         )}
       </section>
     </div>

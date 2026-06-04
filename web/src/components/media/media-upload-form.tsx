@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { Camera } from "lucide-react";
 import { uploadMedia } from "@/app/actions/media";
 import { Button } from "@/components/ui/button";
 
@@ -71,10 +72,12 @@ export function MediaUploadForm({
     <div className="space-y-2">
       <Button
         type="button"
-        variant="outline"
+        variant={open ? "ghost" : "primary"}
         size="sm"
+        className="gap-2"
         onClick={() => setOpen((v) => !v)}
       >
+        {!open && <Camera className="size-4" aria-hidden="true" />}
         {open ? "Cancel" : "Add photo / video"}
       </Button>
 
