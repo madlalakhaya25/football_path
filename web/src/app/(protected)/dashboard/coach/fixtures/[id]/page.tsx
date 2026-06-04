@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CancelFixtureButton } from "./cancel-fixture-button";
 import { MediaUploadForm } from "@/components/media/media-upload-form";
 import { MediaGallery } from "@/components/media/media-gallery";
+import { MatchAttendanceForm } from "@/components/attendance/match-attendance-form";
 
 const STATUS_VARIANT = {
   upcoming: "neutral",
@@ -49,6 +50,7 @@ export default async function FixtureDetailPage({
     { data: media },
     { data: squadMembersRaw },
     { data: profile },
+    { data: matchAttendanceRaw },
   ] = await Promise.all([
     supabase
       .from("media_uploads")
@@ -67,6 +69,10 @@ export default async function FixtureDetailPage({
       .select("academy_id")
       .eq("id", user.id)
       .single(),
+    supabase
+      .from("match_attendance")
+      .select("player_id, status")
+      .eq("fixture_id", id),
   ]);
 
   type Appearance = { played: boolean; players: { id: string; full_name: string; position: string | null; photo_url: string | null } | { id: string; full_name: string; position: string | null; photo_url: string | null }[] | null };
@@ -88,6 +94,9 @@ export default async function FixtureDetailPage({
     if (!m.players) return [];
     return Array.isArray(m.players) ? m.players : [m.players];
   });
+
+  type MatchAttendanceRecord = { player_id: string; status: "present" | "absent" | "late" | "excused" };
+  const existingAttendance: MatchAttendanceRecord[] = (matchAttendanceRaw ?? []) as MatchAttendanceRecord[];
 
   // Normalize media items
   type RawMediaTag = { player_id: string; players: { full_name: string } | { full_name: string }[] | null };
@@ -219,6 +228,18 @@ export default async function FixtureDetailPage({
             })}
           </div>
         </div>
+      )}
+
+      {/* Attendance */}
+      {flattenedSquadPlayers.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Attendance</h2>
+          <MatchAttendanceForm
+            fixtureId={id}
+            players={flattenedSquadPlayers}
+            existing={existingAttendance}
+          />
+        </section>
       )}
 
       {/* Photos & Videos */}

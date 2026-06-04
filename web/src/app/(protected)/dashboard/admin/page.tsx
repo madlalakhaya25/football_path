@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Shield, Calendar, Star, ChevronRight, UserPlus, Settings } from "lucide-react";
+import { Users, Shield, Calendar, Star, ChevronRight, UserPlus, Settings, BarChart2 } from "lucide-react";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -34,9 +34,10 @@ export default async function AdminDashboardPage() {
   ];
 
   const quickActions = [
-    { label: "Add player",   href: "/dashboard/admin/players",  Icon: UserPlus },
-    { label: "Manage teams", href: "/dashboard/admin/teams",    Icon: Shield },
-    { label: "Academy settings", href: "/dashboard/admin/academy", Icon: Settings },
+    { label: "Add player",       href: "/dashboard/admin/players",   Icon: UserPlus },
+    { label: "Manage teams",     href: "/dashboard/admin/teams",     Icon: Shield },
+    { label: "Academy settings", href: "/dashboard/admin/academy",   Icon: Settings },
+    { label: "Analytics",        href: "/dashboard/admin/analytics", Icon: BarChart2 },
   ];
 
   return (
@@ -73,7 +74,7 @@ export default async function AdminDashboardPage() {
       {/* Quick actions */}
       <div>
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Quick actions</p>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {quickActions.map(({ label, href, Icon }) => (
             <Link
               key={label}
