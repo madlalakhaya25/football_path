@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { AddDrillForm } from "./add-drill-form";
 import { DeleteSessionButton } from "./delete-session-button";
 import { DeleteDrillButton } from "./delete-drill-button";
+import { MediaUploadForm } from "@/components/media/media-upload-form";
+import { MediaGallery } from "@/components/media/media-gallery";
 
 const TYPE_STYLES: Record<string, { label: string; chip: string; header: string }> = {
   general:    { label: "General",    chip: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",       header: "bg-slate-500/10" },
@@ -35,16 +37,38 @@ export default async function CoachTrainingSessionPage({
 
   if (!session) notFound();
 
-  const { data: drills } = await supabase
-    .from("training_drills")
-    .select("id, title, description, video_url, sort_order")
-    .eq("session_id", id)
-    .order("sort_order");
-
-  const { data: attendanceRows } = await supabase
-    .from("training_attendance")
-    .select("status")
-    .eq("session_id", id);
+  const [
+    { data: drills },
+    { data: attendanceRows },
+    { data: media },
+    { data: squadMembersRaw },
+    { data: profile },
+  ] = await Promise.all([
+    supabase
+      .from("training_drills")
+      .select("id, title, description, video_url, sort_order")
+      .eq("session_id", id)
+      .order("sort_order"),
+    supabase
+      .from("training_attendance")
+      .select("status")
+      .eq("session_id", id),
+    supabase
+      .from("media_uploads")
+      .select("id, url, media_type, caption, created_at, media_tags ( player_id, players ( full_name ) )")
+      .eq("session_id", id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("team_members")
+      .select("players ( id, full_name )")
+      .eq("team_id", session.team_id)
+      .eq("active", true),
+    supabase
+      .from("profiles")
+      .select("academy_id")
+      .eq("id", user.id)
+      .single(),
+  ]);
 
   const attending = (attendanceRows ?? []).filter((r: { status: string }) => r.status === "attending").length;
   const unavailable = (attendanceRows ?? []).filter((r: { status: string }) => r.status === "unavailable").length;
@@ -55,6 +79,35 @@ export default async function CoachTrainingSessionPage({
     : (session.teams as { name: string } | null)?.name;
 
   const typeStyle = TYPE_STYLES[session.session_type] ?? TYPE_STYLES.general;
+
+  // Flatten squad players from nested join
+  type SquadMemberRaw = { players: { id: string; full_name: string } | { id: string; full_name: string }[] | null };
+  const flattenedSquadPlayers: { id: string; full_name: string }[] = (squadMembersRaw ?? []).flatMap((m: SquadMemberRaw) => {
+    if (!m.players) return [];
+    return Array.isArray(m.players) ? m.players : [m.players];
+  });
+
+  // Normalize media items: flatten nested media_tags -> tagged_players
+  type RawMediaTag = { player_id: string; players: { full_name: string } | { full_name: string }[] | null };
+  type RawMediaItem = {
+    id: string;
+    url: string;
+    media_type: string;
+    caption: string | null;
+    created_at: string;
+    media_tags: RawMediaTag[] | null;
+  };
+  const normalizedMediaItems = (media ?? []).map((item: RawMediaItem) => ({
+    id: item.id,
+    url: item.url,
+    media_type: item.media_type,
+    caption: item.caption,
+    created_at: item.created_at,
+    tagged_players: (item.media_tags ?? []).flatMap((tag: RawMediaTag) => {
+      if (!tag.players) return [];
+      return Array.isArray(tag.players) ? tag.players : [tag.players];
+    }),
+  }));
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -162,6 +215,20 @@ export default async function CoachTrainingSessionPage({
         )}
 
         <AddDrillForm sessionId={id} />
+      </section>
+
+      {/* Photos & Videos */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold">Photos &amp; Videos</h2>
+        <MediaUploadForm
+          teamId={session.team_id}
+          sessionId={id}
+          academyId={profile?.academy_id ?? ""}
+          squadPlayers={flattenedSquadPlayers}
+        />
+        {normalizedMediaItems.length > 0 && (
+          <MediaGallery items={normalizedMediaItems} />
+        )}
       </section>
     </div>
   );

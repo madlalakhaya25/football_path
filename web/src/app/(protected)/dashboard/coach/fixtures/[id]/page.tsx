@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, ClipboardList, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CancelFixtureButton } from "./cancel-fixture-button";
+import { MediaUploadForm } from "@/components/media/media-upload-form";
+import { MediaGallery } from "@/components/media/media-gallery";
 
 const STATUS_VARIANT = {
   upcoming: "neutral",
@@ -27,7 +29,7 @@ export default async function FixtureDetailPage({
   const { data: fixture } = await supabase
     .from("fixtures")
     .select(`
-      id, opponent, venue, fixture_date, is_home, status, notes,
+      id, opponent, venue, fixture_date, is_home, status, notes, team_id,
       match_results ( team_score, opponent_score, match_notes ),
       match_appearances (
         played,
@@ -43,6 +45,30 @@ export default async function FixtureDetailPage({
 
   if (!fixture) notFound();
 
+  const [
+    { data: media },
+    { data: squadMembersRaw },
+    { data: profile },
+  ] = await Promise.all([
+    supabase
+      .from("media_uploads")
+      .select("id, url, media_type, caption, created_at, media_tags ( player_id, players ( full_name ) )")
+      .eq("fixture_id", id)
+      .order("created_at", { ascending: false }),
+    fixture.team_id
+      ? supabase
+          .from("team_members")
+          .select("players ( id, full_name )")
+          .eq("team_id", fixture.team_id)
+          .eq("active", true)
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("profiles")
+      .select("academy_id")
+      .eq("id", user.id)
+      .single(),
+  ]);
+
   type Appearance = { played: boolean; players: { id: string; full_name: string; position: string | null; photo_url: string | null } | { id: string; full_name: string; position: string | null; photo_url: string | null }[] | null };
   type PRating = { rating: number; note: string | null; players: { id: string; full_name: string } | { id: string; full_name: string }[] | null };
 
@@ -54,6 +80,35 @@ export default async function FixtureDetailPage({
   const ratingsMap = new Map(ratings.map((r) => {
     const p = Array.isArray(r.players) ? r.players[0] : r.players;
     return [p?.id, r.rating];
+  }));
+
+  // Flatten squad players from nested join
+  type SquadMemberRaw = { players: { id: string; full_name: string } | { id: string; full_name: string }[] | null };
+  const flattenedSquadPlayers: { id: string; full_name: string }[] = (squadMembersRaw ?? []).flatMap((m: SquadMemberRaw) => {
+    if (!m.players) return [];
+    return Array.isArray(m.players) ? m.players : [m.players];
+  });
+
+  // Normalize media items
+  type RawMediaTag = { player_id: string; players: { full_name: string } | { full_name: string }[] | null };
+  type RawMediaItem = {
+    id: string;
+    url: string;
+    media_type: string;
+    caption: string | null;
+    created_at: string;
+    media_tags: RawMediaTag[] | null;
+  };
+  const normalizedMediaItems = (media ?? []).map((item: RawMediaItem) => ({
+    id: item.id,
+    url: item.url,
+    media_type: item.media_type,
+    caption: item.caption,
+    created_at: item.created_at,
+    tagged_players: (item.media_tags ?? []).flatMap((tag: RawMediaTag) => {
+      if (!tag.players) return [];
+      return Array.isArray(tag.players) ? tag.players : [tag.players];
+    }),
   }));
 
   return (
@@ -165,6 +220,20 @@ export default async function FixtureDetailPage({
           </div>
         </div>
       )}
+
+      {/* Photos & Videos */}
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold">Photos &amp; Videos</h2>
+        <MediaUploadForm
+          teamId={fixture.team_id ?? ""}
+          fixtureId={id}
+          academyId={profile?.academy_id ?? ""}
+          squadPlayers={flattenedSquadPlayers}
+        />
+        {normalizedMediaItems.length > 0 && (
+          <MediaGallery items={normalizedMediaItems} />
+        )}
+      </section>
     </div>
   );
 }

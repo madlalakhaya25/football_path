@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { registerSchema, type RegisterInput } from "@/lib/validation";
 import { createClient } from "@/lib/supabase/client";
-import { DEFAULT_ACADEMY_ID } from "@/lib/constants";
 
 const INPUT_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
@@ -64,9 +63,17 @@ export default function RegisterPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setServerError("Could not retrieve user after sign-up."); return; }
 
+    // Lookup the academy by join code
+    const { data: academyData } = await supabase.rpc('find_academy_by_join_code', { p_code: data.club_code.toUpperCase() });
+    if (academyData?.error || !academyData?.academy_id) {
+      setServerError("Invalid club code. Check with your club admin.");
+      return;
+    }
+    const academyId = academyData.academy_id;
+
     await supabase
       .from("profiles")
-      .update({ full_name: data.full_name, role: data.role, academy_id: DEFAULT_ACADEMY_ID })
+      .update({ full_name: data.full_name, role: data.role, academy_id: academyId })
       .eq("id", user.id);
 
     if (data.role === "parent" && data.share_token && data.share_token.trim() !== "") {
@@ -195,6 +202,32 @@ export default function RegisterPage() {
             </div>
             {errors.role && <p role="alert" className="text-xs text-destructive">{errors.role.message}</p>}
           </div>
+
+          {/* Club join code — shown when a role is selected */}
+          {selectedRole && (
+            <div className="space-y-1.5">
+              <label htmlFor="club_code" className="text-sm font-medium">Club join code</label>
+              <input
+                id="club_code"
+                type="text"
+                autoComplete="off"
+                placeholder="e.g. ABC123"
+                {...register("club_code", {
+                  onChange: (e) => {
+                    e.target.value = e.target.value.toUpperCase();
+                  },
+                })}
+                className={INPUT_CLASS}
+              />
+              {errors.club_code && <p role="alert" className="text-xs text-destructive">{errors.club_code.message}</p>}
+              <p className="text-xs text-muted-foreground">
+                6-character code from your club admin.{" "}
+                <Link href="/register-club" className="underline">
+                  Register a new club instead
+                </Link>
+              </p>
+            </div>
+          )}
 
           {/* Player code — shown only for parents */}
           {selectedRole === "parent" && (
