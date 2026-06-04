@@ -15,11 +15,12 @@ export async function getPlayerInsights(playerId: string): Promise<{
   try {
     const { supabase } = await requireUser();
 
+    // Cleaned up array structure to resolve Turbopack compilation errors
     const [
-      { data: player },
-      { data: ratings },
-      { data: attrs },
-      { data: milestones },
+      playerResult,
+      ratingsResult,
+      attrsResult,
+      milestonesResult
     ] = await Promise.all([
       supabase
         .from("players")
@@ -49,6 +50,11 @@ export async function getPlayerInsights(playerId: string): Promise<{
         .limit(20),
     ]);
 
+    const player = playerResult?.data;
+    const ratings = ratingsResult?.data;
+    const attrs = attrsResult?.data;
+    const milestones = milestonesResult?.data;
+
     if (!player) return { error: "Player not found." };
 
     const age = player.date_of_birth
@@ -96,7 +102,7 @@ export async function getPlayerInsights(playerId: string): Promise<{
       .filter(Boolean)
       .join(", ");
 
-    // Adjusted prompt template to explicitly enforce third-person assessment for coaches
+    // Strict prompt constraints enforcing an internal third-person perspective
     const prompt = `Analyse the following youth football player data and provide specific, technical coaching insights for a coach's internal team management dashboard.
 
 CRITICAL PERSPECTIVE RULES: 
@@ -121,116 +127,13 @@ Provide the response using these exact plain text markdown headers:
 
 Keep the total response under 300 words.`;
 
-    // NEW SDK CALL WITH CONFIG PERSONA STEERING
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
         maxOutputTokens: 600,
-        // System instruction forces the model to stay in an objective analytical role
         systemInstruction: "You are an elite youth academy technical director and player development scout who produces internal reports for coaching staff.",
       }
-    });
-
-    const text = response.text;
-
-    if (!text) {
-      throw new Error("No response from Gemini");
-    }
-
-    return { insights: text };
-  } catch (err) {
-    return {
-      error: err instanceof Error ? err.message : "AI service unavailable.",
-    };
-  }
-}
-      supabase
-        .from("player_attributes")
-        .select("pace, shooting, passing, dribbling, defending, physical")
-        .eq("player_id", playerId),
-
-      supabase
-        .from("player_milestone_completions")
-        .select(
-          "template_id, completed_at, development_milestone_templates(title, category)"
-        )
-        .eq("player_id", playerId)
-        .order("completed_at", { ascending: false })
-        .limit(20),
-    ]);
-
-    if (!player) return { error: "Player not found." };
-
-    const age = player.date_of_birth
-      ? Math.floor(
-          (Date.now() - new Date(player.date_of_birth).getTime()) /
-            (1000 * 60 * 60 * 24 * 365.25)
-        )
-      : null;
-
-    const attrRows = attrs ?? [];
-
-    const avg = (key: string) => {
-      if (!attrRows.length) return null;
-      return Math.round(
-        attrRows.reduce((sum: number, r: any) => sum + (r[key] ?? 0), 0) /
-          attrRows.length
-      );
-    };
-
-    const attributeSummary = attrRows.length
-      ? `Pace ${avg("pace")}, Shooting ${avg("shooting")}, Passing ${avg(
-          "passing"
-        )}, Dribbling ${avg("dribbling")}, Defending ${avg(
-          "defending"
-        )}, Physical ${avg("physical")}`
-      : "No attribute assessments yet";
-
-    const ratingsSummary = (ratings ?? [])
-      .map((r: any) => {
-        const fix = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
-        return `${r.rating}/5 vs ${fix?.opponent ?? "training"}${
-          r.note ? ` — "${r.note}"` : ""
-        }`;
-      })
-      .join("; ");
-
-    const completedMilestones = (milestones ?? [])
-      .map((m: any) => {
-        const t = Array.isArray(m.development_milestone_templates)
-          ? m.development_milestone_templates[0]
-          : m.development_milestone_templates;
-
-        return t ? `${t.category}: ${t.title}` : null;
-      })
-      .filter(Boolean)
-      .join(", ");
-
-    const prompt = `
-You are an expert youth football development coach.
-
-Player: ${player.full_name}
-Position: ${player.position ?? "Unknown"}
-Age: ${age ?? "Unknown"}
-
-Ratings: ${ratingsSummary || "None"}
-Attributes: ${attributeSummary}
-Milestones: ${completedMilestones || "None"}
-
-Provide:
-1. Strengths
-2. Development areas
-3. Drills
-4. Motivational note
-
-Keep under 300 words.
-`;
-
-    // NEW SDK CALL
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
     });
 
     const text = response.text;
