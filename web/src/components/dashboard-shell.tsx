@@ -12,6 +12,8 @@ import {
   Megaphone,
   Dumbbell,
   Settings,
+  Download,
+  Building2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -33,6 +35,8 @@ const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
     { href: "/dashboard/admin", label: "Overview", Icon: LayoutDashboard },
     { href: "/dashboard/admin/players", label: "Players", Icon: Users },
     { href: "/dashboard/admin/teams", label: "Teams", Icon: Shield },
+    { href: "/dashboard/admin/reports", label: "Reports", Icon: Download },
+    { href: "/dashboard/admin/academy", label: "Academy", Icon: Building2 },
   ],
   coach: [
     { href: "/dashboard/coach", label: "Overview", mobileLabel: "Home", Icon: LayoutDashboard },
