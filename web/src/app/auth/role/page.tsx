@@ -39,8 +39,8 @@ export default function RolePage() {
 
   async function handleContinue() {
     if (!selected) return;
-    if (!clubCode || clubCode.trim().length < 4) {
-      setError("Enter your club join code.");
+    if (!clubCode || clubCode.trim().length !== 6) {
+      setError("Club code must be exactly 6 characters.");
       return;
     }
     setLoading(true);

@@ -13,7 +13,7 @@ export const registerSchema = z.object({
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["player", "coach", "parent", "admin"], { error: "Choose a role" }),
-  club_code: z.string().min(4, "Enter your club join code").max(8, "Code too long"),
+  club_code: z.string().length(6, "Join code must be exactly 6 characters"),
   share_token: z.string().optional(),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;

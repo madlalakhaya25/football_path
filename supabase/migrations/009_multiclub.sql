@@ -34,11 +34,22 @@ SECURITY DEFINER SET search_path = public, pg_temp AS $$
 DECLARE
   v_academy_id UUID;
   v_join_code  TEXT;
+  v_attempts   INT := 0;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
-  INSERT INTO academies (name, province)
-  VALUES (p_name, p_province)
-  RETURNING id, join_code INTO v_academy_id, v_join_code;
+  -- Retry up to 5 times on the rare chance of a join_code collision
+  LOOP
+    v_attempts := v_attempts + 1;
+    v_join_code := upper(substr(encode(gen_random_bytes(3), 'hex'), 1, 6));
+    BEGIN
+      INSERT INTO academies (name, province, join_code)
+      VALUES (p_name, p_province, v_join_code)
+      RETURNING id INTO v_academy_id;
+      EXIT;
+    EXCEPTION WHEN unique_violation THEN
+      IF v_attempts >= 5 THEN RAISE; END IF;
+    END;
+  END LOOP;
   UPDATE profiles SET academy_id = v_academy_id, role = 'admin' WHERE id = auth.uid();
   RETURN json_build_object('academy_id', v_academy_id, 'join_code', v_join_code, 'name', p_name);
 END;
