@@ -1,9 +1,10 @@
 "use server";
 
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import { requireUser } from "@/lib/auth";
 
-const client = new Anthropic();
+// Automatically looks for process.env.GEMINI_API_KEY
+const ai = new GoogleGenAI({});
 
 export async function getPlayerInsights(playerId: string): Promise<{
   insights?: string;
@@ -88,18 +89,22 @@ Provide:
 Be specific to the position and age. Base insights strictly on the data provided. Keep the total response under 300 words. Use plain text with the bold headers shown above.`;
 
   try {
-    const message = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 600,
-      messages: [{ role: "user", content: prompt }],
+    // Calling Google AI Studio
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        // Equivalent to max_tokens in Anthropic
+        maxOutputTokens: 600, 
+      }
     });
 
-    const text = message.content
-      .filter((b) => b.type === "text")
-      .map((b) => (b as { type: "text"; text: string }).text)
-      .join("\n");
+    // The SDK extracts text directly via the text property
+    if (!response.text) {
+      throw new Error("No text returned from Gemini");
+    }
 
-    return { insights: text };
+    return { insights: response.text };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "AI service unavailable." };
   }
