@@ -149,3 +149,50 @@ export async function uploadDocumentScan(formData: FormData) {
   revalidatePath("/dashboard/player", "page");
   return { success: true };
 }
+
+export async function signConsentDocument(
+  playerId: string,
+  season: string,
+  signerName: string,
+  consents: {
+    participation_consent: boolean;
+    photo_consent: boolean;
+    transport_consent: boolean;
+    risk_acknowledged: boolean;
+  }
+) {
+  const { supabase } = await requireUser();
+
+  const { error: docErr } = await supabase.from("player_documents").upsert(
+    {
+      player_id: playerId,
+      document_type: "consent_form",
+      season,
+      signed_digitally: true,
+      signer_name: signerName,
+      signer_role: "parent",
+      signed_at: new Date().toISOString(),
+      status: "signed",
+    },
+    { onConflict: "player_id,document_type,season" }
+  );
+  if (docErr) return { error: docErr.message };
+
+  const { error: consentErr } = await supabase.from("player_consents").upsert(
+    {
+      player_id: playerId,
+      season,
+      ...consents,
+      signed_by: signerName,
+      signed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "player_id,season" }
+  );
+  if (consentErr) return { error: consentErr.message };
+
+  revalidatePath(`/dashboard/admin/players/${playerId}`, "page");
+  revalidatePath("/dashboard/parent", "page");
+  revalidatePath("/dashboard/player", "page");
+  return { success: true };
+}

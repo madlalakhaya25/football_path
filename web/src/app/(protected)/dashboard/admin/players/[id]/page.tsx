@@ -11,7 +11,6 @@ import { PlayerPhotoUpload } from "@/components/player-photo-upload";
 import { POSITIONS, FEET } from "@/lib/types";
 import { ExtendedInfoForm } from "@/components/records/extended-info-form";
 import { MedicalForm } from "@/components/records/medical-form";
-import { ConsentsForm } from "@/components/records/consents-form";
 import { DocumentHub } from "@/components/records/document-hub";
 
 const ATTRS = [
@@ -59,9 +58,8 @@ export default async function AdminPlayerDetailPage({
 
   if (!player) notFound();
 
-  const [{ data: medical }, { data: consentsRow }, { data: docs }] = await Promise.all([
+  const [{ data: medical }, { data: docs }] = await Promise.all([
     supabase.from("player_medical").select("*").eq("player_id", id).maybeSingle(),
-    supabase.from("player_consents").select("*").eq("player_id", id).eq("season", currentSeason).maybeSingle(),
     supabase.from("player_documents").select("document_type, status, signer_name, signed_at, uploaded_at, upload_url").eq("player_id", id).eq("season", currentSeason),
   ]);
 
@@ -197,12 +195,6 @@ export default async function AdminPlayerDetailPage({
             )}
           </div>
           <MedicalForm playerId={id} initial={medical as Record<string, unknown> | null} />
-        </div>
-
-        {/* Consents */}
-        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-          <p className="font-semibold">Consents · {currentSeason}</p>
-          <ConsentsForm playerId={id} season={currentSeason} initial={consentsRow as Record<string, unknown> | null} />
         </div>
 
         {/* Documents */}

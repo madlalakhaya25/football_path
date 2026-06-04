@@ -1,16 +1,35 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { signDocumentDigitally, uploadDocumentScan } from "@/app/actions/records";
+import { signDocumentDigitally, signConsentDocument, uploadDocumentScan } from "@/app/actions/records";
 
-const DOCUMENTS = [
+type CheckboxDef = { id: string; label: string; hint: string };
+
+type DocDef = {
+  type: string;
+  label: string;
+  form: string;
+  signerRole: string;
+  terms: string;
+  uploadOnly?: boolean;
+  accept?: string;
+  checkboxes?: CheckboxDef[];
+};
+
+const DOCUMENTS: DocDef[] = [
   {
     type: "registration_agreement",
     label: "Player Registration Agreement",
     form: "GFA-REG-01",
     signerRole: "parent",
     terms:
-      "By signing, the parent/guardian confirms: all information provided is accurate; the player is not currently registered at any other SAFA/GDFA affiliated club; age documentation is accurate; fees are due monthly and persistent non-payment may affect the player's place; player data is held securely under POPIA.",
+      "By signing, the parent/guardian confirms:\n" +
+      "• The player is not currently registered at any other SAFA/GDFA affiliated club in the same season.\n" +
+      "• All personal information provided is accurate. Age documentation (birth certificate or SA ID) is correct and available for inspection on request.\n" +
+      "• Academy monthly fees are due on the 1st of each month. Arrears of three or more months may result in the player's participation being suspended until the account is settled.\n" +
+      "• The academy reserves the right to withdraw or suspend a player's registration for serious or repeated breaches of the Code of Ethics (GFA-ETH-04).\n" +
+      "• Any dispute will first be referred to Academy management; if unresolved, it may be escalated to SAFA/GDFA in accordance with their disciplinary procedures.\n" +
+      "• Personal data is collected and processed in accordance with the academy's POPIA Privacy Notice (GFA-DAT-05).",
   },
   {
     type: "consent_form",
@@ -18,7 +37,31 @@ const DOCUMENTS = [
     form: "GFA-CON-02",
     signerRole: "parent",
     terms:
-      "I consent to my child's participation in all academy activities. I acknowledge the photo/media policy (official channels only, no full names or location tags). I consent to academy-arranged transport to away fixtures. I acknowledge the inherent physical risks of participation.",
+      "By signing, the parent/guardian confirms each of the consents ticked above. " +
+      "This form is the authoritative consent record for the current season and supersedes any previously submitted consent. " +
+      "Consents may be withdrawn in writing at any time; withdrawal of participation consent will end the current registration.",
+    checkboxes: [
+      {
+        id: "participation_consent",
+        label: "Participation",
+        hint: "I consent to my child participating in all Growfit training sessions, matches, tournaments, and academy events for the current season.",
+      },
+      {
+        id: "photo_consent",
+        label: "Photo & media",
+        hint: "I consent to photos and videos of my child being used on official Growfit channels (website, Instagram, Facebook). No full name or precise location will be published. Content will not be sold to third parties.",
+      },
+      {
+        id: "transport_consent",
+        label: "Transport",
+        hint: "I consent to my child being transported to away fixtures and tournaments in academy-arranged, roadworthy, insured vehicles driven by licensed drivers.",
+      },
+      {
+        id: "risk_acknowledged",
+        label: "Risk acknowledgement",
+        hint: "I acknowledge the inherent physical risks of participation in contact sport and confirm the academy's safety and first-aid procedures have been explained to me.",
+      },
+    ],
   },
   {
     type: "code_of_ethics",
@@ -26,7 +69,24 @@ const DOCUMENTS = [
     form: "GFA-ETH-04",
     signerRole: "parent",
     terms:
-      "I commit to upholding Growfit's values — Respect, Child First, Honesty, Fair Play, Accountability, Inclusion — in everything I do at and around Growfit Sports Academy, on the field, on the sideline, online and in the community. Breaches are handled through the Discipline Policy.",
+      "I commit to upholding Growfit's values — Respect, Child First, Honesty, Fair Play, Accountability, Inclusion — in all interactions at and around the academy.\n\n" +
+      "ON THE FIELD\n" +
+      "• Show respect to coaches, referees, opponents, and teammates at all times.\n" +
+      "• Accept the decisions of match officials without argument.\n" +
+      "• Deliberate foul play or violent conduct will result in immediate disciplinary action.\n\n" +
+      "ON THE SIDELINE (parents, guardians & spectators)\n" +
+      "• Provide positive encouragement only — no negative coaching or criticism from the sideline during matches.\n" +
+      "• Do not approach referees, opposition players, or coaches during or immediately after a match.\n" +
+      "• Abusive, threatening, or discriminatory language will result in removal from the venue and may lead to a review of the player's registration.\n\n" +
+      "SOCIAL MEDIA\n" +
+      "• Do not post negative commentary about referees, opponents, or match officials.\n" +
+      "• Do not share footage that could embarrass or identify under-18 players without their parent's explicit consent.\n" +
+      "• Do not share internal club communications or documents publicly.\n\n" +
+      "CONSEQUENCES\n" +
+      "• First offence: verbal or written warning.\n" +
+      "• Repeat offence: parent/guardian may be banned from attending matches.\n" +
+      "• Serious or repeated breach: player's registration may be withdrawn.\n" +
+      "• Matters may be referred to SAFA/GDFA disciplinary committee where applicable.",
   },
   {
     type: "medical_consent",
@@ -34,9 +94,40 @@ const DOCUMENTS = [
     form: "GFA-MED-05",
     signerRole: "parent",
     terms:
-      "I authorise Growfit Sports Academy to: seek emergency medical treatment including ambulance, emergency room or surgery if I cannot be reached; administer first aid while awaiting medical assistance; contact emergency services on my behalf (112, 10177, or the nearest emergency hospital).",
+      "I authorise Growfit Sports Academy to: seek emergency medical treatment including ambulance, emergency room, or surgery if I cannot be reached; administer first aid while awaiting medical assistance; contact emergency services on my behalf (112, 10177, or the nearest emergency hospital). " +
+      "I confirm the medical information recorded in the academy's system is accurate and I will notify the academy immediately of any changes to the player's medical status.",
   },
-] as const;
+  {
+    type: "popia_consent",
+    label: "Data Protection & Privacy Notice",
+    form: "GFA-DAT-05",
+    signerRole: "parent",
+    terms:
+      "Growfit Football Academy collects and processes personal information (name, date of birth, ID number, contact details, medical information, performance data) for the following purposes:\n" +
+      "• Player registration and SAFA/GDFA affiliation\n" +
+      "• Communication regarding training, fixtures, and academy events\n" +
+      "• Player safety and emergency contact\n" +
+      "• Performance tracking and player development\n\n" +
+      "Your data is stored securely within South Africa and is not sold to third parties. It is shared only with:\n" +
+      "• SAFA/GDFA for official registration\n" +
+      "• Coaches and administrators within the Academy\n" +
+      "• Medical personnel in an emergency\n\n" +
+      "Your rights under POPIA:\n" +
+      "• Access or correct your personal information at any time\n" +
+      "• Request deletion of your data (subject to statutory retention requirements)\n" +
+      "• Lodge a complaint with the Information Regulator of South Africa (inforegulator.org.za / complaints.IR@justice.gov.za)\n\n" +
+      "By signing, you confirm you have read and understood this notice and consent to the processing of personal information as described above.",
+  },
+  {
+    type: "id_document",
+    label: "Identity Document / Birth Certificate",
+    form: "GFA-ID-06",
+    signerRole: "parent",
+    terms: "",
+    uploadOnly: true,
+    accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png",
+  },
+];
 
 type DocumentRecord = {
   document_type: string;
@@ -77,7 +168,11 @@ function StatusBadge({ doc }: { doc: DocumentRecord | undefined }) {
       : "";
     return (
       <span className="inline-flex items-center rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-        PDF uploaded{date ? ` · ${date}` : ""}
+        {doc.upload_url ? (
+          <a href={doc.upload_url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">
+            View upload
+          </a>
+        ) : "Uploaded"}{date ? ` · ${date}` : ""}
       </span>
     );
   }
@@ -90,8 +185,6 @@ function StatusBadge({ doc }: { doc: DocumentRecord | undefined }) {
   }
   return null;
 }
-
-type DocDef = (typeof DOCUMENTS)[number];
 
 function DocumentRow({
   def,
@@ -108,23 +201,39 @@ function DocumentRow({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [signerName, setSignerName] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [checkboxValues, setCheckboxValues] = useState<Record<string, boolean>>({});
   const [signError, setSignError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isUploading, startUploadTransition] = useTransition();
 
+  const allCheckboxesTicked =
+    !def.checkboxes ||
+    def.checkboxes.every((cb) => checkboxValues[cb.id]);
+
   function handleSign() {
-    if (!signerName.trim() || !agreed) return;
+    if (!signerName.trim() || !agreed || !allCheckboxesTicked) return;
     setSignError(null);
     startTransition(async () => {
-      const result = await signDocumentDigitally(playerId, def.type, season, signerName.trim(), def.signerRole);
+      let result: { error?: string } | undefined;
+      if (def.type === "consent_form") {
+        result = await signConsentDocument(playerId, season, signerName.trim(), {
+          participation_consent: !!checkboxValues["participation_consent"],
+          photo_consent: !!checkboxValues["photo_consent"],
+          transport_consent: !!checkboxValues["transport_consent"],
+          risk_acknowledged: !!checkboxValues["risk_acknowledged"],
+        });
+      } else {
+        result = await signDocumentDigitally(playerId, def.type, season, signerName.trim(), def.signerRole);
+      }
       if (result?.error) {
         setSignError(result.error);
       } else {
         setSignOpen(false);
         setSignerName("");
         setAgreed(false);
+        setCheckboxValues({});
       }
     });
   }
@@ -158,28 +267,54 @@ function DocumentRow({
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => { setSignOpen((v) => !v); setUploadOpen(false); }}
-            className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-          >
-            Sign here
-          </button>
+          {!def.uploadOnly && (
+            <button
+              type="button"
+              onClick={() => { setSignOpen((v) => !v); setUploadOpen(false); }}
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+            >
+              Sign here
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { setUploadOpen((v) => !v); setSignOpen(false); }}
             className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
           >
-            Upload PDF
+            {def.uploadOnly ? "Upload scan" : "Upload PDF"}
           </button>
         </div>
       </div>
 
-      {signOpen && (
+      {signOpen && !def.uploadOnly && (
         <div className="border-t border-border p-4 space-y-3 bg-muted/30">
-          <blockquote className="border-l-4 border-border pl-4 text-sm text-muted-foreground italic my-3">
-            {def.terms}
-          </blockquote>
+          {def.checkboxes && (
+            <div className="space-y-3 mb-2">
+              {def.checkboxes.map((cb) => (
+                <div key={cb.id} className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id={`${def.type}-${cb.id}`}
+                    checked={!!checkboxValues[cb.id]}
+                    onChange={(e) =>
+                      setCheckboxValues((prev) => ({ ...prev, [cb.id]: e.target.checked }))
+                    }
+                    className="mt-0.5 h-4 w-4 rounded border-input"
+                  />
+                  <div>
+                    <label htmlFor={`${def.type}-${cb.id}`} className="text-sm font-medium">{cb.label}</label>
+                    <p className="text-xs text-muted-foreground mt-0.5">{cb.hint}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {def.terms && (
+            <blockquote className="border-l-4 border-border pl-4 text-sm text-muted-foreground italic whitespace-pre-line">
+              {def.terms}
+            </blockquote>
+          )}
 
           <div className="space-y-1.5">
             <label htmlFor={`signer-${def.type}`} className="text-sm font-medium">
@@ -211,7 +346,7 @@ function DocumentRow({
 
           <button
             type="button"
-            disabled={isPending || !signerName.trim() || !agreed}
+            disabled={isPending || !signerName.trim() || !agreed || !allCheckboxesTicked}
             onClick={handleSign}
             className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
@@ -222,6 +357,11 @@ function DocumentRow({
 
       {uploadOpen && (
         <div className="border-t border-border p-4 space-y-3 bg-muted/30">
+          {def.type === "id_document" && (
+            <p className="text-sm text-muted-foreground">
+              Upload a clear scan or photo of the player&apos;s birth certificate or South African ID document. Accepted formats: PDF, JPEG, PNG.
+            </p>
+          )}
           <form onSubmit={handleUpload} encType="multipart/form-data" className="space-y-3">
             <input type="hidden" name="player_id" value={playerId} />
             <input type="hidden" name="document_type" value={def.type} />
@@ -229,13 +369,13 @@ function DocumentRow({
 
             <div className="space-y-1.5">
               <label htmlFor={`file-${def.type}`} className="text-sm font-medium">
-                Select PDF file
+                {def.uploadOnly ? "Select file" : "Select PDF file"}
               </label>
               <input
                 id={`file-${def.type}`}
                 type="file"
                 name="file"
-                accept=".pdf,application/pdf"
+                accept={def.accept ?? ".pdf,application/pdf"}
                 required
                 className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring file:border-0 file:bg-transparent file:text-sm file:font-medium"
               />
