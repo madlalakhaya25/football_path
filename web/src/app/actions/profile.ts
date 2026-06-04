@@ -40,3 +40,16 @@ export async function updateProfile(formData: FormData) {
   revalidatePath("/dashboard", "layout");
   return { success: true };
 }
+
+export async function changePassword(formData: FormData) {
+  const newPassword = (formData.get("new_password") as string) ?? "";
+  const confirm    = (formData.get("confirm_password") as string) ?? "";
+
+  if (newPassword.length < 8) return { error: "Password must be at least 8 characters." };
+  if (newPassword !== confirm) return { error: "Passwords do not match." };
+
+  const { supabase } = await requireUser();
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: error.message };
+  return { success: true };
+}
