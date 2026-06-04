@@ -107,6 +107,9 @@ export default function Home() {
               <Button size="lg" variant="outline" asChild>
                 <Link href="/auth/login">Sign in</Link>
               </Button>
+              <Button size="lg" variant="ghost" asChild>
+                <Link href="/register-club">Register your club →</Link>
+              </Button>
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">
               {[
