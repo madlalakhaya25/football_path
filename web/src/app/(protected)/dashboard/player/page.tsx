@@ -10,6 +10,7 @@ import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS } from "@/lib/types";
 import { ClaimProfileForm } from "./claim-profile-form";
 import { RatingChart } from "@/components/rating-chart";
+import { MediaGallery } from "@/components/media/media-gallery";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -45,6 +46,12 @@ export default async function PlayerDashboardPage() {
       </div>
     );
   }
+
+  // Fetch media tags for this player
+  const { data: myMediaTags } = await supabase
+    .from("media_tags")
+    .select("media_uploads ( id, url, media_type, caption, created_at )")
+    .eq("player_id", player.id);
 
   // Ratings
   type RatingRow = {
@@ -93,6 +100,29 @@ export default async function PlayerDashboardPage() {
   const age = player.date_of_birth
     ? Math.floor((Date.now() - new Date(player.date_of_birth).getTime()) / 31_557_600_000)
     : null;
+
+  // Normalize media tag items
+  type RawMediaUpload = {
+    id: string;
+    url: string;
+    media_type: string;
+    caption: string | null;
+    created_at: string;
+  } | null;
+  type RawMediaTag = { media_uploads: RawMediaUpload | RawMediaUpload[] };
+  const taggedMediaItems = (myMediaTags ?? []).flatMap((tag: RawMediaTag) => {
+    const mu = tag.media_uploads;
+    if (!mu) return [];
+    const items = Array.isArray(mu) ? mu : [mu];
+    return items.filter((item): item is NonNullable<RawMediaUpload> => item !== null).map((item) => ({
+      id: item.id,
+      url: item.url,
+      media_type: item.media_type,
+      caption: item.caption,
+      created_at: item.created_at,
+      tagged_players: [],
+    }));
+  });
 
   return (
     <div className="space-y-6">
@@ -170,6 +200,13 @@ export default async function PlayerDashboardPage() {
         <section className="rounded-xl border border-border bg-card p-4 space-y-2">
           <p className="text-sm font-semibold">Rating trend</p>
           <RatingChart data={chartData} />
+        </section>
+      )}
+
+      {taggedMediaItems.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold">My Photos &amp; Videos</h2>
+          <MediaGallery items={taggedMediaItems} />
         </section>
       )}
     </div>
