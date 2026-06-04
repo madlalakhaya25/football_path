@@ -58,6 +58,12 @@ export default async function PlayerDetailPage({
 
   if (!player) notFound();
 
+  const { data: medical } = await supabase
+    .from("player_medical")
+    .select("blood_type, allergies, chronic_conditions, current_medication, emergency_1_name, emergency_1_relationship, emergency_1_phone, emergency_2_name, emergency_2_relationship, emergency_2_phone, has_medical_aid, medical_aid_scheme, nearest_hospital, doctor_clinic")
+    .eq("player_id", playerId)
+    .maybeSingle();
+
   const coachTeamIds = (coachTeams ?? []).map((t: { id: string }) => t.id);
   const playerTeamIds = (memberships ?? []).map((m: { team_id: string }) => m.team_id);
   const teamId: string | null =
@@ -237,6 +243,58 @@ export default async function PlayerDetailPage({
           <PlayerAttributesForm playerId={player.id} initial={initialAttrs} />
         </CardContent>
       </Card>
+
+      {medical && (
+        <section className="space-y-3 max-w-2xl">
+          <h2 className="text-base font-semibold">Emergency Info</h2>
+          <div className="rounded-xl border border-border bg-card divide-y divide-border">
+            {medical.emergency_1_name && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Primary contact</p>
+                <p className="font-medium">{medical.emergency_1_name} · {medical.emergency_1_relationship}</p>
+                <p className="text-sm text-muted-foreground">{medical.emergency_1_phone}</p>
+              </div>
+            )}
+            {medical.emergency_2_name && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Secondary contact</p>
+                <p className="font-medium">{medical.emergency_2_name} · {medical.emergency_2_relationship}</p>
+                <p className="text-sm text-muted-foreground">{medical.emergency_2_phone}</p>
+              </div>
+            )}
+            {(medical.allergies && medical.allergies !== 'NONE') && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Allergies</p>
+                <p className="text-sm">{medical.allergies}</p>
+              </div>
+            )}
+            {(medical.chronic_conditions && medical.chronic_conditions !== 'NONE') && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Conditions</p>
+                <p className="text-sm">{medical.chronic_conditions}</p>
+              </div>
+            )}
+            {(medical.current_medication && medical.current_medication !== 'NONE') && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Medication</p>
+                <p className="text-sm">{medical.current_medication}</p>
+              </div>
+            )}
+            {medical.nearest_hospital && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Nearest hospital</p>
+                <p className="text-sm">{medical.nearest_hospital}</p>
+              </div>
+            )}
+            {medical.blood_type && (
+              <div className="px-4 py-3">
+                <p className="text-xs text-muted-foreground">Blood type</p>
+                <p className="font-medium">{medical.blood_type}</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

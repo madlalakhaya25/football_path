@@ -9,6 +9,10 @@ import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { PlayerPhotoUpload } from "@/components/player-photo-upload";
 import { POSITIONS, FEET } from "@/lib/types";
+import { ExtendedInfoForm } from "@/components/records/extended-info-form";
+import { MedicalForm } from "@/components/records/medical-form";
+import { ConsentsForm } from "@/components/records/consents-form";
+import { DocumentHub } from "@/components/records/document-hub";
 
 const ATTRS = [
   { key: "pace",      label: "Pace" },
@@ -36,11 +40,14 @@ export default async function AdminPlayerDetailPage({
     .single();
   if (!profile?.academy_id) redirect("/auth/role");
 
+  const currentSeason = new Date().getFullYear().toString();
+
   const { data: player } = await supabase
     .from("players")
     .select(`
       id, full_name, position, secondary_pos, preferred_foot, date_of_birth, photo_url, share_token, academy_id,
       pace, shooting, passing, dribbling, defending, physical,
+      school, home_address, id_number, mysafa_number,
       player_ratings (
         id, rating, note, created_at,
         fixtures ( opponent, fixture_date )
@@ -51,6 +58,12 @@ export default async function AdminPlayerDetailPage({
     .single();
 
   if (!player) notFound();
+
+  const [{ data: medical }, { data: consentsRow }, { data: docs }] = await Promise.all([
+    supabase.from("player_medical").select("*").eq("player_id", id).maybeSingle(),
+    supabase.from("player_consents").select("*").eq("player_id", id).eq("season", currentSeason).maybeSingle(),
+    supabase.from("player_documents").select("document_type, status, signer_name, signed_at, uploaded_at, upload_url").eq("player_id", id).eq("season", currentSeason),
+  ]);
 
   type Rating = { id: string; rating: number; note: string | null; created_at: string; fixtures: { opponent: string; fixture_date: string } | { opponent: string; fixture_date: string }[] | null };
   const ratings: Rating[] = player.player_ratings ?? [];
@@ -165,6 +178,39 @@ export default async function AdminPlayerDetailPage({
           )}
         </div>
       </div>
+
+      <section className="space-y-6">
+        <h2 className="text-xl font-bold">Player Records</h2>
+
+        {/* Extended info */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <p className="font-semibold">Registration Details</p>
+          <ExtendedInfoForm playerId={id} initial={{ school: player.school, home_address: player.home_address, id_number: player.id_number, mysafa_number: player.mysafa_number }} />
+        </div>
+
+        {/* Medical */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="font-semibold">Medical &amp; Emergency</p>
+            {medical?.needs_renewal && (
+              <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-600">Renewal needed</span>
+            )}
+          </div>
+          <MedicalForm playerId={id} initial={medical as Record<string, unknown> | null} />
+        </div>
+
+        {/* Consents */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <p className="font-semibold">Consents · {currentSeason}</p>
+          <ConsentsForm playerId={id} season={currentSeason} initial={consentsRow as Record<string, unknown> | null} />
+        </div>
+
+        {/* Documents */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <p className="font-semibold">Documents &amp; Contracts · {currentSeason}</p>
+          <DocumentHub playerId={id} season={currentSeason} documents={docs ?? []} />
+        </div>
+      </section>
     </div>
   );
 }

@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS, FEET } from "@/lib/types";
+import { ConsentsForm } from "@/components/records/consents-form";
+import { MedicalForm } from "@/components/records/medical-form";
+import { DocumentHub } from "@/components/records/document-hub";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -47,7 +50,9 @@ export default async function ChildDetailPage({
 
   if (!link) notFound();
 
-  const [{ data: player }, { data: attrRows }, { data: memberRows }] = await Promise.all([
+  const currentSeason = new Date().getFullYear().toString();
+
+  const [{ data: player }, { data: attrRows }, { data: memberRows }, { data: medical }, { data: consentsRow }, { data: docs }] = await Promise.all([
     supabase
       .from("players")
       .select(`
@@ -68,6 +73,9 @@ export default async function ChildDetailPage({
       .select("team_id, teams ( name, age_group )")
       .eq("player_id", childId)
       .eq("active", true),
+    supabase.from("player_medical").select("*").eq("player_id", childId).maybeSingle(),
+    supabase.from("player_consents").select("*").eq("player_id", childId).eq("season", currentSeason).maybeSingle(),
+    supabase.from("player_documents").select("document_type, status, signer_name, signed_at, uploaded_at, upload_url").eq("player_id", childId).eq("season", currentSeason),
   ]);
 
   if (!player) notFound();
@@ -324,6 +332,31 @@ export default async function ChildDetailPage({
           </section>
         </div>
       </div>
+
+      <section className="space-y-4 mt-8">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">Forms &amp; Documents</h2>
+          <span className="text-sm text-muted-foreground">{currentSeason} season</span>
+        </div>
+
+        {/* Consents */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+          <p className="font-semibold text-sm">Consents</p>
+          <ConsentsForm playerId={childId} season={currentSeason} initial={consentsRow as Record<string, unknown> | null} />
+        </div>
+
+        {/* Medical */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+          <p className="font-semibold text-sm">Medical &amp; Emergency Info</p>
+          <MedicalForm playerId={childId} initial={medical as Record<string, unknown> | null} />
+        </div>
+
+        {/* Documents */}
+        <div className="rounded-xl border border-border bg-card p-5 space-y-3">
+          <p className="font-semibold text-sm">Contracts &amp; Agreements</p>
+          <DocumentHub playerId={childId} season={currentSeason} documents={docs ?? []} />
+        </div>
+      </section>
     </div>
   );
 }
