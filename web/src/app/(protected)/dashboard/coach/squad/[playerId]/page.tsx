@@ -14,6 +14,7 @@ import { RatingEditRow } from "./rating-edit-row";
 import { StandaloneRatingForm } from "./standalone-rating-form";
 import { PlayerAttributesForm } from "./player-attributes-form";
 import { RatingChart } from "@/components/rating-chart";
+import { ClipsSection } from "./clips-section";
 
 const ATTR_LABELS = [
   { key: "pace",      label: "Pace" },
@@ -58,18 +59,34 @@ export default async function PlayerDetailPage({
 
   if (!player) notFound();
 
-  const { data: medical } = await supabase
-    .from("player_medical")
-    .select("blood_type, allergies, chronic_conditions, current_medication, emergency_1_name, emergency_1_relationship, emergency_1_phone, emergency_2_name, emergency_2_relationship, emergency_2_phone, has_medical_aid, medical_aid_scheme, nearest_hospital, doctor_clinic")
-    .eq("player_id", playerId)
-    .maybeSingle();
-
   const coachTeamIds = (coachTeams ?? []).map((t: { id: string }) => t.id);
   const playerTeamIds = (memberships ?? []).map((m: { team_id: string }) => m.team_id);
+  const sharedTeamIds = playerTeamIds.filter((id: string) => coachTeamIds.includes(id));
   const teamId: string | null =
     teamParam && coachTeamIds.includes(teamParam)
       ? teamParam
-      : playerTeamIds.find((id) => coachTeamIds.includes(id)) ?? null;
+      : sharedTeamIds[0] ?? null;
+
+  const [{ data: medical }, { data: clips }, { data: recentFixtures }] = await Promise.all([
+    supabase
+      .from("player_medical")
+      .select("blood_type, allergies, chronic_conditions, current_medication, emergency_1_name, emergency_1_relationship, emergency_1_phone, emergency_2_name, emergency_2_relationship, emergency_2_phone, has_medical_aid, medical_aid_scheme, nearest_hospital, doctor_clinic")
+      .eq("player_id", playerId)
+      .maybeSingle(),
+    supabase
+      .from("player_clips")
+      .select("id, title, url, timestamp_seconds, description, fixture_id, created_at")
+      .eq("player_id", playerId)
+      .order("created_at", { ascending: false }),
+    sharedTeamIds.length > 0
+      ? supabase
+          .from("fixtures")
+          .select("id, opponent, fixture_date")
+          .in("team_id", sharedTeamIds)
+          .order("fixture_date", { ascending: false })
+          .limit(20)
+      : Promise.resolve({ data: [] as { id: string; opponent: string; fixture_date: string }[] }),
+  ]);
 
   type Rating = {
     id: string;
@@ -295,6 +312,12 @@ export default async function PlayerDetailPage({
           </div>
         </section>
       )}
+
+      <ClipsSection
+        playerId={player.id}
+        clips={clips ?? []}
+        fixtures={recentFixtures ?? []}
+      />
     </div>
   );
 }
