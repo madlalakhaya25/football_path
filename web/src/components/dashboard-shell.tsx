@@ -136,12 +136,13 @@ export function DashboardShell({ profile, children }: Props) {
       {/* ── Main ──────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile / shared top bar */}
-        <header className="flex h-16 items-center justify-between border-b border-border px-4 lg:px-6">
-          <div className="lg:hidden">
-            <Logo />
-          </div>
+        <header className="flex h-14 items-center justify-between border-b border-border px-4 lg:px-6">
+          {/* Mobile: current page title | Desktop: empty (sidebar has branding) */}
+          <p className="text-base font-semibold lg:hidden">
+            {navItems.find(({ href }) => pathname === href || pathname.startsWith(href + "/"))?.label ?? ""}
+          </p>
           <div className="hidden lg:block" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <ThemeToggle />
             <Link
               href={`/dashboard/${profile.role}/settings`}
@@ -150,7 +151,7 @@ export function DashboardShell({ profile, children }: Props) {
             >
               <Settings className="size-4" aria-hidden="true" />
             </Link>
-            <Button variant="ghost" size="sm" className="gap-2 lg:hidden" onClick={handleSignOut}>
+            <Button variant="ghost" size="sm" className="px-2 lg:hidden" onClick={handleSignOut} aria-label="Sign out">
               <LogOut className="size-4" aria-hidden="true" />
             </Button>
           </div>
