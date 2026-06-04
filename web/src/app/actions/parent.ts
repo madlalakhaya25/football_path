@@ -2,27 +2,38 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { linkChildSchema } from "@/lib/validation";
+
+type LookupType = "share_token" | "id_number" | "mysafa_number";
 
 export async function linkChild(formData: FormData) {
   const { supabase, user } = await requireUser();
 
-  const raw = { share_token: formData.get("share_token") as string };
-  const parsed = linkChildSchema.safeParse(raw);
-  if (!parsed.success) {
-    const msgs = parsed.error.flatten().fieldErrors;
-    return { error: Object.values(msgs).flat()[0] ?? "Invalid code." };
+  const lookupType = (formData.get("lookup_type") as LookupType) ?? "share_token";
+  const lookupValue = (formData.get("lookup_value") as string ?? "").trim();
+  const relationship = (formData.get("relationship") as string) || "Parent";
+
+  if (!lookupValue) return { error: "Please enter a value to search." };
+
+  let playerQuery = supabase.from("players").select("id, full_name");
+
+  if (lookupType === "id_number") {
+    playerQuery = playerQuery.eq("id_number", lookupValue);
+  } else if (lookupType === "mysafa_number") {
+    playerQuery = playerQuery.eq("mysafa_number", lookupValue);
+  } else {
+    playerQuery = playerQuery.eq("share_token", lookupValue.toLowerCase());
   }
 
-  const { data: player } = await supabase
-    .from("players")
-    .select("id")
-    .eq("share_token", parsed.data.share_token.trim().toLowerCase())
-    .single();
+  const { data: player } = await playerQuery.maybeSingle();
 
-  if (!player) return { error: "No player found with that code. Double-check and try again." };
-
-  const relationship = (formData.get("relationship") as string) || "Parent";
+  if (!player) {
+    const labels: Record<LookupType, string> = {
+      share_token: "share code",
+      id_number: "ID / birth certificate number",
+      mysafa_number: "MySAFA registration number",
+    };
+    return { error: `No player found with that ${labels[lookupType]}. Double-check and try again.` };
+  }
 
   const { error } = await supabase
     .from("parent_player_links")

@@ -12,6 +12,7 @@ import { ClaimProfileForm } from "./claim-profile-form";
 import { RatingChart } from "@/components/rating-chart";
 import { MediaGallery } from "@/components/media/media-gallery";
 import { DocumentHub } from "@/components/records/document-hub";
+import { PlayerIdentityForm } from "@/components/records/player-identity-form";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -29,7 +30,7 @@ export default async function PlayerDashboardPage() {
   const { data: player } = await supabase
     .from("players")
     .select(`
-      id, full_name, position, preferred_foot, date_of_birth, photo_url, share_token,
+      id, full_name, position, preferred_foot, date_of_birth, photo_url, share_token, mysafa_number, id_number,
       player_ratings ( rating, created_at, fixtures ( opponent, fixture_date ) ),
       player_attributes ( pace, shooting, passing, dribbling, defending, physical )
     `)
@@ -229,6 +230,21 @@ export default async function PlayerDashboardPage() {
             No media yet. Coaches will tag you in match photos and videos as they upload them.
           </p>
         )}
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-base font-semibold">My Registration Numbers</h2>
+          <p className="text-sm text-muted-foreground">
+            Keep these up to date — your parent can use them to link their account to your profile.
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <PlayerIdentityForm
+            playerId={player.id}
+            initial={{ mysafa_number: player.mysafa_number, id_number: player.id_number }}
+          />
+        </div>
       </section>
 
       <section className="space-y-3">
