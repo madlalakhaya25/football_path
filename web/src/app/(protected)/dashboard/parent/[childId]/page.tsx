@@ -113,7 +113,7 @@ export default async function ChildDetailPage({
     ])
   );
 
-  const [{ data: fixtures }, { data: appearances }] = await Promise.all([
+  const [{ data: fixtures }, { data: appearances }, { data: matchAttendanceRows }] = await Promise.all([
     teamIds.length
       ? supabase
           .from("fixtures")
@@ -125,10 +125,19 @@ export default async function ChildDetailPage({
       .from("match_appearances")
       .select("fixture_id, played")
       .eq("player_id", childId),
+    supabase
+      .from("match_attendance")
+      .select("fixture_id, status")
+      .eq("player_id", childId),
   ]);
 
   const appearanceMap = new Map(
     (appearances ?? []).map((a: { fixture_id: string; played: boolean }) => [a.fixture_id, a])
+  );
+
+  type AttendanceStatus = "present" | "absent" | "late" | "excused";
+  const matchAttendanceMap = new Map<string, AttendanceStatus>(
+    (matchAttendanceRows ?? []).map((r: { fixture_id: string; status: AttendanceStatus }) => [r.fixture_id, r.status] as [string, AttendanceStatus])
   );
 
   const allFixtures = fixtures ?? [];
@@ -144,10 +153,18 @@ export default async function ChildDetailPage({
 
   type Fixture = (typeof allFixtures)[number];
 
+  const ATTENDANCE_VARIANT: Record<AttendanceStatus, "success" | "neutral" | "warning" | "brand"> = {
+    present: "success",
+    absent: "neutral",
+    late: "warning",
+    excused: "brand",
+  };
+
   function FixtureRow({ f }: { f: Fixture }) {
     const date = new Date(f.fixture_date);
     const result = Array.isArray(f.match_results) ? f.match_results[0] : f.match_results;
     const appearance = appearanceMap.get(f.id);
+    const attendanceStatus = matchAttendanceMap.get(f.id);
     const teamInfo = teamMap.get(f.team_id) as { name: string; age_group: string | null } | null | undefined;
     return (
       <div className="flex items-center justify-between px-4 py-3">
@@ -169,11 +186,15 @@ export default async function ChildDetailPage({
               {f.is_home ? result.opponent_score : result.team_score}
             </span>
           )}
-          {appearance && (
+          {attendanceStatus ? (
+            <Badge variant={ATTENDANCE_VARIANT[attendanceStatus]} className="capitalize">
+              {attendanceStatus}
+            </Badge>
+          ) : appearance ? (
             <Badge variant={appearance.played ? "success" : "neutral"}>
               {appearance.played ? "Played" : "Absent"}
             </Badge>
-          )}
+          ) : null}
           <Badge
             variant={STATUS_VARIANT[f.status as keyof typeof STATUS_VARIANT] ?? "neutral"}
             className="capitalize"
