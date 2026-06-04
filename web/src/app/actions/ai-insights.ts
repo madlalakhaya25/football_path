@@ -1,15 +1,12 @@
 "use server";
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { requireUser } from "@/lib/auth";
 
-// Ensure API key exists (fail fast instead of silent runtime crash)
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("Missing GEMINI_API_KEY in environment variables");
-}
-
-// Initialize Gemini client
-const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Initialize Gemini (new SDK style)
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY!,
+});
 
 export async function getPlayerInsights(playerId: string): Promise<{
   insights?: string;
@@ -52,11 +49,8 @@ export async function getPlayerInsights(playerId: string): Promise<{
         .limit(20),
     ]);
 
-    if (!player) {
-      return { error: "Player not found." };
-    }
+    if (!player) return { error: "Player not found." };
 
-    // Age calculation (more accurate conversion)
     const age = player.date_of_birth
       ? Math.floor(
           (Date.now() - new Date(player.date_of_birth).getTime()) /
@@ -64,16 +58,17 @@ export async function getPlayerInsights(playerId: string): Promise<{
         )
       : null;
 
-    // Safe attribute averaging
-    const rows = attrs ?? [];
+    const attrRows = attrs ?? [];
 
-    const avg = (key: keyof (typeof rows)[number]) => {
-      if (!rows.length) return null;
-      const sum = rows.reduce((acc: number, r: any) => acc + (r[key] ?? 0), 0);
-      return Math.round(sum / rows.length);
+    const avg = (key: string) => {
+      if (!attrRows.length) return null;
+      return Math.round(
+        attrRows.reduce((sum: number, r: any) => sum + (r[key] ?? 0), 0) /
+          attrRows.length
+      );
     };
 
-    const attributeSummary = rows.length
+    const attributeSummary = attrRows.length
       ? `Pace ${avg("pace")}, Shooting ${avg("shooting")}, Passing ${avg(
           "passing"
         )}, Dribbling ${avg("dribbling")}, Defending ${avg(
@@ -81,7 +76,6 @@ export async function getPlayerInsights(playerId: string): Promise<{
         )}, Physical ${avg("physical")}`
       : "No attribute assessments yet";
 
-    // Ratings summary
     const ratingsSummary = (ratings ?? [])
       .map((r: any) => {
         const fix = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
@@ -91,7 +85,6 @@ export async function getPlayerInsights(playerId: string): Promise<{
       })
       .join("; ");
 
-    // Milestones summary
     const completedMilestones = (milestones ?? [])
       .map((m: any) => {
         const t = Array.isArray(m.development_milestone_templates)
@@ -106,47 +99,33 @@ export async function getPlayerInsights(playerId: string): Promise<{
     const prompt = `
 You are an expert youth football development coach.
 
-Analyse the player and provide actionable insights.
-
-PLAYER:
-Name: ${player.full_name}
+Player: ${player.full_name}
 Position: ${player.position ?? "Unknown"}
 Age: ${age ?? "Unknown"}
 
-RECENT RATINGS:
-${ratingsSummary || "No ratings yet"}
+Ratings: ${ratingsSummary || "None"}
+Attributes: ${attributeSummary}
+Milestones: ${completedMilestones || "None"}
 
-ATTRIBUTES:
-${attributeSummary}
+Provide:
+1. Strengths
+2. Development areas
+3. Drills
+4. Motivational note
 
-MILESTONES:
-${completedMilestones || "None recorded yet"}
-
-OUTPUT FORMAT:
-
-1. Strengths (2-3 points)
-2. Priority development areas (2-3 points)
-3. Recommended drills (2-3 drills)
-4. Motivational note (1 sentence)
-
-Rules:
-- Be specific to position and age
-- Only use provided data
-- Keep under 300 words
-- Use plain text with headers
+Keep under 300 words.
 `;
 
-    // Gemini model
-    const model = ai.getGenerativeModel({
-      model: "gemini-1.5-flash",
+    // NEW SDK CALL
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
     });
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = response.text;
 
     if (!text) {
-      throw new Error("No response text returned from Gemini");
+      throw new Error("No response from Gemini");
     }
 
     return { insights: text };
