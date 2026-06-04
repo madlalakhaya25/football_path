@@ -100,13 +100,14 @@ export async function getPlayerInsights(playerId: string): Promise<{
       .filter(Boolean)
       .join(", ");
 
-    // OPTIMIZED PROMPT: Tighter constraints, fewer but higher quality outputs.
+    // OPTIMIZED PROMPT: Banning Markdown to output raw, clean text
     const prompt = `Analyze the following youth football data to generate a concise, high-impact technical report for the coaching staff dashboard.
 
 CRITICAL RULES:
 - Use the third person exclusively (e.g., "${player.full_name}", "the player", "he/she"). No second-person pronouns.
 - Be highly analytical and specific to the provided metrics.
 - Keep the total response strictly between 150 and 200 words.
+- DO NOT use any Markdown formatting (no asterisks, no bolding). Use standard dashes "-" for lists.
 
 Player Profile:
 - Name: ${player.full_name}
@@ -118,26 +119,29 @@ Data Context:
 - Attributes (Avg/100): ${attributeSummary}
 - Milestones: ${completedMilestones || "None recorded"}
 
-Output format (Use these exact plain text markdown headers):
-1. **Strengths**: 2 bullet points highlighting the strongest technical/physical metrics.
-2. **Priority development areas**: 1-2 bullet points on the most critical deficit limiting their game.
-3. **Recommended drills/activities**: 1-2 specific pitch exercises to directly address the deficit.
-4. **Motivational note**: One concluding sentence summarizing their overall development trajectory.`;
+Output format (Use these exact plain text headers):
+1. STRENGTHS: (1-2 dashed points)
+2. PRIORITY DEVELOPMENT: (1-2 dashed points)
+3. RECOMMENDED DRILLS: (1-2 dashed points)
+4. MOTIVATIONAL NOTE: (One concluding sentence)`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
-        maxOutputTokens: 500, // Reduced slightly since we want shorter outputs
+        maxOutputTokens: 500,
         systemInstruction: "You are an elite youth academy technical director providing sharp, data-driven player evaluations for coaching staff.",
       }
     });
 
-    const text = response.text;
+    let text = response.text;
 
     if (!text) {
       throw new Error("No response from Gemini");
     }
+
+    // Failsafe: Strip out any asterisks the AI accidentally includes
+    text = text.replace(/\*/g, ""); 
 
     return { insights: text };
   } catch (err) {
