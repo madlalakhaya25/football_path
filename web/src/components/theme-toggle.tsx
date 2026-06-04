@@ -39,7 +39,8 @@ export function ThemeToggle() {
             className={cn(
               "grid size-8 place-items-center rounded-full transition-colors",
               "text-muted-foreground hover:text-foreground",
-              active && "bg-card text-foreground shadow-sm"
+              active && "bg-card text-foreground shadow-sm",
+              value === "system" && "hidden lg:grid"
             )}
           >
             <Icon className="size-4" aria-hidden="true" />
