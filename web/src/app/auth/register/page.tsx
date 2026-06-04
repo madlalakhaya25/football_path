@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Shield, Target, Users } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const ROLES = [
   { value: "player" as const, label: "Player",  description: "Build your passport and get seen.", Icon: Target },
   { value: "coach"  as const, label: "Coach",   description: "Manage your squad and log results.", Icon: Users },
   { value: "parent" as const, label: "Parent",  description: "Follow your child's progress.", Icon: Shield },
-  { value: "admin"  as const, label: "Admin",   description: "Manage an existing club as administrator.", Icon: Shield },
+  { value: "admin"  as const, label: "Admin",   description: "Manage an existing club as administrator.", Icon: Building2 },
 ];
 
 export default function RegisterPage() {
@@ -48,7 +48,7 @@ export default function RegisterPage() {
     const supabase = createClient();
     if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); return; }
 
-    const { data: signUpData, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: { data: { full_name: data.full_name, role: data.role } },

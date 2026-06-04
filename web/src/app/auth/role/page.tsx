@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Target, Users } from "lucide-react";
+import { Shield, Target, Users, Building2 } from "lucide-react";
+import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,8 +13,9 @@ import type { UserRole } from "@/lib/types";
 
 const ROLES: { value: UserRole; label: string; description: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "player", label: "Player", description: "Track your stats and build your passport.", Icon: Target },
-  { value: "coach", label: "Coach", description: "Manage your squad and log match results.", Icon: Users },
+  { value: "coach",  label: "Coach",  description: "Manage your squad and log match results.", Icon: Users },
   { value: "parent", label: "Parent", description: "Follow your child's progress.", Icon: Shield },
+  { value: "admin",  label: "Admin",  description: "Manage an existing club as administrator.", Icon: Building2 },
 ];
 
 const ROLE_ROUTES: Record<UserRole, string> = {
@@ -97,6 +99,7 @@ export default function RolePage() {
 
         <div className="grid grid-cols-2 gap-3">
           {ROLES.map(({ value, label, description, Icon }) => (
+
             <button
               key={value}
               type="button"
@@ -131,7 +134,10 @@ export default function RolePage() {
             className={INPUT_CLASS}
           />
           <p className="text-xs text-muted-foreground">
-            6-character code from your club admin.
+            6-character code from your club admin.{" "}
+            <Link href="/register-club" className="underline">
+              Register a new club instead
+            </Link>
           </p>
         </div>
 

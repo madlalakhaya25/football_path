@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -23,12 +23,35 @@ export default function RegisterClubPage() {
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [joinCode, setJoinCode] = useState<string | null>(null);
   const [registeredClubName, setRegisteredClubName] = useState<string | null>(null);
+  // When a user confirms their email and comes back to this page, they're already
+  // authenticated but haven't created their club yet — skip sign-up in that case.
+  const [alreadyAuthed, setAlreadyAuthed] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: { id: string } | null } }) => {
+      if (!user) return;
+      // If they already have an academy, send them to the dashboard.
+      supabase
+        .from("profiles")
+        .select("academy_id")
+        .eq("id", user.id)
+        .single()
+        .then(({ data }: { data: { academy_id: string | null } | null }) => {
+          if (data?.academy_id) { router.replace("/dashboard/admin"); return; }
+          setAlreadyAuthed(true);
+        });
+    });
+  }, [router]);
 
   function validate(): string | null {
     if (!clubName.trim() || clubName.trim().length < 2) return "Club name must be at least 2 characters.";
-    if (!fullName.trim() || fullName.trim().length < 2) return "Enter your full name.";
-    if (!email.trim() || !email.includes("@")) return "Enter a valid email address.";
-    if (!password || password.length < 8) return "Password must be at least 8 characters.";
+    if (!alreadyAuthed) {
+      if (!fullName.trim() || fullName.trim().length < 2) return "Enter your full name.";
+      if (!email.trim() || !email.includes("@")) return "Enter a valid email address.";
+      if (!password || password.length < 8) return "Password must be at least 8 characters.";
+    }
     return null;
   }
 
@@ -43,20 +66,22 @@ export default function RegisterClubPage() {
     const supabase = createClient();
     if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); setIsSubmitting(false); return; }
 
-    const { error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: { data: { full_name: fullName.trim(), role: "admin" } },
-    });
+    if (!alreadyAuthed) {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { data: { full_name: fullName.trim(), role: "admin" } },
+      });
 
-    if (signUpError) { setServerError(signUpError.message); setIsSubmitting(false); return; }
+      if (signUpError) { setServerError(signUpError.message); setIsSubmitting(false); return; }
 
-    const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
-    if (!session) {
-      setConfirmationSent(true);
-      setIsSubmitting(false);
-      return;
+      if (!session) {
+        setConfirmationSent(true);
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     // Register the academy via RPC
@@ -153,6 +178,12 @@ export default function RegisterClubPage() {
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5" noValidate>
+            {alreadyAuthed && (
+              <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+                You&apos;re signed in. Just name your club and we&apos;ll get you set up.
+              </p>
+            )}
+
             {/* Club name */}
             <div className="space-y-1.5">
               <label htmlFor="club_name" className="text-sm font-medium">Club name</label>
@@ -184,52 +215,54 @@ export default function RegisterClubPage() {
               />
             </div>
 
-            {/* Full name */}
-            <div className="space-y-1.5">
-              <label htmlFor="full_name" className="text-sm font-medium">Your full name</label>
-              <input
-                id="full_name"
-                type="text"
-                autoComplete="name"
-                placeholder="Sipho Dlamini"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                className={INPUT_CLASS}
-              />
-            </div>
+            {/* Personal details — only shown when not already signed in */}
+            {!alreadyAuthed && (
+              <>
+                <div className="space-y-1.5">
+                  <label htmlFor="full_name" className="text-sm font-medium">Your full name</label>
+                  <input
+                    id="full_name"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Sipho Dlamini"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className={INPUT_CLASS}
+                  />
+                </div>
 
-            {/* Email */}
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium">Email address</label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className={INPUT_CLASS}
-              />
-            </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="text-sm font-medium">Email address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={INPUT_CLASS}
+                  />
+                </div>
 
-            {/* Password */}
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-medium">Password</label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={8}
-                className={INPUT_CLASS}
-              />
-              <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
-            </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="text-sm font-medium">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className={INPUT_CLASS}
+                  />
+                  <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
+                </div>
+              </>
+            )}
 
             {serverError && (
               <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
