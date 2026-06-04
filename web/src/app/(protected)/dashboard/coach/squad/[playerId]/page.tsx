@@ -15,6 +15,8 @@ import { StandaloneRatingForm } from "./standalone-rating-form";
 import { PlayerAttributesForm } from "./player-attributes-form";
 import { RatingChart } from "@/components/rating-chart";
 import { AiInsightsPanel } from "@/components/development/ai-insights-panel";
+import { MilestoneCard } from "@/components/development/milestone-card";
+import type { MilestoneCategory } from "@/app/actions/development";
 
 const ATTR_LABELS = [
   { key: "pace",      label: "Pace" },
@@ -59,11 +61,34 @@ export default async function PlayerDetailPage({
 
   if (!player) notFound();
 
-  const { data: medical } = await supabase
-    .from("player_medical")
-    .select("blood_type, allergies, chronic_conditions, current_medication, emergency_1_name, emergency_1_relationship, emergency_1_phone, emergency_2_name, emergency_2_relationship, emergency_2_phone, has_medical_aid, medical_aid_scheme, nearest_hospital, doctor_clinic")
-    .eq("player_id", playerId)
-    .maybeSingle();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("academy_id")
+    .eq("id", user.id)
+    .single();
+
+  const currentSeason = new Date().getFullYear().toString();
+
+  const [{ data: medical }, { data: milestoneTemplates }, { data: completions }] = await Promise.all([
+    supabase
+      .from("player_medical")
+      .select("blood_type, allergies, chronic_conditions, current_medication, emergency_1_name, emergency_1_relationship, emergency_1_phone, emergency_2_name, emergency_2_relationship, emergency_2_phone, has_medical_aid, medical_aid_scheme, nearest_hospital, doctor_clinic")
+      .eq("player_id", playerId)
+      .maybeSingle(),
+    profile?.academy_id
+      ? supabase
+          .from("development_milestone_templates")
+          .select("id, title, description, category, position, age_group, sort_order")
+          .eq("academy_id", profile.academy_id)
+          .or(`position.is.null,position.eq.${player.position ?? ""}`)
+          .order("sort_order", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("player_milestone_completions")
+      .select("template_id, note")
+      .eq("player_id", playerId)
+      .eq("season", currentSeason),
+  ]);
 
   const coachTeamIds = (coachTeams ?? []).map((t: { id: string }) => t.id);
   const playerTeamIds = (memberships ?? []).map((m: { team_id: string }) => m.team_id);
@@ -244,6 +269,83 @@ export default async function PlayerDetailPage({
           <PlayerAttributesForm playerId={player.id} initial={initialAttrs} />
         </CardContent>
       </Card>
+
+      {(milestoneTemplates ?? []).length > 0 && (() => {
+        type MilestoneTemplate = {
+          id: string;
+          title: string;
+          description: string | null;
+          category: MilestoneCategory;
+          position: string | null;
+          age_group: string | null;
+          sort_order: number;
+        };
+        type Completion = { template_id: string; note: string | null };
+
+        const templates = milestoneTemplates as MilestoneTemplate[];
+        const completionSet = new Map(
+          (completions as Completion[] ?? []).map((c) => [c.template_id, c.note])
+        );
+
+        const CATEGORIES: MilestoneCategory[] = ["technical", "tactical", "physical", "mental", "leadership"];
+        const CATEGORY_LABELS: Record<MilestoneCategory, string> = {
+          technical: "Technical", tactical: "Tactical", physical: "Physical",
+          mental: "Mental", leadership: "Leadership",
+        };
+        const CATEGORY_STYLES: Record<MilestoneCategory, string> = {
+          technical: "bg-blue-500/15 text-blue-700 border-transparent",
+          tactical: "bg-violet-500/15 text-violet-700 border-transparent",
+          physical: "bg-orange-500/15 text-orange-700 border-transparent",
+          mental: "bg-teal-500/15 text-teal-700 border-transparent",
+          leadership: "bg-amber-500/15 text-amber-700 border-transparent",
+        };
+
+        const totalCount = templates.length;
+        const doneCount = templates.filter((t) => completionSet.has(t.id)).length;
+
+        return (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold">Development</h2>
+              <span className="text-sm text-muted-foreground">
+                {doneCount} of {totalCount} milestone{totalCount !== 1 ? "s" : ""} complete
+              </span>
+            </div>
+
+            {CATEGORIES.map((cat) => {
+              const items = templates.filter((t) => t.category === cat);
+              if (items.length === 0) return null;
+              return (
+                <div key={cat} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      {CATEGORY_LABELS[cat]}
+                    </p>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_STYLES[cat]}`}>
+                      {items.filter((t) => completionSet.has(t.id)).length}/{items.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {items.map((t) => (
+                      <MilestoneCard
+                        key={t.id}
+                        templateId={t.id}
+                        playerId={player.id}
+                        season={currentSeason}
+                        title={t.title}
+                        description={t.description ?? ""}
+                        category={t.category}
+                        initialCompleted={completionSet.has(t.id)}
+                        initialNote={completionSet.get(t.id) ?? null}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        );
+      })()}
 
       <section className="space-y-3 max-w-2xl">
         <AiInsightsPanel playerId={player.id} />

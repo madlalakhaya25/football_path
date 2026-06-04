@@ -13,6 +13,7 @@ import { RatingChart } from "@/components/rating-chart";
 import { MediaGallery } from "@/components/media/media-gallery";
 import { DocumentHub } from "@/components/records/document-hub";
 import { PlayerIdentityForm } from "@/components/records/player-identity-form";
+import type { MilestoneCategory } from "@/app/actions/development";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -51,8 +52,14 @@ export default async function PlayerDashboardPage() {
 
   const currentSeason = new Date().getFullYear().toString();
 
-  // Fetch documents and media in parallel
-  const [{ data: myDocuments }, { data: myMediaTags }] = await Promise.all([
+  const { data: playerProfile } = await supabase
+    .from("profiles")
+    .select("academy_id")
+    .eq("id", user.id)
+    .single();
+
+  // Fetch documents, media, and milestones in parallel
+  const [{ data: myDocuments }, { data: myMediaTags }, { data: milestoneTemplates }, { data: myCompletions }] = await Promise.all([
     supabase
       .from("player_documents")
       .select("document_type, status, signer_name, signed_at, uploaded_at, upload_url")
@@ -62,6 +69,19 @@ export default async function PlayerDashboardPage() {
       .from("media_tags")
       .select("media_uploads ( id, url, media_type, caption, created_at )")
       .eq("player_id", player.id),
+    playerProfile?.academy_id
+      ? supabase
+          .from("development_milestone_templates")
+          .select("id, title, description, category, position, age_group, sort_order")
+          .eq("academy_id", playerProfile.academy_id)
+          .or(`position.is.null,position.eq.${player.position ?? ""}`)
+          .order("sort_order", { ascending: true })
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("player_milestone_completions")
+      .select("template_id, note")
+      .eq("player_id", player.id)
+      .eq("season", currentSeason),
   ]);
 
   // Ratings
@@ -206,6 +226,98 @@ export default async function PlayerDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {(milestoneTemplates ?? []).length > 0 && (() => {
+        type MilestoneTemplate = {
+          id: string;
+          title: string;
+          description: string | null;
+          category: MilestoneCategory;
+          position: string | null;
+          age_group: string | null;
+          sort_order: number;
+        };
+        type Completion = { template_id: string; note: string | null };
+
+        const templates = milestoneTemplates as MilestoneTemplate[];
+        const completionSet = new Set(
+          (myCompletions as Completion[] ?? []).map((c) => c.template_id)
+        );
+
+        const CATEGORIES: MilestoneCategory[] = ["technical", "tactical", "physical", "mental", "leadership"];
+        const CATEGORY_LABELS: Record<MilestoneCategory, string> = {
+          technical: "Technical", tactical: "Tactical", physical: "Physical",
+          mental: "Mental", leadership: "Leadership",
+        };
+        const CATEGORY_STYLES: Record<MilestoneCategory, string> = {
+          technical: "bg-blue-500/15 text-blue-700 border-transparent",
+          tactical: "bg-violet-500/15 text-violet-700 border-transparent",
+          physical: "bg-orange-500/15 text-orange-700 border-transparent",
+          mental: "bg-teal-500/15 text-teal-700 border-transparent",
+          leadership: "bg-amber-500/15 text-amber-700 border-transparent",
+        };
+
+        const totalCount = templates.length;
+        const doneCount = templates.filter((t) => completionSet.has(t.id)).length;
+
+        return (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-base font-semibold">My Development</h2>
+              <span className="text-sm text-muted-foreground">
+                {doneCount} of {totalCount} milestone{totalCount !== 1 ? "s" : ""} complete
+              </span>
+            </div>
+
+            {CATEGORIES.map((cat) => {
+              const items = templates.filter((t) => t.category === cat);
+              if (items.length === 0) return null;
+              return (
+                <div key={cat} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                      {CATEGORY_LABELS[cat]}
+                    </p>
+                    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${CATEGORY_STYLES[cat]}`}>
+                      {items.filter((t) => completionSet.has(t.id)).length}/{items.length}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {items.map((t) => {
+                      const done = completionSet.has(t.id);
+                      return (
+                        <div key={t.id} className="flex gap-3 rounded-xl border border-border bg-card p-4">
+                          <div className="mt-0.5 flex-shrink-0 size-5 rounded-full border-2 border-border flex items-center justify-center"
+                            style={done ? { backgroundColor: "currentColor", borderColor: "currentColor" } : undefined}>
+                            {done && (
+                              <svg viewBox="0 0 12 12" className="size-full text-white" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                                <path d="M2 6l3 3 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className={`text-sm font-medium leading-snug ${done ? "text-muted-foreground" : ""}`}>
+                                {t.title}
+                              </p>
+                              <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium shrink-0 ${CATEGORY_STYLES[cat]}`}>
+                                {CATEGORY_LABELS[cat]}
+                              </span>
+                            </div>
+                            {t.description && (
+                              <p className="text-xs text-muted-foreground leading-snug">{t.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        );
+      })()}
 
       {chartData.length >= 2 ? (
         <section className="rounded-xl border border-border bg-card p-4 space-y-2">
