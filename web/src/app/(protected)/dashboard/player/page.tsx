@@ -206,19 +206,30 @@ export default async function PlayerDashboardPage() {
         </Card>
       </div>
 
-      {chartData.length >= 2 && (
+      {chartData.length >= 2 ? (
         <section className="rounded-xl border border-border bg-card p-4 space-y-2">
           <p className="text-sm font-semibold">Rating trend</p>
           <RatingChart data={chartData} />
         </section>
-      )}
-
-      {taggedMediaItems.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-base font-semibold">My Photos &amp; Videos</h2>
-          <MediaGallery items={taggedMediaItems} />
+      ) : chartData.length === 1 ? (
+        <section className="rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-sm font-semibold">Rating trend</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Rating trend appears after 2 or more rated matches. You have 1 so far — keep playing!
+          </p>
         </section>
-      )}
+      ) : null}
+
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold">My Photos &amp; Videos</h2>
+        {taggedMediaItems.length > 0 ? (
+          <MediaGallery items={taggedMediaItems} />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No media yet. Coaches will tag you in match photos and videos as they upload them.
+          </p>
+        )}
+      </section>
 
       <section className="space-y-3">
         <div>

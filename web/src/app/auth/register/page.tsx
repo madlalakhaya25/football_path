@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Building2, Shield, Target, Users } from "lucide-react";
+import { ArrowLeft, Building2, Check, Eye, EyeOff, Shield, Target, Users } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [confirmationSent, setConfirmationSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -42,6 +43,7 @@ export default function RegisterPage() {
   } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
 
   const selectedRole = watch("role");
+  const clubCodeValue = watch("club_code") ?? "";
 
   async function onSubmit(data: RegisterInput) {
     setServerError(null);
@@ -163,14 +165,28 @@ export default function RegisterPage() {
           {/* Password */}
           <div className="space-y-1.5">
             <label htmlFor="password" className="text-sm font-medium">Password</label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="••••••••"
-              {...register("password")}
-              className={INPUT_CLASS}
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                {...register("password")}
+                className={INPUT_CLASS + " pr-10"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" aria-hidden="true" />
+                ) : (
+                  <Eye className="size-4" aria-hidden="true" />
+                )}
+              </button>
+            </div>
             {errors.password && <p role="alert" className="text-xs text-destructive">{errors.password.message}</p>}
           </div>
 
@@ -209,18 +225,29 @@ export default function RegisterPage() {
           {selectedRole && (
             <div className="space-y-1.5">
               <label htmlFor="club_code" className="text-sm font-medium">Club join code</label>
-              <input
-                id="club_code"
-                type="text"
-                autoComplete="off"
-                placeholder="e.g. ABC123"
-                {...register("club_code", {
-                  onChange: (e) => {
-                    e.target.value = e.target.value.toUpperCase();
-                  },
-                })}
-                className={INPUT_CLASS}
-              />
+              <div className="relative">
+                <input
+                  id="club_code"
+                  type="text"
+                  autoComplete="off"
+                  placeholder="e.g. ABC123"
+                  maxLength={6}
+                  {...register("club_code", {
+                    onChange: (e) => {
+                      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+                    },
+                  })}
+                  className={INPUT_CLASS + " pr-10 font-mono tracking-widest uppercase"}
+                />
+                {clubCodeValue.length === 6 && (
+                  <span className="absolute inset-y-0 right-0 flex items-center px-3 text-green-500 pointer-events-none">
+                    <Check className="size-4" aria-hidden="true" />
+                  </span>
+                )}
+              </div>
+              {clubCodeValue.length > 0 && clubCodeValue.length < 6 && !errors.club_code && (
+                <p className="text-xs text-muted-foreground">{6 - clubCodeValue.length} more character{6 - clubCodeValue.length !== 1 ? "s" : ""} needed</p>
+              )}
               {errors.club_code && <p role="alert" className="text-xs text-destructive">{errors.club_code.message}</p>}
               <p className="text-xs text-muted-foreground">
                 6-character code from your club admin.{" "}

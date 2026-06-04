@@ -1,10 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star } from "lucide-react";
+import { ArrowLeft, ChevronRight, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS, FEET } from "@/lib/types";
@@ -188,12 +187,18 @@ export default async function ChildDetailPage({
 
   return (
     <div className="space-y-6">
-      <Button asChild variant="ghost" size="sm">
-        <Link href="/dashboard/parent">
-          <ArrowLeft className="size-4" aria-hidden="true" />
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
+        <Link
+          href="/dashboard/parent"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="size-3.5" aria-hidden="true" />
           My Children
         </Link>
-      </Button>
+        <ChevronRight className="size-3.5 text-muted-foreground/40" aria-hidden="true" />
+        <span className="font-medium truncate max-w-[180px] sm:max-w-none">{player.full_name}</span>
+      </nav>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Passport card */}
@@ -305,7 +310,7 @@ export default async function ChildDetailPage({
               </Card>
             ) : (
               <div className="space-y-4">
-                {upcoming.length > 0 && (
+                {upcoming.length > 0 ? (
                   <div>
                     <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                       Upcoming
@@ -314,6 +319,8 @@ export default async function ChildDetailPage({
                       {upcoming.map((f) => <FixtureRow key={f.id} f={f} />)}
                     </div>
                   </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground px-1">No upcoming matches scheduled.</p>
                 )}
                 {past.length > 0 && (
                   <div>

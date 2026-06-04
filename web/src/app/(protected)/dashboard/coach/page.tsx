@@ -3,8 +3,9 @@ import { requireUser } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Calendar, Trophy, Plus, Dumbbell, ChevronRight } from "lucide-react";
+import { Users, Calendar, Plus, Dumbbell, ChevronRight } from "lucide-react";
 import { CreateTeamForm } from "@/components/create-team-form";
+import { CopyButton } from "@/components/copy-button";
 import { daysFromNow } from "@/lib/utils";
 
 const SESSION_TYPE_LABEL: Record<string, string> = {
@@ -96,6 +97,11 @@ export default async function CoachDashboardPage() {
         <div className="space-y-6">
 
           {/* ── What's Next ───────────────────────────────────────── */}
+          {!nextFixture && !nextSession && (
+            <div className="rounded-xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">
+              No upcoming fixtures or training sessions scheduled yet.
+            </div>
+          )}
           {(nextFixture || nextSession) && (
             <section className="grid gap-3 sm:grid-cols-2">
               {nextFixture && (() => {
@@ -194,19 +200,19 @@ export default async function CoachDashboardPage() {
                       <Calendar className="size-3 text-muted-foreground" aria-hidden="true" />
                       {team.upcomingCount} upcoming
                     </span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-medium">
-                      <Trophy className="size-3 text-muted-foreground" aria-hidden="true" />
-                      <span className="font-mono tracking-widest">{team.invite_code}</span>
-                    </span>
                   </div>
-                  <div className="mt-auto flex gap-2">
-                    <Button asChild size="sm" variant="outline" className="flex-1">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Player invite code</p>
+                    <CopyButton text={team.invite_code} />
+                  </div>
+                  <div className="mt-auto grid grid-cols-3 gap-2">
+                    <Button asChild size="sm" variant="outline">
                       <Link href={`/dashboard/coach/squad?team=${team.id}`}>Squad</Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" className="flex-1">
+                    <Button asChild size="sm" variant="outline">
                       <Link href={`/dashboard/coach/fixtures?team=${team.id}`}>Fixtures</Link>
                     </Button>
-                    <Button asChild size="sm" variant="outline" className="flex-1">
+                    <Button asChild size="sm" variant="outline">
                       <Link href={`/dashboard/coach/training?team=${team.id}`}>Training</Link>
                     </Button>
                   </div>
