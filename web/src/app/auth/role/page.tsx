@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Target, Users } from "lucide-react";
+import { Shield, Target, Users, Building2 } from "lucide-react";
+import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,12 +10,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useAuthStore } from "@/store/authStore";
 import type { AuthProfile } from "@/store/authStore";
 import type { UserRole } from "@/lib/types";
-import { DEFAULT_ACADEMY_ID } from "@/lib/constants";
 
 const ROLES: { value: UserRole; label: string; description: string; Icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "player", label: "Player", description: "Track your stats and build your passport.", Icon: Target },
-  { value: "coach", label: "Coach", description: "Manage your squad and log match results.", Icon: Users },
+  { value: "coach",  label: "Coach",  description: "Manage your squad and log match results.", Icon: Users },
   { value: "parent", label: "Parent", description: "Follow your child's progress.", Icon: Shield },
+  { value: "admin",  label: "Admin",  description: "Manage an existing club as administrator.", Icon: Building2 },
 ];
 
 const ROLE_ROUTES: Record<UserRole, string> = {
@@ -24,16 +25,24 @@ const ROLE_ROUTES: Record<UserRole, string> = {
   parent: "/dashboard/parent",
 };
 
+const INPUT_CLASS =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50";
+
 export default function RolePage() {
   const router = useRouter();
   const setProfile = useAuthStore((s) => s.setProfile);
 
   const [selected, setSelected] = useState<UserRole | null>(null);
+  const [clubCode, setClubCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleContinue() {
     if (!selected) return;
+    if (!clubCode || clubCode.trim().length < 4) {
+      setError("Enter your club join code.");
+      return;
+    }
     setLoading(true);
     setError(null);
     const supabase = createClient();
@@ -42,12 +51,20 @@ export default function RolePage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/auth/login"); return; }
 
+    // Look up academy by join code
+    const { data: academyData } = await supabase.rpc('find_academy_by_join_code', { p_code: clubCode.toUpperCase() });
+    if (academyData?.error || !academyData?.academy_id) {
+      setError("Invalid club code — check with your club admin.");
+      setLoading(false);
+      return;
+    }
+
     const { data, error: upsertErr } = await supabase
       .from("profiles")
       .upsert({
         id: user.id,
         role: selected,
-        academy_id: DEFAULT_ACADEMY_ID,
+        academy_id: academyData.academy_id,
         full_name: user.email?.split("@")[0] ?? "New user",
       })
       .select("id, role, academy_id, full_name")
@@ -82,6 +99,7 @@ export default function RolePage() {
 
         <div className="grid grid-cols-2 gap-3">
           {ROLES.map(({ value, label, description, Icon }) => (
+
             <button
               key={value}
               type="button"
@@ -101,6 +119,26 @@ export default function RolePage() {
               <span className="text-xs text-muted-foreground">{description}</span>
             </button>
           ))}
+        </div>
+
+        {/* Club join code */}
+        <div className="space-y-1.5">
+          <label htmlFor="club_code" className="text-sm font-medium">Club join code</label>
+          <input
+            id="club_code"
+            type="text"
+            autoComplete="off"
+            placeholder="e.g. ABC123"
+            value={clubCode}
+            onChange={(e) => setClubCode(e.target.value.toUpperCase())}
+            className={INPUT_CLASS}
+          />
+          <p className="text-xs text-muted-foreground">
+            6-character code from your club admin.{" "}
+            <Link href="/register-club" className="underline">
+              Register a new club instead
+            </Link>
+          </p>
         </div>
 
         {error && (

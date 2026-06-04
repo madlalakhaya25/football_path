@@ -51,7 +51,8 @@ export default function LoginPage() {
       .single();
 
     if (!profileData?.role) {
-      router.push("/auth/role");
+      const metaRole = user.user_metadata?.role as string | undefined;
+      router.push(metaRole === "admin" ? "/register-club" : "/auth/role");
       return;
     }
 
