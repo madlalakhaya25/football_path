@@ -14,6 +14,7 @@ import { RatingEditRow } from "./rating-edit-row";
 import { StandaloneRatingForm } from "./standalone-rating-form";
 import { PlayerAttributesForm } from "./player-attributes-form";
 import { RatingChart } from "@/components/rating-chart";
+import { AiInsightsPanel } from "@/components/development/ai-insights-panel";
 
 const ATTR_LABELS = [
   { key: "pace",      label: "Pace" },
@@ -243,6 +244,10 @@ export default async function PlayerDetailPage({
           <PlayerAttributesForm playerId={player.id} initial={initialAttrs} />
         </CardContent>
       </Card>
+
+      <section className="space-y-3 max-w-2xl">
+        <AiInsightsPanel playerId={player.id} />
+      </section>
 
       {medical && (
         <section className="space-y-3 max-w-2xl">

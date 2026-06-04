@@ -14,6 +14,7 @@ const INPUT_CLASS =
 
 export default function ForgotPasswordPage() {
   const [sent, setSent] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -24,12 +25,14 @@ export default function ForgotPasswordPage() {
   });
 
   async function onSubmit({ email }: ForgotPasswordInput) {
+    setServerError(null);
     const supabase = createClient();
-    if (supabase) {
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + "/auth/reset-password",
-      });
-    }
+    if (!supabase) { setServerError("Auth service unavailable — check Supabase env vars."); return; }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/auth/reset-password",
+    });
+    if (error) { setServerError(error.message); return; }
     // Always show success — don't leak whether email exists
     setSent(true);
   }
@@ -86,6 +89,12 @@ export default function ForgotPasswordPage() {
               </p>
             )}
           </div>
+
+          {serverError && (
+            <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {serverError}
+            </p>
+          )}
 
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Sending…" : "Send reset link"}

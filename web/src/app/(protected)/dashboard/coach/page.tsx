@@ -22,25 +22,29 @@ export default async function CoachDashboardPage() {
     .eq("coach_id", user.id)
     .eq("active", true);
 
-  const allTeams = await Promise.all(
-    (teamRows ?? []).map(async (team) => {
-      const [{ count: squadCount }, { count: upcomingCount }] = await Promise.all([
-        supabase
-          .from("team_members")
-          .select("*", { count: "exact", head: true })
-          .eq("team_id", team.id)
-          .eq("active", true),
-        supabase
-          .from("fixtures")
-          .select("*", { count: "exact", head: true })
-          .eq("team_id", team.id)
-          .eq("status", "upcoming"),
-      ]);
-      return { ...team, squadCount: squadCount ?? 0, upcomingCount: upcomingCount ?? 0 };
-    })
-  );
+  const rawTeams = teamRows ?? [];
+  const teamIds = rawTeams.map((t) => t.id);
 
-  const teamIds = allTeams.map((t) => t.id);
+  // Batch queries instead of O(2n) per-team round-trips
+  const [{ data: memberRows }, { data: upcomingRows }] = await Promise.all([
+    teamIds.length
+      ? supabase.from("team_members").select("team_id").in("team_id", teamIds).eq("active", true)
+      : Promise.resolve({ data: [] }),
+    teamIds.length
+      ? supabase.from("fixtures").select("team_id").in("team_id", teamIds).eq("status", "upcoming")
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const squadCountMap = new Map<string, number>();
+  const upcomingCountMap = new Map<string, number>();
+  for (const r of memberRows ?? []) squadCountMap.set(r.team_id, (squadCountMap.get(r.team_id) ?? 0) + 1);
+  for (const r of upcomingRows ?? []) upcomingCountMap.set(r.team_id, (upcomingCountMap.get(r.team_id) ?? 0) + 1);
+
+  const allTeams = rawTeams.map((team) => ({
+    ...team,
+    squadCount: squadCountMap.get(team.id) ?? 0,
+    upcomingCount: upcomingCountMap.get(team.id) ?? 0,
+  }));
   const now = new Date().toISOString();
 
   const [{ data: nextFixtures }, { data: nextSessions }] = await Promise.all([

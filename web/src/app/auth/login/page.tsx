@@ -139,19 +139,19 @@ export default function LoginPage() {
               {isSubmitting ? "Signing in…" : "Sign in"}
             </Button>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-col items-center gap-2 text-sm text-center">
+              <Link
+                href="/auth/forgot-password"
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
               <span className="text-muted-foreground">
                 Don&apos;t have an account?{" "}
                 <Link href="/auth/register" className="font-medium text-primary underline-offset-4 hover:underline">
                   Create one
                 </Link>
               </span>
-              <Link
-                href="/auth/forgot-password"
-                className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                Forgot password?
-              </Link>
             </div>
           </form>
         </div>
