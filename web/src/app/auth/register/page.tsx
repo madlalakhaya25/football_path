@@ -25,6 +25,7 @@ const ROLES = [
   { value: "player" as const, label: "Player",  description: "Build your passport and get seen.", Icon: Target },
   { value: "coach"  as const, label: "Coach",   description: "Manage your squad and log results.", Icon: Users },
   { value: "parent" as const, label: "Parent",  description: "Follow your child's progress.", Icon: Shield },
+  { value: "admin"  as const, label: "Admin",   description: "Manage an existing club as administrator.", Icon: Shield },
 ];
 
 export default function RegisterPage() {
@@ -175,7 +176,7 @@ export default function RegisterPage() {
           {/* Role */}
           <div className="space-y-2">
             <p className="text-sm font-medium">I am a…</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {ROLES.map(({ value, label, description, Icon }) => (
                 <button
                   key={value}

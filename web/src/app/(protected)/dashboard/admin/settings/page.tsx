@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
 import { ChangePasswordForm } from "@/components/settings/change-password-form";
 
-export default async function ParentSettingsPage() {
+export default async function AdminSettingsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/auth/login");

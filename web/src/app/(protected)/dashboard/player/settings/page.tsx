@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./profile-form";
+import { ChangePasswordForm } from "@/components/settings/change-password-form";
 
 export default async function PlayerSettingsPage() {
   const supabase = await createClient();
@@ -16,8 +17,8 @@ export default async function PlayerSettingsPage() {
   return (
     <div className="space-y-6 max-w-xl">
       <div>
-        <h1 className="text-2xl font-bold">Profile settings</h1>
-        <p className="text-sm text-muted-foreground mt-1">Update your personal information.</p>
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your profile and account security.</p>
       </div>
       <ProfileForm
         defaultValues={{
@@ -26,6 +27,7 @@ export default async function PlayerSettingsPage() {
           bio: profile?.bio ?? "",
         }}
       />
+      <ChangePasswordForm />
     </div>
   );
 }

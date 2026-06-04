@@ -12,7 +12,7 @@ export const registerSchema = z.object({
   full_name: z.string().min(2, "Enter your full name"),
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["player", "coach", "parent"], { error: "Choose a role" }),
+  role: z.enum(["player", "coach", "parent", "admin"], { error: "Choose a role" }),
   club_code: z.string().min(4, "Enter your club join code").max(8, "Code too long"),
   share_token: z.string().optional(),
 });
