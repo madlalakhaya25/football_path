@@ -1,111 +1,158 @@
 "use server";
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { requireUser } from "@/lib/auth";
 
-// Automatically looks for process.env.GEMINI_API_KEY
-const ai = new GoogleGenAI({});
+// Ensure API key exists (fail fast instead of silent runtime crash)
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("Missing GEMINI_API_KEY in environment variables");
+}
+
+// Initialize Gemini client
+const ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function getPlayerInsights(playerId: string): Promise<{
   insights?: string;
   error?: string;
 }> {
-  const { supabase } = await requireUser();
+  try {
+    const { supabase } = await requireUser();
 
-  const [{ data: player }, { data: ratings }, { data: attrs }, { data: milestones }] =
-    await Promise.all([
+    const [
+      { data: player },
+      { data: ratings },
+      { data: attrs },
+      { data: milestones },
+    ] = await Promise.all([
       supabase
         .from("players")
         .select("full_name, position, date_of_birth")
         .eq("id", playerId)
         .single(),
+
       supabase
         .from("player_ratings")
         .select("rating, note, created_at, fixtures(opponent, fixture_date)")
         .eq("player_id", playerId)
         .order("created_at", { ascending: false })
         .limit(10),
+
       supabase
         .from("player_attributes")
         .select("pace, shooting, passing, dribbling, defending, physical")
         .eq("player_id", playerId),
+
       supabase
         .from("player_milestone_completions")
-        .select("template_id, completed_at, development_milestone_templates(title, category)")
+        .select(
+          "template_id, completed_at, development_milestone_templates(title, category)"
+        )
         .eq("player_id", playerId)
         .order("completed_at", { ascending: false })
         .limit(20),
     ]);
 
-  if (!player) return { error: "Player not found." };
+    if (!player) {
+      return { error: "Player not found." };
+    }
 
-  const age = player.date_of_birth
-    ? Math.floor((Date.now() - new Date(player.date_of_birth).getTime()) / 31_557_600_000)
-    : null;
+    // Age calculation (more accurate conversion)
+    const age = player.date_of_birth
+      ? Math.floor(
+          (Date.now() - new Date(player.date_of_birth).getTime()) /
+            (1000 * 60 * 60 * 24 * 365.25)
+        )
+      : null;
 
-  const attrAvg = (key: string) => {
+    // Safe attribute averaging
     const rows = attrs ?? [];
-    if (!rows.length) return null;
-    return Math.round(rows.reduce((s: number, r: Record<string, number>) => s + r[key], 0) / rows.length);
-  };
 
-  const attributeSummary = attrs?.length
-    ? `Pace ${attrAvg("pace")}, Shooting ${attrAvg("shooting")}, Passing ${attrAvg("passing")}, Dribbling ${attrAvg("dribbling")}, Defending ${attrAvg("defending")}, Physical ${attrAvg("physical")}`
-    : "No attribute assessments yet";
+    const avg = (key: keyof (typeof rows)[number]) => {
+      if (!rows.length) return null;
+      const sum = rows.reduce((acc: number, r: any) => acc + (r[key] ?? 0), 0);
+      return Math.round(sum / rows.length);
+    };
 
-  const ratingsSummary = (ratings ?? [])
-    .map((r) => {
-      const fix = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
-      return `${r.rating}/5 vs ${fix?.opponent ?? "training"}${r.note ? ` — "${r.note}"` : ""}`;
-    })
-    .join("; ");
+    const attributeSummary = rows.length
+      ? `Pace ${avg("pace")}, Shooting ${avg("shooting")}, Passing ${avg(
+          "passing"
+        )}, Dribbling ${avg("dribbling")}, Defending ${avg(
+          "defending"
+        )}, Physical ${avg("physical")}`
+      : "No attribute assessments yet";
 
-  const completedMilestones = (milestones ?? [])
-    .map((m) => {
-      const t = Array.isArray(m.development_milestone_templates) ? m.development_milestone_templates[0] : m.development_milestone_templates;
-      return t ? `${t.category}: ${t.title}` : null;
-    })
-    .filter(Boolean)
-    .join(", ");
+    // Ratings summary
+    const ratingsSummary = (ratings ?? [])
+      .map((r: any) => {
+        const fix = Array.isArray(r.fixtures) ? r.fixtures[0] : r.fixtures;
+        return `${r.rating}/5 vs ${fix?.opponent ?? "training"}${
+          r.note ? ` — "${r.note}"` : ""
+        }`;
+      })
+      .join("; ");
 
-  const prompt = `You are an expert youth football development coach. Analyse the following player data and provide specific, actionable coaching insights.
+    // Milestones summary
+    const completedMilestones = (milestones ?? [])
+      .map((m: any) => {
+        const t = Array.isArray(m.development_milestone_templates)
+          ? m.development_milestone_templates[0]
+          : m.development_milestone_templates;
 
-Player: ${player.full_name}
+        return t ? `${t.category}: ${t.title}` : null;
+      })
+      .filter(Boolean)
+      .join(", ");
+
+    const prompt = `
+You are an expert youth football development coach.
+
+Analyse the player and provide actionable insights.
+
+PLAYER:
+Name: ${player.full_name}
 Position: ${player.position ?? "Unknown"}
 Age: ${age ?? "Unknown"}
 
-Recent match ratings (last 10): ${ratingsSummary || "No ratings yet"}
+RECENT RATINGS:
+${ratingsSummary || "No ratings yet"}
 
-Attribute assessments (average across coaches, out of 100): ${attributeSummary}
+ATTRIBUTES:
+${attributeSummary}
 
-Completed development milestones: ${completedMilestones || "None recorded yet"}
+MILESTONES:
+${completedMilestones || "None recorded yet"}
 
-Provide:
-1. **Strengths** (2-3 specific observations based on the data)
-2. **Priority development areas** (2-3 specific, actionable focus areas for training)
-3. **Recommended drills/activities** (2-3 concrete exercises that address the weaknesses)
-4. **Motivational note** (one sentence to share with the player)
+OUTPUT FORMAT:
 
-Be specific to the position and age. Base insights strictly on the data provided. Keep the total response under 300 words. Use plain text with the bold headers shown above.`;
+1. Strengths (2-3 points)
+2. Priority development areas (2-3 points)
+3. Recommended drills (2-3 drills)
+4. Motivational note (1 sentence)
 
-  try {
-    // Calling Google AI Studio
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        // Equivalent to max_tokens in Anthropic
-        maxOutputTokens: 600, 
-      }
+Rules:
+- Be specific to position and age
+- Only use provided data
+- Keep under 300 words
+- Use plain text with headers
+`;
+
+    // Gemini model
+    const model = ai.getGenerativeModel({
+      model: "gemini-1.5-flash",
     });
 
-    // The SDK extracts text directly via the text property
-    if (!response.text) {
-      throw new Error("No text returned from Gemini");
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    if (!text) {
+      throw new Error("No response text returned from Gemini");
     }
 
-    return { insights: response.text };
+    return { insights: text };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "AI service unavailable." };
+    return {
+      error: err instanceof Error ? err.message : "AI service unavailable.",
+    };
   }
 }
