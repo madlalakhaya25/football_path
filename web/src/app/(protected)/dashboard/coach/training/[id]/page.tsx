@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils";
 import { AddDrillForm } from "./add-drill-form";
 import { DeleteSessionButton } from "./delete-session-button";
 import { DeleteDrillButton } from "./delete-drill-button";
+import { AddFromLibrary } from "./add-from-library";
 import { MediaUploadForm } from "@/components/media/media-upload-form";
 import { MediaGallery } from "@/components/media/media-gallery";
+import { TrainingAttendanceForm } from "@/components/attendance/training-attendance-form";
 
 const TYPE_STYLES: Record<string, { label: string; chip: string; header: string }> = {
   general:    { label: "General",    chip: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",       header: "bg-slate-500/10" },
@@ -51,7 +53,7 @@ export default async function CoachTrainingSessionPage({
       .order("sort_order"),
     supabase
       .from("training_attendance")
-      .select("status")
+      .select("player_id, status")
       .eq("session_id", id),
     supabase
       .from("media_uploads")
@@ -70,8 +72,20 @@ export default async function CoachTrainingSessionPage({
       .single(),
   ]);
 
-  const attending = (attendanceRows ?? []).filter((r: { status: string }) => r.status === "attending").length;
-  const unavailable = (attendanceRows ?? []).filter((r: { status: string }) => r.status === "unavailable").length;
+  const libraryDrills = profile?.academy_id
+    ? (
+        await supabase
+          .from("drill_library")
+          .select("id, name, description, category, duration_minutes, difficulty, video_url")
+          .eq("academy_id", profile.academy_id)
+          .order("category")
+          .order("name")
+      ).data ?? []
+    : [];
+
+  type AttendanceRow = { player_id: string; status: string };
+  const attending = (attendanceRows ?? []).filter((r: AttendanceRow) => r.status === "attending").length;
+  const unavailable = (attendanceRows ?? []).filter((r: AttendanceRow) => r.status === "unavailable").length;
 
   const date = new Date(session.session_date);
   const teamName = Array.isArray(session.teams)
@@ -170,6 +184,13 @@ export default async function CoachTrainingSessionPage({
         )}
       </div>
 
+      {/* Coach attendance marking */}
+      <TrainingAttendanceForm
+        sessionId={id}
+        players={flattenedSquadPlayers}
+        existing={(attendanceRows ?? []) as { player_id: string; status: string }[]}
+      />
+
       {/* Photos & Videos */}
       <section className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="flex items-center justify-between gap-3">
@@ -233,6 +254,7 @@ export default async function CoachTrainingSessionPage({
           </div>
         )}
 
+        <AddFromLibrary sessionId={id} drills={libraryDrills} />
         <AddDrillForm sessionId={id} />
       </section>
     </div>

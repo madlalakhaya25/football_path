@@ -58,8 +58,9 @@ export default async function PlayerDashboardPage() {
     .eq("id", user.id)
     .single();
 
-  // Fetch documents, media, and milestones in parallel
-  const [{ data: myDocuments }, { data: myMediaTags }, { data: milestoneTemplates }, { data: myCompletions }] = await Promise.all([
+  type ClipRow = { id: string; title: string; url: string; timestamp_seconds: number | null; description: string | null; created_at: string };
+
+  const [{ data: myDocuments }, { data: myMediaTags }, { data: milestoneTemplates }, { data: myCompletions }, { data: myClipsRaw }] = await Promise.all([
     supabase
       .from("player_documents")
       .select("document_type, status, signer_name, signed_at, uploaded_at, upload_url")
@@ -82,7 +83,14 @@ export default async function PlayerDashboardPage() {
       .select("template_id, note")
       .eq("player_id", player.id)
       .eq("season", currentSeason),
+    supabase
+      .from("player_clips")
+      .select("id, title, url, timestamp_seconds, description, created_at")
+      .eq("player_id", player.id)
+      .order("created_at", { ascending: false }),
   ]);
+
+  const myClips = (myClipsRaw ?? []) as ClipRow[];
 
   // Ratings
   type RatingRow = {
@@ -343,6 +351,40 @@ export default async function PlayerDashboardPage() {
           </p>
         )}
       </section>
+
+      {myClips.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold">My Clips</h2>
+          <div className="divide-y divide-border rounded-xl border border-border bg-card">
+            {myClips.map((clip) => (
+              <div key={clip.id} className="flex items-start gap-3 px-4 py-3.5">
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium leading-snug">{clip.title}</p>
+                    {clip.timestamp_seconds !== null && (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground font-mono">
+                        {Math.floor(clip.timestamp_seconds / 60)}:{String(clip.timestamp_seconds % 60).padStart(2, "0")}
+                      </span>
+                    )}
+                  </div>
+                  {clip.description && (
+                    <p className="text-sm text-muted-foreground">{clip.description}</p>
+                  )}
+                  <a
+                    href={clip.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-0.5"
+                  >
+                    <ExternalLink className="size-3.5" aria-hidden="true" />
+                    Watch clip
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="space-y-3">
         <div>
