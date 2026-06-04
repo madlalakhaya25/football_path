@@ -143,6 +143,13 @@ export function DashboardShell({ profile, children }: Props) {
           <div className="hidden lg:block" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Link
+              href={`/dashboard/${profile.role}/settings`}
+              className="lg:hidden grid size-9 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              aria-label="Settings"
+            >
+              <Settings className="size-4" aria-hidden="true" />
+            </Link>
             <Button variant="ghost" size="sm" className="gap-2 lg:hidden" onClick={handleSignOut}>
               <LogOut className="size-4" aria-hidden="true" />
             </Button>
