@@ -39,6 +39,24 @@ export default async function AdminPlayersPage({
 
   const { data: players } = await query;
 
+  const currentSeason = new Date().getFullYear().toString();
+  const playerIds = (players ?? []).map((p: { id: string }) => p.id);
+  const { data: docRows } = playerIds.length
+    ? await supabase
+        .from("player_documents")
+        .select("player_id, status")
+        .in("player_id", playerIds)
+        .eq("season", currentSeason)
+    : { data: [] };
+
+  const TOTAL_DOCS = 6;
+  const docCountMap = new Map<string, number>();
+  for (const row of docRows ?? []) {
+    if (row.status === "signed" || row.status === "uploaded") {
+      docCountMap.set(row.player_id, (docCountMap.get(row.player_id) ?? 0) + 1);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -73,6 +91,8 @@ export default async function AdminPlayersPage({
               ? Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / 31_557_600_000)
               : null;
             const initials = p.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
+            const docsComplete = docCountMap.get(p.id) ?? 0;
+            const allDocsDone = docsComplete >= TOTAL_DOCS;
 
             return (
               <Link
@@ -90,7 +110,18 @@ export default async function AdminPlayersPage({
                     {age && <Badge variant="neutral" className="text-xs">Age {age}</Badge>}
                   </div>
                 </div>
-                {avg && <span className="shrink-0 text-sm text-muted-foreground">★ {avg}</span>}
+                <div className="flex items-center gap-2 shrink-0">
+                  {avg && <span className="text-sm text-muted-foreground">★ {avg}</span>}
+                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    allDocsDone
+                      ? "bg-green-500/10 text-green-700"
+                      : docsComplete > 0
+                        ? "bg-amber-500/10 text-amber-600"
+                        : "bg-secondary text-muted-foreground"
+                  }`}>
+                    {docsComplete}/{TOTAL_DOCS} docs
+                  </span>
+                </div>
               </Link>
             );
           })}

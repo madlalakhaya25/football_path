@@ -234,9 +234,9 @@ export default async function PlayerDashboardPage() {
       <section className="space-y-3">
         <div>
           <h2 className="text-base font-semibold">Documents &amp; Contracts</h2>
-          <p className="text-sm text-muted-foreground">{currentSeason} season — sign digitally or upload a signed PDF scan.</p>
+          <p className="text-sm text-muted-foreground">{currentSeason} season — your parent or guardian signs these on your behalf.</p>
         </div>
-        <DocumentHub playerId={player.id} season={currentSeason} documents={myDocuments ?? []} />
+        <DocumentHub playerId={player.id} season={currentSeason} documents={myDocuments ?? []} readOnly />
       </section>
     </div>
   );

@@ -199,8 +199,11 @@ export default async function AdminPlayerDetailPage({
 
         {/* Documents */}
         <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-          <p className="font-semibold">Documents &amp; Contracts · {currentSeason}</p>
-          <DocumentHub playerId={id} season={currentSeason} documents={docs ?? []} />
+          <div>
+            <p className="font-semibold">Documents &amp; Contracts · {currentSeason}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Signed by the player&apos;s parent or guardian. Read-only view.</p>
+          </div>
+          <DocumentHub playerId={id} season={currentSeason} documents={docs ?? []} readOnly />
         </div>
       </section>
     </div>

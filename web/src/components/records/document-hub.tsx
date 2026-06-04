@@ -296,6 +296,7 @@ type Props = {
   playerId: string;
   season: string;
   documents: DocumentRecord[];
+  readOnly?: boolean;
 };
 
 function StatusBadge({ doc }: { doc: DocumentRecord | undefined }) {
@@ -531,11 +532,13 @@ function DocumentRow({
   record,
   playerId,
   season,
+  readOnly,
 }: {
   def: DocDef;
   record: DocumentRecord | undefined;
   playerId: string;
   season: string;
+  readOnly?: boolean;
 }) {
   const [signModalOpen, setSignModalOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -591,27 +594,29 @@ function DocumentRow({
               <StatusBadge doc={record} />
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {!def.uploadOnly && (
+          {!readOnly && (
+            <div className="flex items-center gap-2 shrink-0">
+              {!def.uploadOnly && (
+                <button
+                  type="button"
+                  onClick={() => setSignModalOpen(true)}
+                  className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
+                >
+                  {isSigned ? "View / re-sign" : "Sign here"}
+                </button>
+              )}
               <button
                 type="button"
-                onClick={() => setSignModalOpen(true)}
+                onClick={() => setUploadOpen((v) => !v)}
                 className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
               >
-                {isSigned ? "View / re-sign" : "Sign here"}
+                {def.uploadOnly ? "Upload scan" : "Upload PDF"}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setUploadOpen((v) => !v)}
-              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium hover:bg-accent hover:text-accent-foreground"
-            >
-              {def.uploadOnly ? "Upload scan" : "Upload PDF"}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
-        {uploadOpen && (
+        {!readOnly && uploadOpen && (
           <div className="border-t border-border p-4 space-y-3 bg-muted/30">
             {def.type === "id_document" && (
               <p className="text-sm text-muted-foreground">
@@ -655,7 +660,7 @@ function DocumentRow({
   );
 }
 
-export function DocumentHub({ playerId, season, documents }: Props) {
+export function DocumentHub({ playerId, season, documents, readOnly }: Props) {
   const docMap = new Map(documents.map((d) => [d.document_type, d]));
 
   const signableDocs = DOCUMENTS.filter((d) => !d.uploadOnly);
@@ -692,7 +697,9 @@ export function DocumentHub({ playerId, season, documents }: Props) {
         </div>
         {!allDone && (
           <p className="text-xs text-muted-foreground">
-            Sign or upload the remaining documents to complete your registration for the {season} season.
+            {readOnly
+              ? `${total - totalComplete} document${total - totalComplete !== 1 ? "s" : ""} still awaiting parent signature or upload.`
+              : `Sign or upload the remaining documents to complete your registration for the ${season} season.`}
           </p>
         )}
       </div>
@@ -704,6 +711,7 @@ export function DocumentHub({ playerId, season, documents }: Props) {
           record={docMap.get(def.type)}
           playerId={playerId}
           season={season}
+          readOnly={readOnly}
         />
       ))}
     </div>
