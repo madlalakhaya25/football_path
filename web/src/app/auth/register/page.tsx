@@ -65,7 +65,8 @@ export default function RegisterPage() {
     if (!user) { setServerError("Could not retrieve user after sign-up."); return; }
 
     // Lookup the academy by join code
-    const { data: academyData } = await supabase.rpc('find_academy_by_join_code', { p_code: data.club_code.toUpperCase() });
+    const { data: academyData, error: rpcError } = await supabase.rpc('find_academy_by_join_code', { p_code: data.club_code.toUpperCase() });
+    if (rpcError) { setServerError(rpcError.message); return; }
     if (academyData?.error || !academyData?.academy_id) {
       setServerError("Invalid club code. Check with your club admin.");
       return;

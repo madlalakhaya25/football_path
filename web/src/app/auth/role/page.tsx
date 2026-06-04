@@ -52,7 +52,8 @@ export default function RolePage() {
     if (!user) { router.push("/auth/login"); return; }
 
     // Look up academy by join code
-    const { data: academyData } = await supabase.rpc('find_academy_by_join_code', { p_code: clubCode.toUpperCase() });
+    const { data: academyData, error: rpcError } = await supabase.rpc('find_academy_by_join_code', { p_code: clubCode.toUpperCase() });
+    if (rpcError) { setError(rpcError.message); setLoading(false); return; }
     if (academyData?.error || !academyData?.academy_id) {
       setError("Invalid club code — check with your club admin.");
       setLoading(false);

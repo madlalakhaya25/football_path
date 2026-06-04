@@ -51,8 +51,8 @@ export default function LoginPage() {
       .single();
 
     if (!profileData?.role) {
-      const metaRole = user.user_metadata?.role as string | undefined;
-      router.push(metaRole === "admin" ? "/register-club" : "/auth/role");
+      const pendingCreate = user.user_metadata?.pending_club_create === true;
+      router.push(pendingCreate ? "/register-club" : "/auth/role");
       return;
     }
 

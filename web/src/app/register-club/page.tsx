@@ -70,7 +70,7 @@ export default function RegisterClubPage() {
       const { error: signUpError } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { full_name: fullName.trim(), role: "admin" } },
+        options: { data: { full_name: fullName.trim(), role: "admin", pending_club_create: true } },
       });
 
       if (signUpError) { setServerError(signUpError.message); setIsSubmitting(false); return; }
