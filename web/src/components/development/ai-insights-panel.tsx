@@ -54,16 +54,17 @@ export function AiInsightsPanel({ playerId }: { playerId: string }) {
       )}
 
       {insights && (
-        <div className="px-4 py-4 text-sm leading-relaxed whitespace-pre-line">
-          {insights.split(/(\*\*[^*]+\*\*)/).map((part, i) =>
-            part.startsWith("**") && part.endsWith("**") ? (
-              <strong key={i} className="font-semibold text-foreground">
-                {part.slice(2, -2)}
-              </strong>
+        <div className="px-4 py-4 text-sm leading-relaxed space-y-1">
+          {insights.split("\n").map((line, i) => {
+            const isHeader = /^\d+\.\s+[A-Z][A-Z\s]+:/.test(line.trim());
+            return isHeader ? (
+              <p key={i} className="font-semibold text-foreground pt-2 first:pt-0">
+                {line}
+              </p>
             ) : (
-              <span key={i}>{part}</span>
-            )
-          )}
+              <p key={i} className="text-muted-foreground">{line}</p>
+            );
+          })}
         </div>
       )}
     </div>
