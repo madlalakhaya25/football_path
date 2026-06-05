@@ -9,6 +9,7 @@ import { CancelFixtureButton } from "./cancel-fixture-button";
 import { MediaUploadForm } from "@/components/media/media-upload-form";
 import { MediaGallery } from "@/components/media/media-gallery";
 import { MatchAttendanceForm } from "@/components/attendance/match-attendance-form";
+import { MatchReportPanel } from "@/components/ai/match-report-panel";
 
 const STATUS_VARIANT = {
   upcoming: "neutral",
@@ -239,6 +240,13 @@ export default async function FixtureDetailPage({
             players={flattenedSquadPlayers}
             existing={existingAttendance}
           />
+        </section>
+      )}
+
+      {/* AI Match Report */}
+      {fixture.status === "completed" && (
+        <section className="space-y-3 max-w-2xl">
+          <MatchReportPanel fixtureId={id} />
         </section>
       )}
 

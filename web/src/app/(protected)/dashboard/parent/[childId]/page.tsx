@@ -9,6 +9,7 @@ import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS, FEET } from "@/lib/types";
 import { MedicalForm } from "@/components/records/medical-form";
 import { DocumentHub } from "@/components/records/document-hub";
+import { ParentReportPanel } from "@/components/ai/parent-report-panel";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -358,6 +359,8 @@ export default async function ChildDetailPage({
           </section>
         </div>
       </div>
+
+      <ParentReportPanel playerId={player.id} playerName={player.full_name} />
 
       <section className="space-y-4 mt-8">
         <div className="flex items-center justify-between">

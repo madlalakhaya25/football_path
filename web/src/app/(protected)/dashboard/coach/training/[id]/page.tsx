@@ -10,6 +10,7 @@ import { AddFromLibrary } from "./add-from-library";
 import { MediaUploadForm } from "@/components/media/media-upload-form";
 import { MediaGallery } from "@/components/media/media-gallery";
 import { TrainingAttendanceForm } from "@/components/attendance/training-attendance-form";
+import { SessionGeneratorPanel } from "@/components/ai/session-generator-panel";
 
 const TYPE_STYLES: Record<string, { label: string; chip: string; header: string }> = {
   general:    { label: "General",    chip: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",       header: "bg-slate-500/10" },
@@ -212,6 +213,8 @@ export default async function CoachTrainingSessionPage({
 
       {/* Drills */}
       <section className="space-y-4">
+        <SessionGeneratorPanel sessionId={id} teamId={session.team_id} />
+
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">
             Drills
