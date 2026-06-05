@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { NewSessionForm } from "./new-session-form";
 
@@ -25,14 +27,14 @@ export default async function NewTrainingSessionPage({
   const team = allTeams.find((t) => t.id === teamParam) ?? allTeams[0];
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-xl">
       <div>
-        <Link
-          href={`/dashboard/coach/training?team=${team.id}`}
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back to training
-        </Link>
+        <Button asChild variant="ghost" size="sm">
+          <Link href={`/dashboard/coach/training?team=${team.id}`}>
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Training
+          </Link>
+        </Button>
         <h1 className="mt-2 text-2xl font-bold">New training session</h1>
         {allTeams.length > 1 && (
           <p className="text-sm text-muted-foreground mt-1">

@@ -1,6 +1,7 @@
 "use client";
 import { useTransition } from "react";
 import { UserX } from "lucide-react";
+import { toast } from "sonner";
 import { removePlayerFromSquad } from "@/app/actions/squad";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,12 @@ export function RemovePlayerButton({ playerId, playerName, teamId }: Props) {
   function handleRemove() {
     if (!confirm(`Remove ${playerName} from the squad?`)) return;
     startTransition(async () => {
-      await removePlayerFromSquad(playerId, teamId);
+      const res = await removePlayerFromSquad(playerId, teamId);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success(`${playerName} removed from squad`);
+      }
     });
   }
 

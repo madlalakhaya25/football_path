@@ -136,7 +136,7 @@ export default async function SquadPage({
             .map((pos) => (
               <section key={pos}>
                 <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  {POSITIONS.find((p) => p.value === pos)?.label ?? "Unassigned"}
+                  {POSITIONS.find((p) => p.value === pos)?.label ?? "Unassigned"} · {byPosition[pos].length}
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {byPosition[pos].map((player) => {

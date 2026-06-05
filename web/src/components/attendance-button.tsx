@@ -1,6 +1,7 @@
 "use client";
 import { useTransition } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { setAttendance } from "@/app/actions/training";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,12 @@ export function AttendanceButton({ sessionId, current }: Props) {
 
   function handleClick(status: "attending" | "unavailable") {
     startTransition(async () => {
-      await setAttendance(sessionId, status);
+      const res = await setAttendance(sessionId, status);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success(status === "attending" ? "Marked as going" : "Marked as unavailable");
+      }
     });
   }
 
@@ -32,7 +38,11 @@ export function AttendanceButton({ sessionId, current }: Props) {
           pending && "opacity-50 cursor-wait"
         )}
       >
-        <CheckCircle2 className="size-4" aria-hidden="true" />
+        {pending ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <CheckCircle2 className="size-4" aria-hidden="true" />
+        )}
         Going
       </button>
       <button
@@ -47,7 +57,11 @@ export function AttendanceButton({ sessionId, current }: Props) {
           pending && "opacity-50 cursor-wait"
         )}
       >
-        <XCircle className="size-4" aria-hidden="true" />
+        {pending ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <XCircle className="size-4" aria-hidden="true" />
+        )}
         Can&apos;t make it
       </button>
     </div>

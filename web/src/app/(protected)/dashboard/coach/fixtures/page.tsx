@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -107,8 +107,16 @@ export default async function CoachFixturesPage({
         <Card>
           <CardHeader>
             <CardTitle>No fixtures yet</CardTitle>
-            <CardDescription>Schedule your first match.</CardDescription>
+            <CardDescription>Schedule your first match to track results and player appearances.</CardDescription>
           </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <Link href={`/dashboard/coach/fixtures/new?team=${team.id}`}>
+                <Plus className="size-4" aria-hidden="true" />
+                Schedule first match
+              </Link>
+            </Button>
+          </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">

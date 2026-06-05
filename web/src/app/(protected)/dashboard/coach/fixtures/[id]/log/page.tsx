@@ -1,4 +1,7 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { LogResultForm } from "./log-result-form";
 
@@ -34,6 +37,12 @@ export default async function LogResultPage({
 
   return (
     <div className="space-y-6 max-w-2xl">
+      <Button asChild variant="ghost" size="sm">
+        <Link href={`/dashboard/coach/fixtures/${id}`}>
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Fixture
+        </Link>
+      </Button>
       <div>
         <h1 className="text-2xl font-bold">Log result</h1>
         <p className="text-sm text-muted-foreground">

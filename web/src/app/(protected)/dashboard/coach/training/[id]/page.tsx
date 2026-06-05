@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Clock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
+import { MapPin, Clock, PlayCircle, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { AddDrillForm } from "./add-drill-form";
@@ -127,9 +128,12 @@ export default async function CoachTrainingSessionPage({
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Back link */}
-      <Link href="/dashboard/coach/training" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Training
-      </Link>
+      <Button asChild variant="ghost" size="sm">
+        <Link href="/dashboard/coach/training">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Training
+        </Link>
+      </Button>
 
       {/* Session header card */}
       <div className={cn("overflow-hidden rounded-xl border border-border", typeStyle.header)}>
@@ -255,6 +259,12 @@ export default async function CoachTrainingSessionPage({
               </div>
             ))}
           </div>
+        )}
+
+        {(drills ?? []).length === 0 && (
+          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+            No drills yet — generate with AI above or add manually below.
+          </p>
         )}
 
         <AddFromLibrary sessionId={id} drills={libraryDrills} />
