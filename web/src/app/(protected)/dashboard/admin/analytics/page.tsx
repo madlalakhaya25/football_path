@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PositionPieChart } from "@/components/analytics/position-pie-chart";
 import { RatingTrendChart } from "@/components/analytics/rating-trend-chart";
 import { ComplianceBar } from "@/components/analytics/compliance-bar";
+import { AcademyHealthPanel } from "@/components/ai/academy-health-panel";
 
 const DOC_TYPES = [
   "registration_agreement",
@@ -278,6 +279,10 @@ export default async function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <section className="space-y-3">
+        <AcademyHealthPanel />
+      </section>
     </div>
   );
 }
