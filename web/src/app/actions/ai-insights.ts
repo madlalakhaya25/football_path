@@ -121,37 +121,52 @@ export async function getPlayerInsights(playerId: string): Promise<{
       .filter(Boolean)
       .join(", ");
 
-    // OPTIMIZED PROMPT: Banning Markdown to output raw, clean text
-    const prompt = `Analyze the following youth football data to generate a concise, high-impact technical report for the coaching staff dashboard.
+    const ltpdPhase = (() => {
+      if (!age) return "Training to Train (U13-U15)";
+      if (age <= 9)  return "FUNdamentals (U6-U9)";
+      if (age <= 12) return "Learning to Train (U10-U12)";
+      if (age <= 15) return "Training to Train (U13-U15)";
+      if (age <= 18) return "Training to Compete (U16-U18)";
+      return "Training to Win (U19+)";
+    })();
+
+    const prompt = `Generate a concise, high-impact technical player evaluation for the coaching staff of a SAFA-registered youth academy.
 
 CRITICAL RULES:
-- Use the third person exclusively (e.g., "${player.full_name}", "the player", "he/she"). No second-person pronouns.
-- Be highly analytical and specific to the provided metrics.
-- Keep the total response strictly between 150 and 200 words.
-- DO NOT use any Markdown formatting (no asterisks, no bolding). Use standard dashes "-" for lists.
+- Use third person exclusively ("${player.full_name}", "the player"). No second-person pronouns.
+- Be specific to the data provided — do not make up attributes or ratings.
+- Keep the total response strictly between 160 and 220 words.
+- Plain text only — no asterisks, no Markdown, no bolding. Use dashes "-" for list items.
 
-Player Profile:
+PLAYER PROFILE:
 - Name: ${player.full_name}
 - Position: ${player.position ?? "Unknown"}
-- Age: ${age ?? "Unknown"}
+- Age: ${age ?? "Unknown"} | LTPD Phase: ${ltpdPhase}
 
-Data Context:
+DATA CONTEXT:
 - Match Ratings (Last 10): ${ratingsSummary || "None recorded"}
 - Attributes (Avg/100): ${attributeSummary}
-- Milestones: ${completedMilestones || "None recorded"}
+- Milestones Completed: ${completedMilestones || "None recorded"}
 
-Output format (Use these exact plain text headers):
-1. STRENGTHS: (1-2 dashed points)
-2. PRIORITY DEVELOPMENT: (1-2 dashed points)
-3. RECOMMENDED DRILLS: (1-2 dashed points)
-4. MOTIVATIONAL NOTE: (One concluding sentence)`;
+SAFA/FIFA EVALUATION FRAMEWORK:
+- Assess against LTPD phase-appropriate expectations (not adult standards)
+- Reference the 4-Corner Model: Technical, Tactical, Physical, Social/Psychological
+- Consider position-specific SAFA competency requirements
+- Identify readiness indicators for the next LTPD phase
+
+Output using these exact plain text headers:
+1. STRENGTHS: (1-2 dashed points — specific to data, referencing 4-Corner dimension)
+2. PRIORITY DEVELOPMENT: (1-2 dashed points — phase-appropriate gaps, SAFA-aligned)
+3. RECOMMENDED DRILLS: (1-2 dashed points — specific drill types to address the gaps)
+4. PATHWAY READINESS: (One sentence on readiness for the next LTPD phase or development pathway step)
+5. MOTIVATIONAL NOTE: (One encouraging sentence for the coaching staff)`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
-        maxOutputTokens: 500,
-        systemInstruction: "You are an elite youth academy technical director providing sharp, data-driven player evaluations for coaching staff.",
+        maxOutputTokens: 600,
+        systemInstruction: "You are a SAFA Level 4 and FIFA-certified technical director providing data-driven player evaluations. Your assessments apply the Long-Term Player Development (LTPD) framework, SAFA's position-specific competency standards, the 4-Corner development model (Technical, Tactical, Physical, Social/Psychological), and the South African football pathway from grassroots to PSL level. Plain text only — no asterisks, no Markdown.",
       }
     });
 

@@ -147,7 +147,7 @@ export async function generateAcademyHealthReport(): Promise<{
         ? top3.map(({ name, avg }) => `${name} (${avg.toFixed(2)})`).join(", ")
         : "None recorded";
 
-    const prompt = `You are an experienced football academy director. Analyse the following academy data and provide a strategic monthly health report.
+    const prompt = `Analyse the following data for a SAFA-registered youth football academy and produce a strategic monthly health report benchmarked against FIFA and SAFA development standards.
 
 ACADEMY METRICS:
 - Total active players: ${totalActivePlayers}
@@ -159,20 +159,29 @@ ACADEMY METRICS:
 - Top performers: ${topPerformersStr}
 - Players needing attention (no recent rating): ${noRecentRatingCount}
 
+SAFA / FIFA BENCHMARKS FOR CONTEXT:
+- SAFA NDP standard: minimum 3 training sessions per team per week (12+ per month)
+- SAFA registration: 80%+ document compliance required before competitive play
+- FIFA grassroots standard: max 1:15 coach-to-player ratio; player welfare first
+- Healthy monthly rating pool: 70%+ of active players should receive at least one rating
+- Milestone completion: 20%+ of available milestones per season phase indicates active development
+- Squad balance: SAFA recommends all outfield positions represented to enable positional rotation
+
 Output format (plain text, no markdown, no asterisks):
-1. ACADEMY OVERVIEW: (2 sentences on current academy health)
-2. STRENGTHS: (2 specific positives backed by the data)
-3. CONCERNS: (2 areas needing attention)
-4. PRIORITY ACTIONS: (3 specific actions for the admin/coaching staff this month)
-5. DIRECTOR'S NOTE: (one forward-looking sentence about the academy's trajectory)`;
+1. ACADEMY OVERVIEW: (2 sentences on current academy health, referencing key metrics)
+2. STRENGTHS: (2 specific positives backed by the data, referencing SAFA/FIFA benchmarks where applicable)
+3. CONCERNS: (2 areas needing attention, with data-referenced reasons)
+4. PRIORITY ACTIONS: (3 specific, actionable steps for coaching staff this month)
+5. DIRECTOR'S NOTE: (one forward-looking sentence on the academy's development trajectory)
+6. SAFA PATHWAY ALIGNMENT: (one sentence on how current performance aligns with SAFA's National Development Programme and pathway from grassroots to semi-professional football)`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
-        maxOutputTokens: 700,
+        maxOutputTokens: 800,
         systemInstruction:
-          "You are an experienced football academy director providing strategic insights.",
+          "You are a SAFA-accredited academy director with FIFA Quality Programme and CAF Club Licensing expertise. Your monthly health reports benchmark against SAFA's National Development Programme standards, FIFA grassroots best practices, and South African youth football development criteria. Be specific, data-driven, and practical. Plain text only — no asterisks, no Markdown.",
       },
     });
 

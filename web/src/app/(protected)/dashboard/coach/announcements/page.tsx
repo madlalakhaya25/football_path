@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Megaphone, PenLine } from "lucide-react";
+import { Megaphone, PenLine, Eye } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { AnnouncementForm } from "./announcement-form";
@@ -39,6 +39,20 @@ export default async function CoachAnnouncementsPage() {
     .in("team_id", teamIds)
     .order("created_at", { ascending: false });
 
+  const announcementIds = (announcements ?? []).map((a) => a.id);
+  const { data: readCountsRaw } = announcementIds.length
+    ? await supabase
+        .from("announcement_reads")
+        .select("announcement_id")
+        .in("announcement_id", announcementIds)
+        .not("read_at", "is", null)
+    : { data: [] };
+
+  const readCountMap = new Map<string, number>();
+  for (const r of (readCountsRaw ?? []) as { announcement_id: string }[]) {
+    readCountMap.set(r.announcement_id, (readCountMap.get(r.announcement_id) ?? 0) + 1);
+  }
+
   const teamMap = new Map(allTeams.map((t) => [t.id, t.name]));
   const multiTeam = allTeams.length > 1;
 
@@ -72,6 +86,7 @@ export default async function CoachAnnouncementsPage() {
           {(announcements ?? []).map((a) => {
             const teamName = teamMap.get(a.team_id);
             const isRecent = Date.now() - new Date(a.created_at).getTime() < 24 * 3_600_000;
+            const readCount = readCountMap.get(a.id) ?? 0;
             return (
               <article
                 key={a.id}
@@ -98,6 +113,12 @@ export default async function CoachAnnouncementsPage() {
                       <span className="text-xs text-muted-foreground">
                         {formatRelativeTime(a.created_at)}
                       </span>
+                      {readCount > 0 && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Eye className="size-3" aria-hidden="true" />
+                          {readCount} read
+                        </span>
+                      )}
                     </div>
                   </div>
                   <DeleteAnnouncementButton id={a.id} title={a.title} />

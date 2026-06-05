@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { Download } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -54,7 +54,7 @@ export default async function AdminReportsPage() {
       <div>
         <h1 className="text-2xl font-bold">Reports</h1>
         <p className="text-muted-foreground mt-1">
-          Download CSV exports of academy data.
+          Export academy data as CSV or open a print-ready PDF.
         </p>
       </div>
 
@@ -65,11 +65,17 @@ export default async function AdminReportsPage() {
               <CardTitle className="text-base">{r.title}</CardTitle>
               <CardDescription>{r.description}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full gap-2">
+            <CardContent className="flex gap-2">
+              <Button asChild variant="outline" className="flex-1 gap-2">
                 <a href={r.href} download={r.filename}>
                   <Download className="size-4" aria-hidden="true" />
-                  Download CSV
+                  CSV
+                </a>
+              </Button>
+              <Button asChild className="flex-1 gap-2">
+                <a href={`${r.href}?format=pdf`} target="_blank" rel="noopener noreferrer">
+                  <FileText className="size-4" aria-hidden="true" />
+                  PDF
                 </a>
               </Button>
             </CardContent>

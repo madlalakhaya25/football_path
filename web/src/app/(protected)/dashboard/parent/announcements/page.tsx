@@ -69,16 +69,15 @@ export default async function ParentAnnouncementsPage() {
 
   type ReadRecord = { read_at: string | null; dismissed_at: string | null };
 
-  const visible = (announcements ?? []).filter((a) => {
-    const reads = a.announcement_reads as ReadRecord[] | null;
-    return !reads?.[0]?.dismissed_at;
-  });
-
+  const allAnnouncements = announcements ?? [];
   const multiTeam = teamIds.length > 1;
 
   return (
-    <PageShell count={visible.length}>
-      {visible.length === 0 ? (
+    <PageShell count={allAnnouncements.filter((a) => {
+      const reads = a.announcement_reads as ReadRecord[] | null;
+      return !reads?.[0]?.read_at;
+    }).length}>
+      {allAnnouncements.length === 0 ? (
         <EmptyState
           icon={<Megaphone className="size-8 text-muted-foreground/40" />}
           title="Nothing yet"
@@ -86,16 +85,20 @@ export default async function ParentAnnouncementsPage() {
         />
       ) : (
         <div className="space-y-2">
-          {visible.map((a) => {
+          {allAnnouncements.map((a) => {
             const reads = a.announcement_reads as ReadRecord[] | null;
             const readRecord = reads?.[0] ?? null;
             const isUnread = !readRecord?.read_at;
+            const isAcknowledged = !!readRecord?.dismissed_at;
             const isRecent = Date.now() - new Date(a.created_at).getTime() < 24 * 3_600_000;
             const teamName = teamMap.get(a.team_id);
             return (
               <article
                 key={a.id}
-                className="group flex gap-0 overflow-hidden rounded-xl border border-border bg-card hover:border-primary/40 transition-colors"
+                className={cn(
+                  "group flex gap-0 overflow-hidden rounded-xl border border-border bg-card hover:border-primary/40 transition-colors",
+                  isAcknowledged && "opacity-75"
+                )}
               >
                 <div className={cn("w-1 shrink-0", isUnread ? "bg-primary" : "bg-border")} />
                 <Link
@@ -109,7 +112,7 @@ export default async function ParentAnnouncementsPage() {
                     <p className={cn("font-semibold leading-snug", isUnread ? "text-foreground" : "text-foreground/80")}>
                       {a.title}
                     </p>
-                    {isRecent && (
+                    {isRecent && !isAcknowledged && (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                         New
                       </span>
@@ -128,7 +131,7 @@ export default async function ParentAnnouncementsPage() {
                   </div>
                 </Link>
                 <div className="flex items-start pt-3 pr-3">
-                  <DismissAnnouncementButton id={a.id} />
+                  <DismissAnnouncementButton id={a.id} acknowledged={isAcknowledged} />
                 </div>
               </article>
             );

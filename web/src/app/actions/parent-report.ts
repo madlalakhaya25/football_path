@@ -98,12 +98,21 @@ export async function generateParentReport(
       (a: { status: string }) => a.status === "attending"
     ).length;
 
-    const prompt = `You are a professional youth football academy coach. Write a warm, encouraging progress report letter addressed to the parent of ${player.full_name}.
+    const ltpdPhase = (() => {
+      if (!age) return "Training to Train (U13-U15)";
+      if (age <= 9)  return "FUNdamentals — focusing on fun, confidence, and love for the game";
+      if (age <= 12) return "Learning to Train — building ball skills and physical fundamentals";
+      if (age <= 15) return "Training to Train — developing tactical understanding and positional awareness";
+      if (age <= 18) return "Training to Compete — preparing for competitive, high-intensity football";
+      return "Training to Win — elite performance and competition readiness";
+    })();
 
-Player data:
+    const prompt = `Write a warm, encouraging progress report for the parent of a young footballer at a SAFA-registered academy.
+
+PLAYER DATA:
 - Name: ${player.full_name}
 - Position: ${player.position ?? "Not specified"}
-${age ? `- Age: ${age}` : ""}
+${age ? `- Age: ${age} | Development Stage: ${ltpdPhase}` : `- Development Stage: ${ltpdPhase}`}
 - Recent match ratings (last 6): ${ratingsSummary || "No recent ratings"}
 - Average rating: ${avgRating ? `${avgRating}/5` : "Not available"}
 - Attributes (out of 100): ${attributeSummary}
@@ -111,28 +120,31 @@ ${age ? `- Age: ${age}` : ""}
 - Training sessions attended (last 30 days): ${attendingCount}
 
 CRITICAL RULES:
-- Strictly 150-200 words total.
-- Written in first person plural ("we", "our") as the coaching staff writing to the parent.
-- Refer to the player as "${player.full_name}" and "your child".
-- Warm and encouraging tone throughout.
-- No negative language — reframe weaknesses as growth areas.
+- Strictly 160-210 words total.
+- Written as the coaching staff (first person plural: "we", "our").
+- Refer to the player as "${player.full_name}" or "your child" — never "he/she" alone.
+- Warm, encouraging, and culturally respectful tone — this is a South African youth academy.
+- Frame everything positively — weaknesses are "growth areas" and "exciting opportunities".
+- Acknowledge the parent's role in the player's development journey.
+- Reference the player's LTPD development stage to set age-appropriate expectations.
 - Plain text only — no asterisks, no Markdown, no bold formatting.
 - Use dashes "-" for list items.
-- Use these exact section headers:
 
+Use these exact section headers:
 1. OVERALL PROGRESS:
 2. STRENGTHS WE'VE NOTICED:
 3. AREAS WE'RE WORKING ON:
 4. UPCOMING FOCUS:
-5. FROM THE COACHING STAFF:`;
+5. DEVELOPMENT PATHWAY NOTE: (one sentence on what stage of the SAFA/FIFA development journey ${player.full_name} is on and what lies ahead)
+6. FROM THE COACHING STAFF:`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
-        maxOutputTokens: 600,
+        maxOutputTokens: 700,
         systemInstruction:
-          "You are a professional youth football academy coach writing warm, encouraging progress reports for parents. Plain text only — no asterisks, no Markdown.",
+          "You are a SAFA-accredited youth development coach writing warm, culturally sensitive progress reports for parents of young South African footballers. Your reports apply Long-Term Player Development (LTPD) principles, mastery-climate coaching philosophy (praising effort and progress, not just outcomes), and South Africa's positive youth football development ethos. You understand that parents are key partners in a young player's journey. Plain text only — no asterisks, no Markdown.",
       },
     });
 
