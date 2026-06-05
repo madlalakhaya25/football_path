@@ -8,11 +8,12 @@ export type UserRole = "admin" | "coach" | "player" | "parent";
 export type FixtureStatus = "upcoming" | "completed" | "cancelled" | "postponed";
 
 export type Position =
-  | "goalkeeper"
-  | "defender"
-  | "midfielder"
-  | "winger"
-  | "striker";
+  // Granular positions
+  | "gk" | "cb" | "sw" | "lb" | "rb" | "lwb" | "rwb"
+  | "cdm" | "cm" | "lm" | "rm" | "cam"
+  | "lw" | "rw" | "ss" | "cf" | "st"
+  // Legacy (kept for backward compat)
+  | "goalkeeper" | "defender" | "midfielder" | "winger" | "striker";
 
 export type Foot = "left" | "right" | "both";
 
@@ -84,12 +85,34 @@ export interface PlayerRating {
   created_at: string;
 }
 
-export const POSITIONS: { value: Position; label: string }[] = [
-  { value: "goalkeeper", label: "Goalkeeper" },
-  { value: "defender", label: "Defender" },
-  { value: "midfielder", label: "Midfielder" },
-  { value: "winger", label: "Winger" },
-  { value: "striker", label: "Striker" },
+export const POSITIONS: { value: Position; label: string; group: string }[] = [
+  // Goalkeepers
+  { value: "gk",  label: "Goalkeeper (GK)",           group: "Goalkeeper" },
+  // Defenders
+  { value: "cb",  label: "Centre Back (CB)",           group: "Defender" },
+  { value: "sw",  label: "Sweeper (SW)",               group: "Defender" },
+  { value: "lb",  label: "Left Back (LB)",             group: "Defender" },
+  { value: "rb",  label: "Right Back (RB)",            group: "Defender" },
+  { value: "lwb", label: "Left Wing Back (LWB)",       group: "Defender" },
+  { value: "rwb", label: "Right Wing Back (RWB)",      group: "Defender" },
+  // Midfielders
+  { value: "cdm", label: "Defensive Midfielder (CDM)", group: "Midfielder" },
+  { value: "cm",  label: "Central Midfielder (CM)",    group: "Midfielder" },
+  { value: "lm",  label: "Left Midfielder (LM)",       group: "Midfielder" },
+  { value: "rm",  label: "Right Midfielder (RM)",      group: "Midfielder" },
+  { value: "cam", label: "Attacking Midfielder (CAM)", group: "Midfielder" },
+  // Forwards
+  { value: "lw",  label: "Left Winger (LW)",           group: "Forward" },
+  { value: "rw",  label: "Right Winger (RW)",          group: "Forward" },
+  { value: "ss",  label: "Second Striker (SS)",        group: "Forward" },
+  { value: "cf",  label: "Centre Forward (CF)",        group: "Forward" },
+  { value: "st",  label: "Striker (ST)",               group: "Forward" },
+  // Legacy
+  { value: "goalkeeper", label: "Goalkeeper",          group: "Goalkeeper" },
+  { value: "defender",   label: "Defender",            group: "Defender" },
+  { value: "midfielder", label: "Midfielder",          group: "Midfielder" },
+  { value: "winger",     label: "Winger",              group: "Forward" },
+  { value: "striker",    label: "Striker",             group: "Forward" },
 ];
 
 export const FEET: { value: Foot; label: string }[] = [

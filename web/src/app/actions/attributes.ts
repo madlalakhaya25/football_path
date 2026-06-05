@@ -3,14 +3,35 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 
+const optionalAttr = z.number().int().min(1).max(99).optional();
+
 const attributesSchema = z.object({
-  pace:      z.number().int().min(1).max(99),
-  shooting:  z.number().int().min(1).max(99),
-  passing:   z.number().int().min(1).max(99),
-  dribbling: z.number().int().min(1).max(99),
-  defending: z.number().int().min(1).max(99),
-  physical:  z.number().int().min(1).max(99),
-  notes:     z.string().max(300).optional(),
+  pace:             z.number().int().min(1).max(99),
+  shooting:         z.number().int().min(1).max(99),
+  passing:          z.number().int().min(1).max(99),
+  dribbling:        z.number().int().min(1).max(99),
+  defending:        z.number().int().min(1).max(99),
+  physical:         z.number().int().min(1).max(99),
+  notes:            z.string().max(300).optional(),
+  ball_control:     optionalAttr,
+  crossing:         optionalAttr,
+  heading:          optionalAttr,
+  tackling:         optionalAttr,
+  finishing:        optionalAttr,
+  first_touch:      optionalAttr,
+  stamina:          optionalAttr,
+  agility:          optionalAttr,
+  jumping:          optionalAttr,
+  strength:         optionalAttr,
+  positioning:      optionalAttr,
+  decision_making:  optionalAttr,
+  composure:        optionalAttr,
+  work_rate:        optionalAttr,
+  leadership:       optionalAttr,
+  shot_stopping:    optionalAttr,
+  reflexes:         optionalAttr,
+  distribution:     optionalAttr,
+  handling:         optionalAttr,
 });
 
 export async function upsertPlayerAttributes(
@@ -18,7 +39,13 @@ export async function upsertPlayerAttributes(
   payload: {
     pace: number; shooting: number; passing: number;
     dribbling: number; defending: number; physical: number;
-    notes: string;
+    notes?: string;
+    ball_control?: number; crossing?: number; heading?: number;
+    tackling?: number; finishing?: number; first_touch?: number;
+    stamina?: number; agility?: number; jumping?: number; strength?: number;
+    positioning?: number; decision_making?: number; composure?: number;
+    work_rate?: number; leadership?: number; shot_stopping?: number;
+    reflexes?: number; distribution?: number; handling?: number;
   }
 ) {
   const { supabase, user } = await requireUser();

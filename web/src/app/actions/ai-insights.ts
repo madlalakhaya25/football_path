@@ -35,7 +35,7 @@ export async function getPlayerInsights(playerId: string): Promise<{
 
       supabase
         .from("player_attributes")
-        .select("pace, shooting, passing, dribbling, defending, physical")
+        .select("pace, shooting, passing, dribbling, defending, physical, ball_control, crossing, heading, tackling, finishing, first_touch, stamina, agility, jumping, strength, positioning, decision_making, composure, work_rate, leadership, shot_stopping, reflexes, distribution, handling")
         .eq("player_id", playerId),
 
       supabase
@@ -64,20 +64,41 @@ export async function getPlayerInsights(playerId: string): Promise<{
 
     const attrRows = attrs ?? [];
 
+    const ALL_ATTR_KEYS = [
+      "pace", "shooting", "passing", "dribbling", "defending", "physical",
+      "ball_control", "crossing", "heading", "tackling", "finishing", "first_touch",
+      "stamina", "agility", "jumping", "strength",
+      "positioning", "decision_making", "composure", "work_rate", "leadership",
+      "shot_stopping", "reflexes", "distribution", "handling",
+    ];
+
+    const ATTR_LABELS: Record<string, string> = {
+      pace: "Pace", shooting: "Shooting", passing: "Passing", dribbling: "Dribbling",
+      defending: "Defending", physical: "Physical", ball_control: "Ball Control",
+      crossing: "Crossing", heading: "Heading", tackling: "Tackling",
+      finishing: "Finishing", first_touch: "First Touch", stamina: "Stamina",
+      agility: "Agility", jumping: "Jumping", strength: "Strength",
+      positioning: "Positioning", decision_making: "Decision Making",
+      composure: "Composure", work_rate: "Work Rate", leadership: "Leadership",
+      shot_stopping: "Shot Stopping", reflexes: "Reflexes",
+      distribution: "Distribution", handling: "Handling",
+    };
+
     const avg = (key: string) => {
       if (!attrRows.length) return null;
-      return Math.round(
-        attrRows.reduce((sum: number, r: any) => sum + (r[key] ?? 0), 0) /
-          attrRows.length
-      );
+      const vals = attrRows.map((r: any) => r[key]).filter((v: any) => v != null);
+      if (!vals.length) return null;
+      return Math.round(vals.reduce((sum: number, v: number) => sum + v, 0) / vals.length);
     };
 
     const attributeSummary = attrRows.length
-      ? `Pace ${avg("pace")}, Shooting ${avg("shooting")}, Passing ${avg(
-          "passing"
-        )}, Dribbling ${avg("dribbling")}, Defending ${avg(
-          "defending"
-        )}, Physical ${avg("physical")}`
+      ? ALL_ATTR_KEYS
+          .map((key) => {
+            const val = avg(key);
+            return val != null ? `${ATTR_LABELS[key]}: ${val}` : null;
+          })
+          .filter(Boolean)
+          .join(", ")
       : "No attribute assessments yet";
 
     const ratingsSummary = (ratings ?? [])

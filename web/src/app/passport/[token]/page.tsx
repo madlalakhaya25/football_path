@@ -9,14 +9,12 @@ import { StatBar } from "@/components/ui/stat-bar";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { POSITIONS, FEET } from "@/lib/types";
+import { getPositionAttrs, ATTR_META, type AttrKey } from "@/lib/attributes";
 import QRCode from "qrcode";
 
 export const revalidate = 60;
 
-type AttrData = {
-  pace: number; shooting: number; passing: number;
-  dribbling: number; defending: number; physical: number;
-} | null;
+type AttrData = Partial<Record<AttrKey, number>> | null;
 
 interface PassportData {
   id: string;
@@ -31,15 +29,6 @@ interface PassportData {
   ratings: { rating: number; note: string | null; fixture_date: string | null; opponent: string | null; created_at: string }[];
   attributes: AttrData;
 }
-
-const ATTR_LABELS = [
-  { key: "pace",      label: "Pace" },
-  { key: "shooting",  label: "Shooting" },
-  { key: "passing",   label: "Passing" },
-  { key: "dribbling", label: "Dribbling" },
-  { key: "defending", label: "Defending" },
-  { key: "physical",  label: "Physical" },
-] as const;
 
 export default async function PublicPassportPage({
   params,
@@ -69,12 +58,13 @@ export default async function PublicPassportPage({
     ? ratingValues.reduce((a, b) => a + b, 0) / ratingValues.length
     : 0;
 
-  // Overall = mean of ability attributes when assessed; falls back to match rating average
+  // Overall = mean of core ability attributes when assessed; falls back to match rating average
+  const coreKeys: AttrKey[] = ["pace", "shooting", "passing", "dribbling", "defending", "physical"];
   const attrsOverall = attrs
-    ? Math.round(
-        (attrs.pace + attrs.shooting + attrs.passing +
-         attrs.dribbling + attrs.defending + attrs.physical) / 6
-      )
+    ? (() => {
+        const vals = coreKeys.map((k) => attrs[k]).filter((v): v is number => v != null);
+        return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+      })()
     : null;
   const overall = attrsOverall ?? matchAvg;
 
@@ -136,10 +126,22 @@ export default async function PublicPassportPage({
                 </div>
 
                 {attrs ? (
-                  <div className="space-y-2 pt-1">
-                    {ATTR_LABELS.map(({ key, label }) => (
-                      <StatBar key={key} label={label} value={attrs[key]} />
-                    ))}
+                  <div className="space-y-3 pt-1">
+                    {(["technical", "physical", "mental"] as const).map((cat) => {
+                      const posAttrs = getPositionAttrs(passport.position);
+                      const keys = posAttrs[cat].filter((k) => attrs[k] != null);
+                      if (keys.length === 0) return null;
+                      return (
+                        <div key={cat} className="space-y-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          </p>
+                          {keys.map((key) => (
+                            <StatBar key={key} label={ATTR_META[key].label} value={attrs[key]!} />
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground pt-1">No ability assessment yet.</p>
