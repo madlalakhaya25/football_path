@@ -8,6 +8,14 @@ import {
   Users,
   Dumbbell,
   Megaphone,
+  Wand2,
+  FileCheck,
+  BookOpen,
+  Camera,
+  Building2,
+  Brain,
+  CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -28,30 +36,114 @@ const ROLES = [
   {
     Icon: Target,
     title: "Player",
-    description:
-      "Build your digital passport, track training sessions, and let your stats tell your story.",
+    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    description: "Your career in one place.",
+    bullets: [
+      "Digital passport with QR share code",
+      "Match ratings and performance history",
+      "Training attendance and session notes",
+      "Development milestones across 5 categories",
+    ],
   },
   {
     Icon: Users,
     title: "Coach",
-    description:
-      "Manage your squad, plan training, rate performances, and post announcements — all in one place.",
+    color: "bg-primary/10 text-primary",
+    description: "Everything your squad needs.",
+    bullets: [
+      "AI session plans aligned to FIFA LTPD & SAFA NDP",
+      "Post-match ratings, reports, and analysis",
+      "Player attribute assessments (4-Corner Model)",
+      "Fixtures, training, and announcements",
+    ],
   },
   {
     Icon: Shield,
     title: "Parent",
-    description:
-      "Follow your child's fixtures, training, and ratings live. Never miss an update from the coach.",
+    color: "bg-green-500/10 text-green-600 dark:text-green-400",
+    description: "Stay close to the journey.",
+    bullets: [
+      "Live updates on fixtures and training",
+      "AI-generated progress reports (LTPD framed)",
+      "Document signing — POPIA, consent, medical",
+      "Your child's ratings and milestone progress",
+    ],
+  },
+  {
+    Icon: Building2,
+    title: "Admin",
+    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    description: "Run your academy with clarity.",
+    bullets: [
+      "Academy-wide analytics and compliance dashboards",
+      "SAFA document compliance tracking (6 docs/player)",
+      "Squad, team, and player management",
+      "AI academy health report with SAFA benchmarks",
+    ],
   },
 ];
 
 const FEATURES = [
-  { Icon: ShieldCheck, title: "Digital passports", text: "A verified profile that travels with every player." },
-  { Icon: Star, title: "Coach ratings", text: "Star ratings and notes saved after every match." },
-  { Icon: Dumbbell, title: "Training sessions", text: "Plan sessions with drill lists, types, and notes." },
-  { Icon: Megaphone, title: "Announcements", text: "Coaches post updates; players and parents stay informed instantly." },
-  { Icon: LineChart, title: "Progress tracking", text: "Attribute trends that show real development over time." },
-  { Icon: Trophy, title: "Match centre", text: "Fixtures, results, and squad appearances in one place." },
+  {
+    Icon: ShieldCheck,
+    title: "Digital Player Passport",
+    text: "A verified, shareable profile with a unique QR code. Scouts and coaches see ratings, attributes, and milestones at a glance.",
+  },
+  {
+    Icon: Wand2,
+    title: "AI Session Generator",
+    text: "Generates LTPD-phased drills with 4-Corner coaching cues, FIFA session structure, and SAFA NDP competency alignment.",
+  },
+  {
+    Icon: Brain,
+    title: "AI Match & Player Reports",
+    text: "Post-match reports, individual insights, and parent letters — all grounded in FIFA technical methodology and SAFA standards.",
+  },
+  {
+    Icon: LineChart,
+    title: "Academy Analytics",
+    text: "SAFA-benchmarked dashboards: position distribution, rating trends, document compliance, training attendance, top performers.",
+  },
+  {
+    Icon: Star,
+    title: "Performance Ratings",
+    text: "Coaches rate players out of 5 after every match or training. Notes, history, and trend charts build a long-term record.",
+  },
+  {
+    Icon: Dumbbell,
+    title: "Training Management",
+    text: "Plan sessions with drill lists, session types, attendance tracking, and media uploads tagged to individual players.",
+  },
+  {
+    Icon: FileCheck,
+    title: "SAFA Document Compliance",
+    text: "Track all 6 registration documents per player per season — registration agreement, POPIA consent, medical consent, and more.",
+  },
+  {
+    Icon: BookOpen,
+    title: "Development Milestones",
+    text: "5 development categories — Technical, Tactical, Physical, Mental, Leadership — with season-by-season milestone tracking.",
+  },
+  {
+    Icon: Trophy,
+    title: "Match Centre",
+    text: "Fixtures, results, squad appearances, match attendance, and W/D/L records in one place for every team.",
+  },
+  {
+    Icon: Megaphone,
+    title: "Announcements",
+    text: "Coaches post updates direct to their squad. Players and parents stay informed. Coaches see who has read each post.",
+  },
+  {
+    Icon: Camera,
+    title: "Media Gallery",
+    text: "Upload photos and videos from training or matches, tag players, and build a visual record of every session.",
+  },
+  {
+    Icon: Target,
+    title: "Multi-Role Platform",
+    text: "Admin, Coach, Player, and Parent — each with a dedicated dashboard. One account, one academy, all stakeholders.",
+  },
 ];
 
 const ATTRIBUTES = [
@@ -62,6 +154,15 @@ const ATTRIBUTES = [
   { label: "Defending", value: 64 },
 ];
 
+const FRAMEWORKS = [
+  "FIFA LTPD",
+  "SAFA NDP",
+  "CAF Pathway",
+  "4-Corner Model",
+  "SAFA Registration",
+  "UEFA Best Practice",
+];
+
 export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col">
@@ -70,8 +171,8 @@ export default function Home() {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Logo />
           <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
-            <a className="text-sm text-muted-foreground hover:text-foreground" href="#roles">Roles</a>
-            <a className="text-sm text-muted-foreground hover:text-foreground" href="#features">Features</a>
+            <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" href="#roles">Roles</a>
+            <a className="text-sm text-muted-foreground hover:text-foreground transition-colors" href="#features">Features</a>
           </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -87,50 +188,52 @@ export default function Home() {
 
       <main className="flex-1">
         {/* ── Hero ───────────────────────────────────────────── */}
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-20">
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-2 lg:py-24">
           <div>
             <Badge variant="brand" className="mb-4">
               #WeBuildChampions
             </Badge>
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-              Football development{" "}
-              <span className="text-primary">starts here.</span>
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              Where South African{" "}
+              <span className="text-primary">youth football</span>{" "}
+              meets world-class development.
             </h1>
-            <p className="mt-4 max-w-md text-base text-muted-foreground sm:text-lg">
-              Build the next generation of footballers through structured
-              training, performance ratings, and digital player passports.
+            <p className="mt-5 max-w-lg text-base text-muted-foreground sm:text-lg leading-relaxed">
+              Growfit FA gives every player a verified digital passport, every coach
+              AI-powered session plans, and every academy SAFA-benchmarked analytics —
+              all built on FIFA LTPD and SAFA NDP frameworks.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" asChild>
-                <Link href="/auth/register">Create your passport</Link>
+                <Link href="/auth/register">
+                  Create your passport
+                  <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/auth/login">Sign in</Link>
-              </Button>
-              <Button size="lg" variant="ghost" asChild>
-                <Link href="/register-club">Register your club →</Link>
               </Button>
             </div>
             <dl className="mt-10 grid max-w-md grid-cols-3 gap-6">
               {[
                 ["4", "User roles"],
-                ["6", "Session types"],
+                ["5", "AI reports"],
                 ["360°", "Player view"],
               ].map(([n, label]) => (
                 <div key={label}>
-                  <dt className="text-2xl font-bold tabular-nums">{n}</dt>
-                  <dd className="text-sm text-muted-foreground">{label}</dd>
+                  <dt className="text-3xl font-extrabold tabular-nums text-primary">{n}</dt>
+                  <dd className="mt-0.5 text-sm text-muted-foreground">{label}</dd>
                 </div>
               ))}
             </dl>
           </div>
 
-          {/* Passport preview — showcases signature components */}
-          <Card className="mx-auto w-full max-w-sm overflow-hidden">
-            <div className="h-1 bg-brand" />
-            <CardHeader className="flex-row items-center justify-between">
-              <div>
-                <CardTitle>Daniel Mbatha</CardTitle>
+          {/* Passport preview */}
+          <Card className="mx-auto w-full max-w-sm overflow-hidden shadow-xl">
+            <div className="h-1.5 bg-brand" />
+            <CardHeader className="flex-row items-center justify-between gap-4">
+              <div className="min-w-0">
+                <CardTitle className="text-lg">Daniel Mbatha</CardTitle>
                 <CardDescription>Right Winger · U17 Squad</CardDescription>
               </div>
               <RatingRing value={78} size={84} />
@@ -146,66 +249,179 @@ export default function Home() {
                   <StatBar key={a.label} label={a.label} value={a.value} />
                 ))}
               </div>
+              <div className="flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="size-3.5 text-green-500" aria-hidden="true" />
+                  SAFA Registered
+                </span>
+                <span className="flex items-center gap-1">
+                  <CheckCircle2 className="size-3.5 text-green-500" aria-hidden="true" />
+                  Docs Complete
+                </span>
+                <span className="font-medium text-foreground">Training to Compete</span>
+              </div>
             </CardContent>
           </Card>
         </section>
 
+        {/* ── Framework alignment strip ─────────────────────── */}
+        <div className="border-y border-border bg-muted/40">
+          <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-4 py-4 sm:px-6">
+            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Aligned with</span>
+            {FRAMEWORKS.map((f) => (
+              <span key={f} className="text-sm font-medium text-foreground/70">{f}</span>
+            ))}
+          </div>
+        </div>
+
         {/* ── Roles ──────────────────────────────────────────── */}
-        <section
-          id="roles"
-          className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6"
-        >
-          <h2 className="text-2xl font-bold tracking-tight">
-            One platform, every role
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Choose how you want to grow.
-          </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {ROLES.map(({ Icon, title, description }) => (
-              <Link key={title} href="/auth/login">
-                <Card className="h-full transition-colors hover:border-primary/50">
-                  <CardHeader>
-                    <span className="mb-2 grid size-11 place-items-center rounded-lg bg-brand/15 text-primary">
+        <section id="roles" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold tracking-tight">One platform, every role</h2>
+            <p className="mt-2 text-muted-foreground max-w-xl">
+              Admin, coach, player, and parent — each with a dedicated experience
+              built for how they interact with the beautiful game.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {ROLES.map(({ Icon, title, color, description, bullets }) => (
+              <Link key={title} href="/auth/register">
+                <Card className="h-full transition-all hover:border-primary/50 hover:shadow-md">
+                  <CardHeader className="pb-3">
+                    <span className={`mb-2 grid size-11 place-items-center rounded-lg ${color}`}>
                       <Icon className="size-5" aria-hidden="true" />
                     </span>
-                    <CardTitle>{title}</CardTitle>
+                    <CardTitle className="text-lg">{title}</CardTitle>
                     <CardDescription>{description}</CardDescription>
                   </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-1.5">
+                      {bullets.map((b) => (
+                        <li key={b} className="flex items-start gap-2 text-xs text-muted-foreground">
+                          <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-primary/60" aria-hidden="true" />
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
                 </Card>
               </Link>
             ))}
           </div>
         </section>
 
+        {/* ── AI callout ─────────────────────────────────────── */}
+        <section className="border-y border-border bg-primary/5">
+          <div className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6">
+            <div className="grid gap-10 lg:grid-cols-2 lg:items-center">
+              <div>
+                <Badge variant="brand" className="mb-4">AI-Powered Development</Badge>
+                <h2 className="text-3xl font-bold tracking-tight">
+                  Five AI reports. Every grounded in{" "}
+                  <span className="text-primary">FIFA, SAFA & CAF standards.</span>
+                </h2>
+                <p className="mt-4 text-muted-foreground leading-relaxed">
+                  Our AI isn&apos;t generic. Every insight is shaped by the
+                  Long-Term Player Development (LTPD) framework, the 4-Corner
+                  Model, and SAFA&apos;s National Development Programme — giving
+                  coaches and parents analysis that actually matches where each
+                  player is in their journey.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {[
+                  { icon: Wand2,      label: "AI Session Planner",     desc: "LTPD-phased drills with 4-Corner coaching cues" },
+                  { icon: Brain,      label: "Player Insights",         desc: "SAFA position competencies + pathway readiness" },
+                  { icon: Trophy,     label: "Match Reports",           desc: "FIFA technical methodology + development lens" },
+                  { icon: Shield,     label: "Parent Progress Reports", desc: "Mastery-climate letters grounded in LTPD stage" },
+                  { icon: LineChart,  label: "Academy Health Report",   desc: "SAFA NDP benchmarks for academy directors" },
+                ].map(({ icon: Icon, label, desc }) => (
+                  <div key={label} className="flex items-start gap-3 rounded-xl border border-border bg-background p-4">
+                    <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold">{label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* ── Features ───────────────────────────────────────── */}
-        <section
-          id="features"
-          className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6"
-        >
+        <section id="features" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold tracking-tight">Everything the academy needs</h2>
+            <p className="mt-2 text-muted-foreground max-w-xl">
+              From first registration document to first-team selection —
+              Growfit FA covers every step of the development pathway.
+            </p>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ Icon, title, text }) => (
-              <div key={title} className="rounded-xl border border-border bg-card p-5">
-                <Icon className="size-5 text-primary" aria-hidden="true" />
+              <div key={title} className="group rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/40">
+                <span className="grid size-10 place-items-center rounded-lg bg-brand/10 text-primary">
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
                 <h3 className="mt-3 font-semibold">{title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+                <p className="mt-1 text-sm text-muted-foreground leading-relaxed">{text}</p>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* ── CTA ────────────────────────────────────────────── */}
+        <section className="border-t border-border bg-muted/40">
+          <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 px-4 py-16 text-center sm:px-6">
+            <Badge variant="brand">#WeBuildChampions</Badge>
+            <h2 className="text-3xl font-bold tracking-tight max-w-xl">
+              Ready to give your academy a world-class development platform?
+            </h2>
+            <p className="text-muted-foreground max-w-md">
+              Join academies across South Africa building the next generation
+              of footballers with FIFA LTPD and SAFA NDP aligned tools.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button size="lg" asChild>
+                <Link href="/auth/register">
+                  Get started free
+                  <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/auth/login">Sign in to your academy</Link>
+              </Button>
+            </div>
           </div>
         </section>
       </main>
 
       {/* ── Footer ───────────────────────────────────────────── */}
       <footer className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6">
-          <Logo />
-          <p className="text-sm text-muted-foreground">
-            To develop, empower, and create opportunities for grassroots
-            footballers.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Growfit FA
-          </p>
+        <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+            <div className="space-y-2">
+              <Logo />
+              <p className="text-sm text-muted-foreground max-w-xs">
+                To develop, empower, and create opportunities for grassroots footballers across South Africa and beyond.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3 sm:items-end">
+              <div className="flex flex-wrap gap-2">
+                {["FIFA LTPD", "SAFA NDP", "CAF Pathway", "4-Corner Model"].map((f) => (
+                  <span key={f} className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {f}
+                  </span>
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                © {new Date().getFullYear()} Growfit FA
+              </p>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
