@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { RatingRing } from "@/components/ui/rating-ring";
 import { StatBar } from "@/components/ui/stat-bar";
 import { POSITIONS, FEET } from "@/lib/types";
+import { ATTR_META, type AttrKey } from "@/lib/attributes";
 import { RemovePlayerButton } from "../remove-player-button";
 import { RatingEditRow } from "./rating-edit-row";
 import { StandaloneRatingForm } from "./standalone-rating-form";
@@ -19,14 +20,7 @@ import { MilestoneCard } from "@/components/development/milestone-card";
 import type { MilestoneCategory } from "@/app/actions/development";
 import { ClipsSection } from "./clips-section";
 
-const ATTR_LABELS = [
-  { key: "pace",      label: "Pace" },
-  { key: "shooting",  label: "Shooting" },
-  { key: "passing",   label: "Passing" },
-  { key: "dribbling", label: "Dribbling" },
-  { key: "defending", label: "Defending" },
-  { key: "physical",  label: "Physical" },
-] as const;
+const CORE_ATTR_KEYS: AttrKey[] = ["pace", "shooting", "passing", "dribbling", "defending", "physical"];
 
 export default async function PlayerDetailPage({
   params,
@@ -52,7 +46,7 @@ export default async function PlayerDetailPage({
       .single(),
     supabase
       .from("player_attributes")
-      .select("pace, shooting, passing, dribbling, defending, physical")
+      .select("pace, shooting, passing, dribbling, defending, physical, ball_control, crossing, heading, tackling, finishing, first_touch, stamina, agility, jumping, strength, positioning, decision_making, composure, work_rate, leadership, shot_stopping, reflexes, distribution, handling")
       .eq("player_id", playerId)
       .eq("coach_id", user.id)
       .single(),
@@ -135,7 +129,6 @@ export default async function PlayerDetailPage({
       };
     });
 
-  type AttrKey = "pace" | "shooting" | "passing" | "dribbling" | "defending" | "physical";
   const initialAttrs = myAttrs as Record<AttrKey, number> | null;
 
   const ratingValues = ratings.map((r) => r.rating);
@@ -215,8 +208,8 @@ export default async function PlayerDetailPage({
             {/* Attribute bars snapshot */}
             {initialAttrs && (
               <div className="space-y-1.5 pt-2 border-t border-border">
-                {ATTR_LABELS.map(({ key, label }) => (
-                  <StatBar key={key} label={label} value={initialAttrs[key]} />
+                {CORE_ATTR_KEYS.map((key) => (
+                  <StatBar key={key} label={ATTR_META[key].label} value={initialAttrs[key]} />
                 ))}
               </div>
             )}
@@ -281,7 +274,7 @@ export default async function PlayerDetailPage({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <PlayerAttributesForm playerId={player.id} initial={initialAttrs} />
+          <PlayerAttributesForm playerId={player.id} initial={initialAttrs} position={player.position} />
         </CardContent>
       </Card>
 
