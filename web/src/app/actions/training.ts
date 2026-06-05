@@ -70,6 +70,66 @@ export async function createTrainingSession(formData: FormData) {
   redirect(`/dashboard/coach/training/${data.id}`);
 }
 
+export async function createTrainingSessionWithDrills(params: {
+  team_id: string;
+  title: string;
+  session_date: string;
+  location?: string;
+  session_type: string;
+  notes?: string;
+  drills: { title: string; description?: string; video_url?: string }[];
+}): Promise<{ id?: string; error?: string }> {
+  const { supabase, user } = await requireUser();
+
+  const parsed = sessionSchema.safeParse({
+    team_id: params.team_id,
+    title: params.title,
+    session_date: params.session_date,
+    location: params.location || undefined,
+    session_type: params.session_type,
+    notes: params.notes || undefined,
+  });
+
+  if (!parsed.success) {
+    const msgs = parsed.error.flatten().fieldErrors;
+    return { error: Object.values(msgs).flat()[0] ?? "Invalid input." };
+  }
+
+  const teamIds = await getCoachTeamIds(supabase, user.id);
+  if (!teamIds.includes(parsed.data.team_id)) return { error: "Team not found." };
+
+  const { data, error } = await supabase
+    .from("training_sessions")
+    .insert({
+      team_id: parsed.data.team_id,
+      coach_id: user.id,
+      title: parsed.data.title,
+      session_date: parsed.data.session_date,
+      location: parsed.data.location ?? null,
+      session_type: parsed.data.session_type,
+      notes: parsed.data.notes ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) return { error: error?.message ?? "Could not create session." };
+
+  if (params.drills.length > 0) {
+    const drillRows = params.drills.map((d, i) => ({
+      session_id: data.id,
+      title: d.title,
+      description: d.description || null,
+      video_url: d.video_url || null,
+      sort_order: i,
+    }));
+    const { error: drillError } = await supabase.from("training_drills").insert(drillRows);
+    if (drillError) return { error: drillError.message };
+  }
+
+  revalidatePath("/dashboard/coach/training", "page");
+  return { id: data.id };
+}
+
 export async function deleteTrainingSession(id: string) {
   const { supabase, user } = await requireUser();
 

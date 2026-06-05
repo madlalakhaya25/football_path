@@ -134,7 +134,7 @@ export default async function CoachTrainingPage({
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Past · {past.length}
               </h2>
-              <div className="divide-y divide-border rounded-xl border border-border opacity-70">
+              <div className="divide-y divide-border rounded-xl border border-border">
                 {past.map((s) => <SessionRow key={s.id} s={s} />)}
               </div>
             </section>

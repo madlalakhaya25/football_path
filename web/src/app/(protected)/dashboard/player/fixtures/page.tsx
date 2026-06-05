@@ -100,13 +100,22 @@ export default async function PlayerFixturesPage() {
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {result && (
-            <span className="font-bold tabular-nums text-sm">
-              {f.is_home ? result.team_score : result.opponent_score}
-              {" – "}
-              {f.is_home ? result.opponent_score : result.team_score}
-            </span>
-          )}
+          {result && (() => {
+            const ourScore = f.is_home ? result.team_score : result.opponent_score;
+            const theirScore = f.is_home ? result.opponent_score : result.team_score;
+            const outcome = ourScore > theirScore ? "W" : ourScore < theirScore ? "L" : "D";
+            const outcomeVariant = outcome === "W" ? "success" : outcome === "L" ? "danger" : "neutral";
+            return (
+              <>
+                <Badge variant={outcomeVariant as "success" | "danger" | "neutral"} className="font-bold">
+                  {outcome}
+                </Badge>
+                <span className="font-bold tabular-nums text-sm">
+                  {ourScore} – {theirScore}
+                </span>
+              </>
+            );
+          })()}
           {appearance && (
             <Badge variant={appearance.played ? "success" : "neutral"}>
               {appearance.played ? "Played" : "Absent"}
@@ -139,7 +148,7 @@ export default async function PlayerFixturesPage() {
           {upcoming.length > 0 && (
             <section>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Upcoming
+                Upcoming · {upcoming.length}
               </h2>
               <div className="divide-y divide-border rounded-xl border border-border">
                 {upcoming.map((f) => <FixtureRow key={f.id} f={f} />)}
@@ -149,7 +158,7 @@ export default async function PlayerFixturesPage() {
           {past.length > 0 && (
             <section>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Past
+                Past · {past.length}
               </h2>
               <div className="divide-y divide-border rounded-xl border border-border">
                 {past.map((f) => <FixtureRow key={f.id} f={f} />)}

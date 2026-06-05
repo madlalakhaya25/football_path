@@ -210,17 +210,34 @@ export default async function ChildDetailPage({
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
-        <Link
-          href="/dashboard/parent"
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="size-3.5" aria-hidden="true" />
-          My Children
-        </Link>
-        <ChevronRight className="size-3.5 text-muted-foreground/40" aria-hidden="true" />
-        <span className="font-medium truncate max-w-[180px] sm:max-w-none">{player.full_name}</span>
-      </nav>
+      <div className="space-y-3">
+        <nav className="flex items-center gap-1.5 text-sm" aria-label="Breadcrumb">
+          <Link
+            href="/dashboard/parent"
+            className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="size-3.5" aria-hidden="true" />
+            My Children
+          </Link>
+          <ChevronRight className="size-3.5 text-muted-foreground/40" aria-hidden="true" />
+          <span className="font-medium truncate max-w-[180px] sm:max-w-none">{player.full_name}</span>
+        </nav>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { href: "#ratings", label: "Ratings" },
+            { href: "#fixtures", label: "Fixtures" },
+            { href: "#documents", label: "Documents" },
+          ].map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+            >
+              {label}
+            </a>
+          ))}
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Passport card */}
@@ -265,7 +282,7 @@ export default async function ChildDetailPage({
         {/* Ratings + Fixtures */}
         <div className="space-y-6 lg:col-span-2">
           {/* Rating history */}
-          <section className="space-y-3">
+          <section id="ratings" className="space-y-3">
             <h2 className="text-lg font-semibold">Rating history</h2>
             {ratings.length === 0 ? (
               <Card>
@@ -314,7 +331,7 @@ export default async function ChildDetailPage({
           </section>
 
           {/* Fixtures */}
-          <section className="space-y-3">
+          <section id="fixtures" className="space-y-3">
             <h2 className="text-lg font-semibold">Fixtures</h2>
             {!teamIds.length ? (
               <Card>
@@ -362,7 +379,7 @@ export default async function ChildDetailPage({
 
       <ParentReportPanel playerId={player.id} playerName={player.full_name} />
 
-      <section className="space-y-4 mt-8">
+      <section id="documents" className="space-y-4 mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Forms &amp; Documents</h2>
           <span className="text-sm text-muted-foreground">{currentSeason} season</span>

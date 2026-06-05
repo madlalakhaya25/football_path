@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTransition } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -14,6 +15,7 @@ import {
   Settings,
   Download,
   Building2,
+  Loader2,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -71,11 +73,14 @@ export function DashboardShell({ profile, children }: Props) {
   const supabase = createClient();
 
   const navItems = NAV_BY_ROLE[profile.role as UserRole] ?? [];
+  const [isSigningOut, startSignOut] = useTransition();
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    clearAuth();
-    router.push("/auth/login");
+  function handleSignOut() {
+    startSignOut(async () => {
+      await supabase.auth.signOut();
+      clearAuth();
+      router.push("/auth/login");
+    });
   }
 
   return (
@@ -128,9 +133,9 @@ export function DashboardShell({ profile, children }: Props) {
             <Settings className="size-4" aria-hidden="true" />
             Settings
           </Link>
-          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleSignOut}>
-            <LogOut className="size-4" aria-hidden="true" />
-            Sign out
+          <Button variant="ghost" size="sm" className="w-full justify-start gap-2 text-muted-foreground" onClick={handleSignOut} disabled={isSigningOut}>
+            {isSigningOut ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <LogOut className="size-4" aria-hidden="true" />}
+            {isSigningOut ? "Signing out…" : "Sign out"}
           </Button>
         </div>
       </aside>

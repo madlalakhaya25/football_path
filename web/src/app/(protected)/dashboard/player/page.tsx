@@ -164,9 +164,24 @@ export default async function PlayerDashboardPage() {
     }));
   });
 
+  const needsRegistration = !player.mysafa_number && !player.id_number;
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">My Passport</h1>
+
+      {needsRegistration && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-4 py-3 flex items-start gap-3">
+          <span className="mt-0.5 text-amber-600 dark:text-amber-400 text-lg leading-none">!</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-amber-900 dark:text-amber-200">Complete your profile</p>
+            <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
+              Add your MySAFA number and ID number to keep your passport up to date.{" "}
+              <a href="#registration" className="underline font-medium">Add now ↓</a>
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Profile card */}
@@ -391,7 +406,7 @@ export default async function PlayerDashboardPage() {
         </section>
       )}
 
-      <section className="space-y-3">
+      <section id="registration" className="space-y-3">
         <div>
           <h2 className="text-base font-semibold">My Registration Numbers</h2>
           <p className="text-sm text-muted-foreground">

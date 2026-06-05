@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Clock, PlayCircle, CheckCircle2, XCircle } from "lucide-react";
+import { MapPin, Clock, PlayCircle, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { AddDrillForm } from "./add-drill-form";
@@ -102,6 +103,9 @@ export default async function CoachTrainingSessionPage({
     return Array.isArray(m.players) ? m.players : [m.players];
   });
 
+  const pendingCount = flattenedSquadPlayers.length - attending - unavailable;
+  const allMarked = flattenedSquadPlayers.length > 0 && pendingCount <= 0;
+
   // Normalize media items: flatten nested media_tags -> tagged_players
   type RawMediaTag = { player_id: string; players: { full_name: string } | { full_name: string }[] | null };
   type RawMediaItem = {
@@ -127,9 +131,12 @@ export default async function CoachTrainingSessionPage({
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Back link */}
-      <Link href="/dashboard/coach/training" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Training
-      </Link>
+      <Button asChild variant="ghost" size="sm">
+        <Link href="/dashboard/coach/training">
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Training
+        </Link>
+      </Button>
 
       {/* Session header card */}
       <div className={cn("overflow-hidden rounded-xl border border-border", typeStyle.header)}>
@@ -170,17 +177,29 @@ export default async function CoachTrainingSessionPage({
           </div>
         )}
 
-        {(attending > 0 || unavailable > 0) && (
-          <div className="border-t border-border/60 bg-background/60 px-5 py-3 flex items-center gap-4 text-sm">
+        {(attending > 0 || unavailable > 0 || flattenedSquadPlayers.length > 0) && (
+          <div className="border-t border-border/60 bg-background/60 px-5 py-3 flex flex-wrap items-center gap-4 text-sm">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Attendance</span>
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-              <CheckCircle2 className="size-3.5" aria-hidden="true" />
-              {attending} going
-            </span>
-            <span className="flex items-center gap-1 text-destructive font-medium">
-              <XCircle className="size-3.5" aria-hidden="true" />
-              {unavailable} can&apos;t make it
-            </span>
+            {attending > 0 && (
+              <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                {attending} going
+              </span>
+            )}
+            {unavailable > 0 && (
+              <span className="flex items-center gap-1 text-destructive font-medium">
+                <XCircle className="size-3.5" aria-hidden="true" />
+                {unavailable} can&apos;t make it
+              </span>
+            )}
+            {allMarked ? (
+              <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                All marked
+              </span>
+            ) : pendingCount > 0 ? (
+              <span className="text-muted-foreground">{pendingCount} pending</span>
+            ) : null}
           </div>
         )}
       </div>
@@ -255,6 +274,12 @@ export default async function CoachTrainingSessionPage({
               </div>
             ))}
           </div>
+        )}
+
+        {(drills ?? []).length === 0 && (
+          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+            No drills yet — generate with AI above or add manually below.
+          </p>
         )}
 
         <AddFromLibrary sessionId={id} drills={libraryDrills} />

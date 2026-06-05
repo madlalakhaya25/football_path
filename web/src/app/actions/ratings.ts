@@ -10,7 +10,7 @@ const updateRatingSchema = z.object({
 
 export async function addStandaloneRating(
   playerId: string,
-  payload: { rating: number; note: string }
+  payload: { rating: number; note?: string }
 ) {
   const { supabase, user } = await requireUser();
 

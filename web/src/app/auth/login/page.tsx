@@ -85,6 +85,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
+                autoFocus
                 placeholder="you@example.com"
                 {...register("email")}
                 className={INPUT_CLASS}

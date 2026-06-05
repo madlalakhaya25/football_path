@@ -16,9 +16,10 @@ interface Props {
   squad: Player[];
   isHome: boolean;
   opponent: string;
+  hideCancel?: boolean;
 }
 
-export function LogResultForm({ fixtureId, squad, isHome, opponent }: Props) {
+export function LogResultForm({ fixtureId, squad, isHome, opponent, hideCancel }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -201,9 +202,11 @@ export function LogResultForm({ fixtureId, squad, isHome, opponent }: Props) {
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save result"}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
-        </Button>
+        {!hideCancel && (
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
+        )}
       </div>
     </form>
   );

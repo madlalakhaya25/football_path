@@ -102,8 +102,22 @@ export default async function CoachDashboardPage() {
 
           {/* ── What's Next ───────────────────────────────────────── */}
           {!nextFixture && !nextSession && (
-            <div className="rounded-xl border border-border bg-card px-5 py-4 text-sm text-muted-foreground">
-              No upcoming fixtures or training sessions scheduled yet.
+            <div className="rounded-xl border border-dashed border-border bg-card/50 px-5 py-6 space-y-3">
+              <p className="text-sm text-muted-foreground">No upcoming fixtures or training sessions yet.</p>
+              <div className="flex flex-wrap gap-2">
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/dashboard/coach/fixtures/new?team=${allTeams[0].id}`}>
+                    <Calendar className="size-3.5" aria-hidden="true" />
+                    Schedule fixture
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="outline">
+                  <Link href={`/dashboard/coach/training/new?team=${allTeams[0].id}`}>
+                    <Dumbbell className="size-3.5" aria-hidden="true" />
+                    Plan training
+                  </Link>
+                </Button>
+              </div>
             </div>
           )}
           {(nextFixture || nextSession) && (

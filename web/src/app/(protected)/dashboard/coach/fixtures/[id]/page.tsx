@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CancelFixtureButton } from "./cancel-fixture-button";
+import { LogResultForm } from "./log/log-result-form";
 import { MediaUploadForm } from "@/components/media/media-upload-form";
 import { MediaGallery } from "@/components/media/media-gallery";
 import { MatchAttendanceForm } from "@/components/attendance/match-attendance-form";
@@ -61,7 +62,7 @@ export default async function FixtureDetailPage({
     fixture.team_id
       ? supabase
           .from("team_members")
-          .select("players ( id, full_name )")
+          .select("players ( id, full_name, position )")
           .eq("team_id", fixture.team_id)
           .eq("active", true)
       : Promise.resolve({ data: [] }),
@@ -90,8 +91,9 @@ export default async function FixtureDetailPage({
   }));
 
   // Flatten squad players from nested join
-  type SquadMemberRaw = { players: { id: string; full_name: string } | { id: string; full_name: string }[] | null };
-  const flattenedSquadPlayers: { id: string; full_name: string }[] = (squadMembersRaw ?? []).flatMap((m: SquadMemberRaw) => {
+  type SquadPlayerRow = { id: string; full_name: string; position: string | null };
+  type SquadMemberRaw = { players: SquadPlayerRow | SquadPlayerRow[] | null };
+  const flattenedSquadPlayers: SquadPlayerRow[] = (squadMembersRaw ?? []).flatMap((m: SquadMemberRaw) => {
     if (!m.players) return [];
     return Array.isArray(m.players) ? m.players : [m.players];
   });
@@ -148,15 +150,7 @@ export default async function FixtureDetailPage({
             {fixture.status}
           </Badge>
           {fixture.status === "upcoming" && (
-            <>
-              <Button asChild size="sm">
-                <Link href={`/dashboard/coach/fixtures/${id}/log`}>
-                  <ClipboardList className="size-4" aria-hidden="true" />
-                  Log result
-                </Link>
-              </Button>
-              <CancelFixtureButton fixtureId={id} />
-            </>
+            <CancelFixtureButton fixtureId={id} />
           )}
         </div>
       </div>
@@ -165,6 +159,23 @@ export default async function FixtureDetailPage({
         <p className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           {fixture.notes}
         </p>
+      )}
+
+      {/* Inline log result form */}
+      {fixture.status === "upcoming" && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="size-5 text-primary" aria-hidden="true" />
+            <h2 className="text-lg font-semibold">Log result</h2>
+          </div>
+          <LogResultForm
+            fixtureId={id}
+            squad={flattenedSquadPlayers}
+            isHome={fixture.is_home}
+            opponent={fixture.opponent}
+            hideCancel
+          />
+        </section>
       )}
 
       {/* Result */}
