@@ -25,7 +25,7 @@ export default async function NewTrainingSessionPage({
   const team = allTeams.find((t) => t.id === teamParam) ?? allTeams[0];
 
   return (
-    <div className="space-y-6 max-w-xl">
+    <div className="space-y-6 max-w-2xl">
       <div>
         <Link
           href={`/dashboard/coach/training?team=${team.id}`}

@@ -11,7 +11,7 @@ interface SessionParams {
   focusArea: string;
   durationMinutes: number;
   squadSize: number;
-  sessionId: string;
+  sessionId?: string;
 }
 
 export async function generateSessionPlan(
