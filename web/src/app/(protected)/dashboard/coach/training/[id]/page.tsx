@@ -103,6 +103,9 @@ export default async function CoachTrainingSessionPage({
     return Array.isArray(m.players) ? m.players : [m.players];
   });
 
+  const pendingCount = flattenedSquadPlayers.length - attending - unavailable;
+  const allMarked = flattenedSquadPlayers.length > 0 && pendingCount <= 0;
+
   // Normalize media items: flatten nested media_tags -> tagged_players
   type RawMediaTag = { player_id: string; players: { full_name: string } | { full_name: string }[] | null };
   type RawMediaItem = {
@@ -174,17 +177,29 @@ export default async function CoachTrainingSessionPage({
           </div>
         )}
 
-        {(attending > 0 || unavailable > 0) && (
-          <div className="border-t border-border/60 bg-background/60 px-5 py-3 flex items-center gap-4 text-sm">
+        {(attending > 0 || unavailable > 0 || flattenedSquadPlayers.length > 0) && (
+          <div className="border-t border-border/60 bg-background/60 px-5 py-3 flex flex-wrap items-center gap-4 text-sm">
             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Attendance</span>
-            <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
-              <CheckCircle2 className="size-3.5" aria-hidden="true" />
-              {attending} going
-            </span>
-            <span className="flex items-center gap-1 text-destructive font-medium">
-              <XCircle className="size-3.5" aria-hidden="true" />
-              {unavailable} can&apos;t make it
-            </span>
+            {attending > 0 && (
+              <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                {attending} going
+              </span>
+            )}
+            {unavailable > 0 && (
+              <span className="flex items-center gap-1 text-destructive font-medium">
+                <XCircle className="size-3.5" aria-hidden="true" />
+                {unavailable} can&apos;t make it
+              </span>
+            )}
+            {allMarked ? (
+              <span className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
+                <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                All marked
+              </span>
+            ) : pendingCount > 0 ? (
+              <span className="text-muted-foreground">{pendingCount} pending</span>
+            ) : null}
           </div>
         )}
       </div>

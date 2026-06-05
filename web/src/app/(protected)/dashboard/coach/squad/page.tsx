@@ -63,7 +63,7 @@ export default async function SquadPage({
     const age = p.date_of_birth
       ? Math.floor((Date.now() - new Date(p.date_of_birth).getTime()) / 31_557_600_000)
       : null;
-    return { ...p, avg, age, joinedAt: m.joined_at };
+    return { ...p, avg, ratingsCount: ratings.length, age, joinedAt: m.joined_at };
   }).filter(Boolean);
 
   const byPosition: Record<string, typeof squad> = {};
@@ -184,7 +184,7 @@ export default async function SquadPage({
                           </div>
                           {player.avg && (
                             <p className="mt-1 text-xs text-muted-foreground">
-                              ★ {player.avg} avg
+                              ★ {player.avg} avg · {player.ratingsCount}
                             </p>
                           )}
                         </Link>

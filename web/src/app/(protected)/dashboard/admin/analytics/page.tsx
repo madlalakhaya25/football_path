@@ -232,7 +232,7 @@ export default async function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {attendanceData.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No attendance data yet.</p>
+              <p className="text-sm text-muted-foreground">No attendance data yet — coaches mark attendance in training sessions.</p>
             ) : (
               <div className="space-y-3">
                 {attendanceData.map(({ team, rate, attending, total }) => (
@@ -259,7 +259,7 @@ export default async function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             {topPlayers.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No ratings logged yet.</p>
+              <p className="text-sm text-muted-foreground">No ratings logged yet — they appear once coaches log match results.</p>
             ) : (
               <ol className="divide-y divide-border">
                 {topPlayers.map(({ name, avg }, i) => (
