@@ -14,6 +14,7 @@ import { MediaGallery } from "@/components/media/media-gallery";
 import { DocumentHub } from "@/components/records/document-hub";
 import { PlayerIdentityForm } from "@/components/records/player-identity-form";
 import type { MilestoneCategory } from "@/app/actions/development";
+import { DevelopmentPlanPanel } from "@/components/development/development-plan-panel";
 
 const ATTR_KEYS = ["pace", "shooting", "passing", "dribbling", "defending", "physical"] as const;
 type AttrKey = (typeof ATTR_KEYS)[number];
@@ -326,6 +327,10 @@ export default async function PlayerDashboardPage() {
           </section>
         );
       })()}
+
+      <section className="space-y-3">
+        <DevelopmentPlanPanel playerId={player.id} />
+      </section>
 
       {chartData.length >= 2 ? (
         <section className="rounded-xl border border-border bg-card p-4 space-y-2">
