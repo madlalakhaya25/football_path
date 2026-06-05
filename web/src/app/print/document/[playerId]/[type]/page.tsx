@@ -72,14 +72,20 @@ export default async function DocumentPrintPage({
         .sig-meta { font-size: 11px; color: #555; }
         .footer { border-top: 1px solid #ddd; margin-top: 40px; padding-top: 14px; font-size: 10px; color: #888; display: flex; justify-content: space-between; }
         .print-btn { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; background: #1d4ed8; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+        .header-logo { width: 48px; height: 48px; border-radius: 6px; object-fit: contain; }
+        .header-brand { display: flex; align-items: center; gap: 14px; }
       `}</style>
 
       <div className="page">
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-          <div>
-            <h1>Growfit Football Academy</h1>
-            <h2>{def.label}</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div className="header-brand">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/growfit.png" alt="Growfit FA" className="header-logo" />
+            <div>
+              <h1>Growfit Football Academy</h1>
+              <h2>{def.label}</h2>
+            </div>
           </div>
           <div style={{ textAlign: "right", fontSize: 11, color: "#777" }}>
             <div style={{ fontWeight: 700, fontSize: 13 }}>{def.form}</div>

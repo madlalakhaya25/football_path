@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { htmlTable, htmlReport } from "../_html";
 
 function csvEscape(val: unknown): string {
   const s = val == null ? "" : String(val);
@@ -9,54 +10,10 @@ function csvRow(cells: unknown[]): string {
   return cells.map(csvEscape).join(",");
 }
 
-function htmlTable(headers: string[], rows: unknown[][]): string {
-  const th = headers.map((h) => `<th>${h}</th>`).join("");
-  const trs = rows.map((r) =>
-    `<tr>${r.map((c) => `<td>${c == null ? "" : String(c)}</td>`).join("")}</tr>`
-  ).join("");
-  return `<table><thead><tr>${th}</tr></thead><tbody>${trs}</tbody></table>`;
-}
-
-function htmlReport(title: string, subtitle: string, table: string, landscape = false): string {
-  const date = new Date().toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" });
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>${title}</title>
-<style>
-  @page { size: A4 ${landscape ? "landscape" : ""}; margin: 15mm 12mm; }
-  @media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; } }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #111; background: #fff; }
-  .page { max-width: 1100px; margin: 0 auto; padding: 20px; }
-  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 16px; }
-  .header h1 { font-size: 15px; font-weight: 700; }
-  .header p { font-size: 10px; color: #666; margin-top: 2px; }
-  .meta { font-size: 9px; text-align: right; color: #666; }
-  table { width: 100%; border-collapse: collapse; font-size: 8.5px; }
-  th { background: #f3f4f6; text-align: left; padding: 5px 6px; font-weight: 700; border: 1px solid #d1d5db; white-space: nowrap; }
-  td { padding: 4px 6px; border: 1px solid #e5e7eb; vertical-align: top; }
-  tr:nth-child(even) td { background: #f9fafb; }
-  .footer { margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 10px; font-size: 8px; color: #9ca3af; display: flex; justify-content: space-between; }
-  .print-btn { position: fixed; bottom: 20px; right: 20px; padding: 10px 18px; background: #1d4ed8; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
-</style>
-</head><body>
-<div class="page">
-  <div class="header">
-    <div><h1>Growfit Football Academy</h1><p>${title} — ${subtitle}</p></div>
-    <div class="meta">Generated: ${date}</div>
-  </div>
-  ${table}
-  <div class="footer"><span>Growfit FA · growfitfa.com · POPIA compliant — handle with care</span><span>${date}</span></div>
-</div>
-<button class="print-btn no-print" onclick="window.print()">Print / Save PDF</button>
-<script>setTimeout(function(){ window.print(); }, 800);</script>
-</body></html>`;
-}
-
 export async function GET(request: Request) {
   const format = new URL(request.url).searchParams.get("format");
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return new NextResponse("Unauthorized", { status: 401 });
 
   const { data: profile } = await supabase
@@ -118,7 +75,12 @@ export async function GET(request: Request) {
   const date = new Date().toISOString().slice(0, 10);
 
   if (format === "pdf") {
-    const html = htmlReport("Player Records", `${rows.length} active players`, htmlTable(headers, rows), true);
+    const html = htmlReport(
+      "Player Records",
+      `${rows.length} active players`,
+      htmlTable(headers, rows),
+      { landscape: true, footerNote: "POPIA compliant — handle with care" }
+    );
     return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
   }
 
