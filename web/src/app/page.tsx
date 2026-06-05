@@ -37,9 +37,9 @@ const ROLES = [
     Icon: Target,
     title: "Player",
     color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    description: "Your career in one place.",
+    description: "Your career, all in one place.",
     bullets: [
-      "Digital passport with QR share code",
+      "Digital passport with a shareable QR code",
       "Match ratings and performance history",
       "Training attendance and session notes",
       "Development milestones across 5 categories",
@@ -49,23 +49,23 @@ const ROLES = [
     Icon: Users,
     title: "Coach",
     color: "bg-primary/10 text-primary",
-    description: "Everything your squad needs.",
+    description: "Tools that make coaching easier.",
     bullets: [
-      "AI session plans aligned to FIFA LTPD & SAFA NDP",
+      "AI session plans aligned to FIFA LTPD and SAFA NDP",
       "Post-match ratings, reports, and analysis",
       "Player attribute assessments (4-Corner Model)",
-      "Fixtures, training, and announcements",
+      "Fixtures, training, and team announcements",
     ],
   },
   {
     Icon: Shield,
     title: "Parent",
     color: "bg-green-500/10 text-green-600 dark:text-green-400",
-    description: "Stay close to the journey.",
+    description: "Always know what's happening.",
     bullets: [
       "Live updates on fixtures and training",
-      "AI-generated progress reports (LTPD framed)",
-      "Document signing — POPIA, consent, medical",
+      "AI progress reports framed around the LTPD stage",
+      "Sign documents digitally: POPIA, consent, medical",
       "Your child's ratings and milestone progress",
     ],
   },
@@ -73,12 +73,12 @@ const ROLES = [
     Icon: Building2,
     title: "Admin",
     color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-    description: "Run your academy with clarity.",
+    description: "Run your academy, your way.",
     bullets: [
       "Academy-wide analytics and compliance dashboards",
-      "SAFA document compliance tracking (6 docs/player)",
+      "SAFA document compliance tracking (6 docs per player)",
       "Squad, team, and player management",
-      "AI academy health report with SAFA benchmarks",
+      "AI academy health report benchmarked to SAFA NDP",
     ],
   },
 ];
@@ -87,27 +87,27 @@ const FEATURES = [
   {
     Icon: ShieldCheck,
     title: "Digital Player Passport",
-    text: "A verified, shareable profile with a unique QR code. Scouts and coaches see ratings, attributes, and milestones at a glance.",
+    text: "A verified, shareable profile with a unique QR code. Scouts and coaches can see ratings, attributes, and milestones at a glance.",
   },
   {
     Icon: Wand2,
     title: "AI Session Generator",
-    text: "Generates LTPD-phased drills with 4-Corner coaching cues, FIFA session structure, and SAFA NDP competency alignment.",
+    text: "Builds LTPD-phased drills with 4-Corner coaching cues, a FIFA session structure, and SAFA NDP competency alignment.",
   },
   {
     Icon: Brain,
-    title: "AI Match & Player Reports",
-    text: "Post-match reports, individual insights, and parent letters — all grounded in FIFA technical methodology and SAFA standards.",
+    title: "AI Match and Player Reports",
+    text: "Post-match reports, individual insights, and parent letters, each grounded in FIFA technical methodology and SAFA standards.",
   },
   {
     Icon: LineChart,
     title: "Academy Analytics",
-    text: "SAFA-benchmarked dashboards: position distribution, rating trends, document compliance, training attendance, top performers.",
+    text: "SAFA-benchmarked dashboards showing position spread, rating trends, document compliance, training attendance, and top performers.",
   },
   {
     Icon: Star,
     title: "Performance Ratings",
-    text: "Coaches rate players out of 5 after every match or training. Notes, history, and trend charts build a long-term record.",
+    text: "Coaches rate players out of 5 after every match or session. Notes, history, and trend charts build a long-term record.",
   },
   {
     Icon: Dumbbell,
@@ -117,22 +117,22 @@ const FEATURES = [
   {
     Icon: FileCheck,
     title: "SAFA Document Compliance",
-    text: "Track all 6 registration documents per player per season — registration agreement, POPIA consent, medical consent, and more.",
+    text: "Track all 6 registration documents per player, per season: registration agreement, POPIA consent, medical consent, and more.",
   },
   {
     Icon: BookOpen,
     title: "Development Milestones",
-    text: "5 development categories — Technical, Tactical, Physical, Mental, Leadership — with season-by-season milestone tracking.",
+    text: "Five development categories (Technical, Tactical, Physical, Mental, Leadership) with milestone tracking each season.",
   },
   {
     Icon: Trophy,
     title: "Match Centre",
-    text: "Fixtures, results, squad appearances, match attendance, and W/D/L records in one place for every team.",
+    text: "Fixtures, results, squad appearances, match attendance, and win/draw/loss records in one place for every team.",
   },
   {
     Icon: Megaphone,
     title: "Announcements",
-    text: "Coaches post updates direct to their squad. Players and parents stay informed. Coaches see who has read each post.",
+    text: "Coaches post updates straight to the squad. Players and parents stay informed, and coaches can see who has read each message.",
   },
   {
     Icon: Camera,
@@ -142,7 +142,7 @@ const FEATURES = [
   {
     Icon: Target,
     title: "Multi-Role Platform",
-    text: "Admin, Coach, Player, and Parent — each with a dedicated dashboard. One account, one academy, all stakeholders.",
+    text: "Admin, Coach, Player, and Parent each get their own dedicated dashboard. One account, one academy, everyone connected.",
   },
 ];
 
@@ -194,14 +194,13 @@ export default function Home() {
               #WeBuildChampions
             </Badge>
             <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Where South African{" "}
-              <span className="text-primary">youth football</span>{" "}
-              meets world-class development.
+              Football development, built for{" "}
+              <span className="text-primary">South African academies.</span>
             </h1>
             <p className="mt-5 max-w-lg text-base text-muted-foreground sm:text-lg leading-relaxed">
-              Growfit FA gives every player a verified digital passport, every coach
-              AI-powered session plans, and every academy SAFA-benchmarked analytics —
-              all built on FIFA LTPD and SAFA NDP frameworks.
+              Players get a digital passport. Coaches get AI session plans.
+              Academies get analytics that lines up with what SAFA and FIFA
+              actually expect.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button size="lg" asChild>
@@ -279,8 +278,7 @@ export default function Home() {
           <div className="mb-10">
             <h2 className="text-3xl font-bold tracking-tight">One platform, every role</h2>
             <p className="mt-2 text-muted-foreground max-w-xl">
-              Admin, coach, player, and parent — each with a dedicated experience
-              built for how they interact with the beautiful game.
+              Every person in the academy sees what matters to them, without the clutter.
             </p>
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -317,23 +315,22 @@ export default function Home() {
               <div>
                 <Badge variant="brand" className="mb-4">AI-Powered Development</Badge>
                 <h2 className="text-3xl font-bold tracking-tight">
-                  Five AI reports. Every grounded in{" "}
-                  <span className="text-primary">FIFA, SAFA & CAF standards.</span>
+                  Five AI reports, each shaped by{" "}
+                  <span className="text-primary">FIFA, SAFA and CAF standards.</span>
                 </h2>
                 <p className="mt-4 text-muted-foreground leading-relaxed">
-                  Our AI isn&apos;t generic. Every insight is shaped by the
-                  Long-Term Player Development (LTPD) framework, the 4-Corner
-                  Model, and SAFA&apos;s National Development Programme — giving
-                  coaches and parents analysis that actually matches where each
-                  player is in their journey.
+                  Each report is built around the FIFA Long-Term Player Development
+                  framework, the 4-Corner Model, and SAFA&apos;s National Development
+                  Programme. So coaches and parents get feedback that&apos;s grounded
+                  in how youth development actually works, not just numbers on a screen.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {[
                   { icon: Wand2,      label: "AI Session Planner",     desc: "LTPD-phased drills with 4-Corner coaching cues" },
-                  { icon: Brain,      label: "Player Insights",         desc: "SAFA position competencies + pathway readiness" },
-                  { icon: Trophy,     label: "Match Reports",           desc: "FIFA technical methodology + development lens" },
-                  { icon: Shield,     label: "Parent Progress Reports", desc: "Mastery-climate letters grounded in LTPD stage" },
+                  { icon: Brain,      label: "Player Insights",         desc: "Position competencies and pathway readiness" },
+                  { icon: Trophy,     label: "Match Reports",           desc: "FIFA technical methodology with a development lens" },
+                  { icon: Shield,     label: "Parent Progress Reports", desc: "Warm, readable letters grounded in the player's LTPD stage" },
                   { icon: LineChart,  label: "Academy Health Report",   desc: "SAFA NDP benchmarks for academy directors" },
                 ].map(({ icon: Icon, label, desc }) => (
                   <div key={label} className="flex items-start gap-3 rounded-xl border border-border bg-background p-4">
@@ -356,8 +353,8 @@ export default function Home() {
           <div className="mb-10">
             <h2 className="text-3xl font-bold tracking-tight">Everything the academy needs</h2>
             <p className="mt-2 text-muted-foreground max-w-xl">
-              From first registration document to first-team selection —
-              Growfit FA covers every step of the development pathway.
+              From the first registration document to match day, Growfit FA handles
+              the admin so coaches can focus on the football.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -378,11 +375,11 @@ export default function Home() {
           <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 px-4 py-16 text-center sm:px-6">
             <Badge variant="brand">#WeBuildChampions</Badge>
             <h2 className="text-3xl font-bold tracking-tight max-w-xl">
-              Ready to give your academy a world-class development platform?
+              Get your academy up and running today.
             </h2>
             <p className="text-muted-foreground max-w-md">
-              Join academies across South Africa building the next generation
-              of footballers with FIFA LTPD and SAFA NDP aligned tools.
+              Free to try and takes less than 10 minutes to set up.
+              Your players, coaches, and parents will all have what they need from day one.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button size="lg" asChild>
@@ -406,7 +403,7 @@ export default function Home() {
             <div className="space-y-2">
               <Logo />
               <p className="text-sm text-muted-foreground max-w-xs">
-                To develop, empower, and create opportunities for grassroots footballers across South Africa and beyond.
+                Good football development shouldn&apos;t be complicated. We&apos;re here to make it simple.
               </p>
             </div>
             <div className="flex flex-col items-start gap-3 sm:items-end">

@@ -23,12 +23,12 @@ const ROLES: {
   {
     value: "player",
     label: "Player",
-    tagline: "Build your career.",
-    description: "Your development story, tracked from first session to final whistle.",
+    tagline: "Track your game.",
+    description: "See your ratings, your milestones, and how you're growing as a player.",
     bullets: [
-      "Digital passport with shareable QR code",
+      "Digital passport with a shareable QR code",
       "Match ratings and performance history",
-      "Development milestones — Technical, Tactical, Physical, Mental, Leadership",
+      "Development milestones across 5 categories",
       "Training attendance and session records",
     ],
     color: "border-blue-500/50 bg-blue-500/5 ring-blue-500",
@@ -37,10 +37,10 @@ const ROLES: {
   {
     value: "coach",
     label: "Coach",
-    tagline: "Develop champions.",
-    description: "AI-powered tools and SAFA-aligned plans for coaches who take development seriously.",
+    tagline: "Coach smarter.",
+    description: "Plan sessions, rate players, log results and let the AI do the heavy lifting.",
     bullets: [
-      "AI session planner — FIFA LTPD phased, 4-Corner Model drills",
+      "AI session planner (FIFA LTPD phases, 4-Corner Model drills)",
       "Player ratings, attribute assessments, and AI insights",
       "Fixtures, training, attendance, and AI post-match reports",
       "Squad management, announcements, and media uploads",
@@ -51,12 +51,12 @@ const ROLES: {
   {
     value: "parent",
     label: "Parent",
-    tagline: "Follow every step.",
-    description: "Stay close to your child's development — live updates, AI progress letters, and documents all in one place.",
+    tagline: "Stay in the loop.",
+    description: "Updates on training, fixtures, and how your child is developing, all in one place.",
     bullets: [
       "Live fixture and training updates",
-      "AI progress reports aligned to SAFA LTPD standards",
-      "POPIA, consent, and registration document signing",
+      "AI progress reports aligned to your child's LTPD stage",
+      "Sign documents digitally: POPIA, consent, medical",
       "Match ratings and milestone tracking",
     ],
     color: "border-green-500/50 bg-green-500/5 ring-green-500",
@@ -66,7 +66,7 @@ const ROLES: {
     value: "admin",
     label: "Admin",
     tagline: "Run your academy.",
-    description: "Full oversight of your academy — compliance, analytics, teams, and players — benchmarked against SAFA NDP standards.",
+    description: "Manage teams, players, and documents, with compliance dashboards benchmarked to SAFA NDP standards.",
     bullets: [
       "SAFA document compliance dashboard (6 docs per player)",
       "Academy health AI report with FIFA/SAFA benchmarks",
@@ -164,9 +164,9 @@ export default function RolePage() {
         <div className="w-full max-w-2xl space-y-8">
           {/* Heading */}
           <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Who are you in the game?</h1>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">What&apos;s your role?</h1>
             <p className="text-muted-foreground text-sm sm:text-base">
-              Choose your role to get a personalised experience — each role has its own dashboard, tools, and AI insights.
+              Pick the role that fits you. Each one has its own dashboard and tools built around what you actually need.
             </p>
           </div>
 
@@ -230,7 +230,7 @@ export default function RolePage() {
                 {selectedRole ? `Join ${selectedRole.label === "Admin" ? "your academy" : "your club"}` : "Join your club"}
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Enter the 6-character code from your club admin to link your account to the right academy.
+                Your club admin will give you a 6-character code. Enter it here to connect your account to your academy.
               </p>
             </div>
             <div className="space-y-1.5">

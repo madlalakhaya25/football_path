@@ -44,7 +44,7 @@ export default async function PlayerDashboardPage() {
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">My Passport</h1>
         <p className="text-muted-foreground text-sm">
-          Your coach has added you to the squad — enter the share token they gave you to link your profile.
+          Your coach has added you to the squad. Enter the share token they gave you to link your profile.
         </p>
         <ClaimProfileForm />
       </div>
@@ -176,7 +176,7 @@ export default async function PlayerDashboardPage() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-amber-900 dark:text-amber-200">Complete your profile</p>
             <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-              Add your MySAFA number and ID number to keep your passport up to date.{" "}
+              Add your MySAFA number and ID number to keep your profile up to date.{" "}
               <a href="#registration" className="underline font-medium">Add now ↓</a>
             </p>
           </div>
@@ -400,7 +400,7 @@ export default async function PlayerDashboardPage() {
         <section className="rounded-xl border border-border bg-card px-4 py-3">
           <p className="text-sm font-semibold">Rating trend</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Rating trend appears after 2 or more rated matches. You have 1 so far — keep playing!
+            Rating trend appears after 2 or more rated matches. You have 1 so far, keep going!
           </p>
         </section>
       ) : null}
@@ -454,7 +454,7 @@ export default async function PlayerDashboardPage() {
         <div>
           <h2 className="text-base font-semibold">My Registration Numbers</h2>
           <p className="text-sm text-muted-foreground">
-            Keep these up to date — your parent can use them to link their account to your profile.
+            Keep these up to date so your parent can link their account to your profile.
           </p>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
