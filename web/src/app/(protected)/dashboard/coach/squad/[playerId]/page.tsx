@@ -16,6 +16,7 @@ import { StandaloneRatingForm } from "./standalone-rating-form";
 import { PlayerAttributesForm } from "./player-attributes-form";
 import { RatingChart } from "@/components/rating-chart";
 import { AiInsightsPanel } from "@/components/development/ai-insights-panel";
+import { DevelopmentPlanPanel } from "@/components/development/development-plan-panel";
 import { MilestoneCard } from "@/components/development/milestone-card";
 import type { MilestoneCategory } from "@/app/actions/development";
 import { ClipsSection } from "./clips-section";
@@ -363,6 +364,10 @@ export default async function PlayerDetailPage({
 
       <section className="space-y-3 max-w-2xl">
         <AiInsightsPanel playerId={player.id} />
+      </section>
+
+      <section className="space-y-3 max-w-2xl">
+        <DevelopmentPlanPanel playerId={player.id} />
       </section>
 
       {medical && (
