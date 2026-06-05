@@ -79,6 +79,15 @@ export default async function PublicPassportPage({
     : null;
   const initials = passport.full_name.split(" ").slice(0, 2).map((w: string) => w[0]).join("").toUpperCase();
 
+  const ltpdPhase = (() => {
+    if (!age) return null;
+    if (age <= 9)  return "FUNdamentals";
+    if (age <= 12) return "Learning to Train";
+    if (age <= 15) return "Training to Train";
+    if (age <= 18) return "Training to Compete";
+    return "Training to Win";
+  })();
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
@@ -89,7 +98,27 @@ export default async function PublicPassportPage({
       </header>
 
       <main className="flex-1 px-4 py-10 sm:px-6">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl space-y-6">
+          {/* Academy + pathway badge strip */}
+          {(passport.academy_name || ltpdPhase) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {passport.academy_name && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium">
+                  <span className="size-1.5 rounded-full bg-primary inline-block" />
+                  {passport.academy_name}
+                </span>
+              )}
+              {ltpdPhase && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700/40">
+                  FIFA LTPD · {ltpdPhase}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-green-300/60 bg-green-50 px-3 py-1 text-xs font-medium text-green-800 dark:bg-green-900/20 dark:text-green-300 dark:border-green-700/40">
+                SAFA Registered Academy
+              </span>
+            </div>
+          )}
+
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Passport card */}
             <Card className="overflow-hidden lg:col-span-1">
@@ -219,8 +248,18 @@ export default async function PublicPassportPage({
         </div>
       </main>
 
-      <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
-        Powered by <span className="font-semibold text-foreground">Growfit FA</span>
+      <footer className="border-t border-border py-8 text-center space-y-2">
+        <p className="text-sm font-semibold text-foreground">Growfit FA</p>
+        <p className="text-xs text-muted-foreground">
+          Youth development platform aligned with FIFA LTPD, SAFA National Development Programme, and CAF development frameworks
+        </p>
+        <div className="flex flex-wrap justify-center gap-3 pt-1">
+          {["FIFA LTPD", "SAFA NDP", "CAF Pathway", "4-Corner Model"].map((label) => (
+            <span key={label} className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {label}
+            </span>
+          ))}
+        </div>
       </footer>
     </div>
   );

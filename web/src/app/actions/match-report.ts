@@ -63,9 +63,9 @@ export async function generateMatchReport(
         : `${result.opponent_score} – ${result.team_score} (Away)`
       : "Result not recorded";
 
-    const prompt = `You are an elite youth football technical director. Write a post-match team report for the coaching staff.
+    const prompt = `Write a post-match technical report for the coaching staff of a SAFA-registered youth football academy.
 
-Match details:
+MATCH DATA:
 - Opponent: ${fixture.opponent}
 - Date: ${fixture.fixture_date}
 - Venue: ${fixture.venue ?? "Not specified"}
@@ -76,24 +76,28 @@ ${result?.match_notes ? `- Match notes: ${result.match_notes}` : ""}
 - Attendance: ${presentCount} present, ${absentCount} absent
 
 CRITICAL RULES:
-- Strictly 150-200 words total.
-- Use third person throughout.
+- Strictly 160-220 words total.
+- Use third person throughout ("the team", player names).
 - Plain text only — no asterisks, no Markdown, no bold formatting.
 - Use dashes "-" for list items.
-- Use these exact section headers:
+- Apply FIFA/SAFA technical analysis standards: assess both technical execution and tactical decision-making.
+- Frame feedback through a youth development lens — praise effort and learning, not just results.
+- Identify specific 4-Corner improvements (Technical, Tactical, Physical, Social/Psychological).
 
+Use these exact section headers:
 1. MATCH SUMMARY:
-2. STANDOUT PERFORMERS:
-3. AREAS TO IMPROVE:
-4. TRAINING FOCUS THIS WEEK:`;
+2. STANDOUT PERFORMERS: (reference specific ratings or noted contributions)
+3. COLLECTIVE DEVELOPMENT AREAS: (technical and tactical patterns the team should work on)
+4. TRAINING FOCUS THIS WEEK: (2-3 specific drill or session themes aligned to the match observations)
+5. DEVELOPMENT ALIGNMENT: (one sentence on how today's performance reflects age-appropriate SAFA/FIFA development targets for this squad)`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-lite",
       contents: prompt,
       config: {
-        maxOutputTokens: 600,
+        maxOutputTokens: 700,
         systemInstruction:
-          "You are an elite youth academy technical director writing concise, data-driven post-match reports for coaching staff. Plain text only.",
+          "You are a SAFA/CAF-licensed technical analyst writing post-match reports for youth academy coaches. Your analysis applies FIFA technical study group methodology, age-appropriate development principles, the 4-Corner Player Development Model, and SAFA's tactical framework for youth football. You assess both individual and collective performance through a long-term development lens, not just match outcomes. Plain text only — no asterisks, no Markdown.",
       },
     });
 
