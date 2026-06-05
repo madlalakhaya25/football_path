@@ -9,7 +9,7 @@ import { StatBar } from "@/components/ui/stat-bar";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { POSITIONS, FEET } from "@/lib/types";
-import { getPositionAttrs, ATTR_META, type AttrKey } from "@/lib/attributes";
+import { ATTR_META, type AttrKey } from "@/lib/attributes";
 import QRCode from "qrcode";
 
 export const revalidate = 60;
@@ -157,8 +157,9 @@ export default async function PublicPassportPage({
                 {attrs ? (
                   <div className="space-y-3 pt-1">
                     {(["technical", "physical", "mental"] as const).map((cat) => {
-                      const posAttrs = getPositionAttrs(passport.position);
-                      const keys = posAttrs[cat].filter((k) => attrs[k] != null);
+                      const keys = (Object.keys(ATTR_META) as AttrKey[]).filter(
+                        (k) => ATTR_META[k].category === cat && attrs[k] != null
+                      );
                       if (keys.length === 0) return null;
                       return (
                         <div key={cat} className="space-y-1.5">

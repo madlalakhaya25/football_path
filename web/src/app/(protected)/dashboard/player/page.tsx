@@ -283,14 +283,58 @@ export default async function PlayerDashboardPage() {
 
         const totalCount = templates.length;
         const doneCount = templates.filter((t) => completionSet.has(t.id)).length;
+        const overallPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+
+        const CATEGORY_BAR_COLORS: Record<MilestoneCategory, string> = {
+          technical: "bg-blue-500",
+          tactical: "bg-violet-500",
+          physical: "bg-orange-500",
+          mental: "bg-teal-500",
+          leadership: "bg-amber-500",
+        };
 
         return (
           <section className="space-y-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-base font-semibold">My Development</h2>
-              <span className="text-sm text-muted-foreground">
-                {doneCount} of {totalCount} milestone{totalCount !== 1 ? "s" : ""} complete
+              <span className="text-sm text-muted-foreground font-medium">
+                {doneCount}/{totalCount} &middot; {overallPct}%
               </span>
+            </div>
+
+            {/* Overall progress bar */}
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                <span>Overall progress</span>
+                <span>{overallPct}% complete</span>
+              </div>
+              <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${overallPct}%` }}
+                />
+              </div>
+              <div className="grid grid-cols-5 gap-1.5 pt-1">
+                {CATEGORIES.map((cat) => {
+                  const catItems = templates.filter((t) => t.category === cat);
+                  if (catItems.length === 0) return null;
+                  const catDone = catItems.filter((t) => completionSet.has(t.id)).length;
+                  const catPct = Math.round((catDone / catItems.length) * 100);
+                  return (
+                    <div key={cat} className="space-y-1">
+                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${CATEGORY_BAR_COLORS[cat]}`}
+                          style={{ width: `${catPct}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-center text-muted-foreground uppercase tracking-wide truncate">
+                        {CATEGORY_LABELS[cat]}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {CATEGORIES.map((cat) => {
