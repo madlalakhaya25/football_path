@@ -12,7 +12,6 @@ import { POSITIONS, FEET } from "@/lib/types";
 import { ATTR_META, type AttrKey } from "@/lib/attributes";
 import { RemovePlayerButton } from "../remove-player-button";
 import { RatingEditRow } from "./rating-edit-row";
-import { StandaloneRatingForm } from "./standalone-rating-form";
 import { PlayerAttributesForm } from "./player-attributes-form";
 import { RatingChart } from "@/components/rating-chart";
 import { AiInsightsPanel } from "@/components/development/ai-insights-panel";
@@ -233,8 +232,6 @@ export default async function PlayerDetailPage({
               <RatingChart data={chartData} />
             </section>
           )}
-
-          <StandaloneRatingForm playerId={player.id} />
 
           {ratings.length === 0 ? (
             <Card>

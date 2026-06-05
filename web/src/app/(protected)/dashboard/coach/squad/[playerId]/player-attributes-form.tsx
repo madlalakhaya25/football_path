@@ -1,7 +1,8 @@
 "use client";
 import { useState, useTransition } from "react";
-import { Check } from "lucide-react";
+import { Check, Star } from "lucide-react";
 import { upsertPlayerAttributes } from "@/app/actions/attributes";
+import { addStandaloneRating } from "@/app/actions/ratings";
 import { getPositionAttrs, ATTR_META, ALL_ATTR_KEYS, type AttrKey } from "@/lib/attributes";
 
 interface Props {
@@ -21,6 +22,8 @@ function buildDefaults(initial: Partial<Record<AttrKey, number>> | null): Record
 export function PlayerAttributesForm({ playerId, initial, position }: Props) {
   const [values, setValues] = useState<Record<AttrKey, number>>(() => buildDefaults(initial));
   const [notes, setNotes] = useState("");
+  const [rating, setRating] = useState(0);
+  const [ratingHovered, setRatingHovered] = useState(0);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -41,11 +44,16 @@ export function PlayerAttributesForm({ playerId, initial, position }: Props) {
     setError("");
     setSaved(false);
     startTransition(async () => {
-      const result = await upsertPlayerAttributes(playerId, { ...values, notes: notes || undefined });
-      if (result?.error) {
-        setError(result.error);
+      const [attrsResult, ratingResult] = await Promise.all([
+        upsertPlayerAttributes(playerId, { ...values, notes: notes || undefined }),
+        rating > 0 ? addStandaloneRating(playerId, { rating, note: notes || undefined }) : Promise.resolve(null),
+      ]);
+      const err = attrsResult?.error ?? ratingResult?.error;
+      if (err) {
+        setError(err);
       } else {
         setSaved(true);
+        if (rating > 0) setRating(0);
       }
     });
   }
@@ -56,8 +64,48 @@ export function PlayerAttributesForm({ playerId, initial, position }: Props) {
     { label: "Mental",    keys: posAttrs.mental },
   ];
 
+  const displayRating = ratingHovered || rating;
+
   return (
     <div className="space-y-6">
+      {/* Overall rating */}
+      <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Overall rating (optional)
+        </p>
+        <div
+          className="flex gap-1"
+          onMouseLeave={() => setRatingHovered(0)}
+          role="group"
+          aria-label="Overall rating"
+        >
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              aria-label={`${n} star${n !== 1 ? "s" : ""}`}
+              onMouseEnter={() => setRatingHovered(n)}
+              onClick={() => setRating((prev) => (prev === n ? 0 : n))}
+              className="rounded p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Star
+                className={`size-6 transition-colors ${
+                  n <= displayRating
+                    ? "fill-amber-400 text-amber-400"
+                    : "text-muted-foreground/30 hover:text-amber-300"
+                }`}
+              />
+            </button>
+          ))}
+          {rating > 0 && (
+            <span className="ml-2 self-center text-sm text-muted-foreground">{rating}/5</span>
+          )}
+          {rating === 0 && (
+            <span className="ml-2 self-center text-xs text-muted-foreground">click to rate</span>
+          )}
+        </div>
+      </div>
+
       {GROUPS.map(({ label, keys }) => {
         const avg = groupAvg(keys);
         return (

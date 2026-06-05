@@ -174,11 +174,9 @@ function CreateTab({ teamId }: { teamId: string }) {
       <Field label="Date of birth" name="date_of_birth" type="date" />
 
       {/* Attributes */}
-      <details className="group">
-        <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground select-none">
-          Player attributes (optional) ▸
-        </summary>
-        <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+      <div className="space-y-3">
+        <p className="text-sm font-medium">Initial attributes <span className="text-muted-foreground font-normal">(optional)</span></p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {(["pace","shooting","passing","dribbling","defending","physical"] as const).map((attr) => (
             <div key={attr} className="space-y-1">
               <label htmlFor={attr} className="text-xs font-medium capitalize text-muted-foreground">{attr}</label>
@@ -194,7 +192,7 @@ function CreateTab({ teamId }: { teamId: string }) {
             </div>
           ))}
         </div>
-      </details>
+      </div>
 
       {state?.error && (
         <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
